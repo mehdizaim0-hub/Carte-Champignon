@@ -5,14 +5,14 @@ permissions:
 jobs:
   go:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/explore_ign.py 2>&1 | tee tools/explore_out.txt
+      - run: python3 tools/explore2.py 2>&1 | tee tools/explore_out2.txt
       - run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
-          git add tools/explore_out.txt
+          git add tools/explore_out2.txt tools/color_map.json
           git commit -m "résultat exploration" || true
           git pull --rebase
           git push
