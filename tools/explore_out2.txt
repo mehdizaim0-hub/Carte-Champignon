@@ -1,0 +1,21 @@
+=== CORS (en-tetes insensibles à la casse)
+ign 200 ACAO = * | ACAH = DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Disposition,Content-Length,X-Community
+open-meteo 200 ACAO = * | ACAH = accept, authorization, content-type, origin, x-requested-with, user-agent, access-control-allow-origin, range, if-match, if-unmodified-since
+soilgrids 200 ACAO = * | ACAH = DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+=== couleur GetMap -> type de forêt (terrain.json, échantillon)
+  couleur (0, 217, 47) {'f': 14, 'r': 4, 'm': 4}
+  couleur (26, 230, 230) {'f': 1, 'r': 15}
+  couleur (255, 64, 51) {'f': 2, 'r': 3, 'm': 5}
+  couleur (0, 77, 46) {'f': 6, 'm': 3}
+  couleur (255, 249, 165) {'f': 1, 'r': 1, 'm': 5}
+  couleur (255, 230, 191) {'f': 2, 'r': 1, 'm': 3}
+  couleur (191, 38, 255) {'r': 5, 'm': 1}
+  couleur (229, 196, 93) {'f': 1, 'r': 2, 'm': 1}
+  couleur (153, 38, 255) {'r': 4}
+  couleur (51, 153, 255) {'r': 3, 'm': 1}
+  couleur (77, 51, 255) {'f': 1, 'r': 2}
+  couleur (0, 255, 128) {'f': 2, 'm': 1}
+  couleur (255, 26, 255) {'f': 1, 'r': 1, 'm': 1}
+  couleur (153, 179, 204) {'r': 3}
+=== Open-Meteo : 40 mailles x (40 passés + 8 prévus) x 5 variables
+  essai 1 OK en 6.8s 40 mailles, 48 jours, 93 Ko
