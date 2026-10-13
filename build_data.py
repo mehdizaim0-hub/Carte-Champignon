@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Genere data.json : grille de mailles sur la France avec altitude, pluie et
-temperature (14 jours passes + 8 jours de prevision) via Open-Meteo.
+temperature (40 jours passes + 8 jours de prevision) via Open-Meteo.
 
 Aucune cle API, aucune dependance : fonctionne avec Python 3.8+ tel quel.
 Lancer :  python build_data.py   (ou  py build_data.py  sous Windows)
@@ -27,7 +27,7 @@ except Exception:
 
 # ---------------------------------------------------------------- reglages
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
-PAST_DAYS = 14
+PAST_DAYS = 40                    # la pluie du cèpe agit sur ~26 j, celle du lactaire sur 3-5 semaines
 FORECAST_DAYS = 8
 STEP_LAT, STEP_LON = 0.15, 0.18   # ~17 km ; remonter a 0.25/0.30 pour une grille plus legere
 BATCH = 40                        # mailles par requete

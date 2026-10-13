@@ -1,18 +1,18 @@
-name: Exploration données (temporaire)
+name: Forêt à fine échelle (manuel)
 on: workflow_dispatch
 permissions:
   contents: write
 jobs:
-  go:
+  forets:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/explore2.py 2>&1 | tee tools/explore_out2.txt
+      - run: python3 build_forets.py --max-seconds 6000
       - run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
-          git add tools/explore_out2.txt tools/color_map.json
-          git commit -m "résultat exploration" || true
+          git add forets.json
+          git commit -m "forêt fine IGN" || echo "rien"
           git pull --rebase
           git push
