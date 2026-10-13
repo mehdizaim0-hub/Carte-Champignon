@@ -1,0 +1,9 @@
+name: Exploration données (temporaire)
+on: workflow_dispatch
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/explore_ign.py
