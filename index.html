@@ -50,7 +50,12 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .badge{display:inline-block;font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
 .badge.live{color:#2f7a2f;border-color:#2f7a2f}
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
-.bar{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0,60%,55%),hsl(60,65%,52%),hsl(125,55%,40%))}
+.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(133,50%,58%,.35) 30%,hsl(131,56%,36%) 70%,hsl(129,62%,24%) 100%)}
+.dim{opacity:.4;pointer-events:none}
+.spark{display:flex;align-items:flex-end;gap:4px;height:46px;margin:8px 0 2px}
+.spark div{flex:1;text-align:center;font-size:10px;color:var(--mute);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.spark i{display:block;border-radius:3px 3px 0 0;min-height:2px;background:hsl(131,56%,36%)}
+.spark div.sel i{outline:2px solid var(--acc)}
 ol{list-style:none;margin:0;padding:0}
 li.z{display:flex;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background var(--dur-micro) var(--ease-in-out)}
 li.z:hover{background:color-mix(in srgb,var(--line) 30%,transparent)}
@@ -84,10 +89,13 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <aside>
 <header style="--i:0">
 <h1>Où poussent les <em>champignons</em> ?</h1>
-<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7.</p>
+<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en vert : plus c'est foncé, plus les conditions sont réunies.</p>
 </header>
 <section class="card" style="--i:1" aria-label="Espèce et jour">
 <div class="chips" id="chips" role="group" aria-label="Espèce"></div>
+<div class="row"><label>Vue</label></div>
+<div class="chips" id="views" role="group" aria-label="Vue"></div>
+<div class="note" id="viewnote" style="margin-top:6px"></div>
 <div class="row"><label>Jour</label></div>
 <div class="chips" id="days" role="group" aria-label="Jour" style="margin-top:4px"></div>
 <div id="manual">
@@ -95,7 +103,8 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <div class="row"><label for="dt">Écart de température</label><input type="range" id="dt" min="-6" max="6" step="0.5" value="0"><span class="v" id="dtv"></span></div>
 </div>
 <div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
-<div class="legend" style="margin-top:10px"><span>peu favorable</span><div class="bar"></div><span>très favorable</span></div>
+<div class="note" style="margin:8px 0 0">Les meilleures zones du moment sont renforcées et marquées d'un point vert foncé ; une espèce hors saison reste incolore.</div>
+<div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>vert foncé : très favorable</span></div>
 </section>
 <section class="card" style="--i:2">
 <h2>Autour de chez moi</h2>
@@ -113,6 +122,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 14 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
 <p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol plutôt acide ou calcaire (cartes mondiales des sols SoilGrids), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN).</p>
 <p style="margin:0 0 8px"><b>On sait quand chaque champignon sort.</b> Les calendriers viennent de milliers d'observations réelles de cueilleurs et naturalistes en France (base GBIF). Exemple : le cèpe sort surtout en septembre-octobre, la morille en avril.</p>
+<p style="margin:0 0 8px"><b>Quatre vues.</b> « Jour choisi » montre une date. « Zones durables » garde celles qui restent bonnes sur la semaine. « Meilleur jour » retient le pic de chaque zone. « Habitat » ignore la météo et montre les massifs propices en permanence ; villes et grandes cultures y restent incolores.</p>
 <p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus elle est verte sur la carte.</p>
 <p style="margin:0"><b>À savoir.</b> La carte indique où les conditions sont réunies, pas où les champignons sont à coup sûr. Rien ne remplace la connaissance de ses coins !</p>
 </div>
@@ -128,16 +138,19 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 // t : trapèze sur T°moyenne 7j. hu : plage d'humidité du sol (m³/m³).
 // frost : 1 = gel tue, 0..1 = sensibilité, négatif = gel léger stimule.
 // gb : poids mensuels (jan..déc) issus des observations réelles GBIF France.
+// tw : fenêtre (jours) de la température moyenne (7 par défaut ; cèpe 14, étude 20 j en hêtraie).
+// warm : la morille réagit au réchauffement du sol (Buscot 1989) : bonus si la semaine est plus chaude que la précédente.
+// ev : solidité des paramètres (2 = études directes, 1 = partielle, 0 = estimé par prudence).
 const SP=[
-{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,12,19,23],ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
-{n:"Girolle",so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
-{n:"Morille",so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
-{n:"Trompette de la mort",so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
-{n:"Pied-de-mouton",so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
-{n:"Lactaire délicieux",so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
-{n:"Bolet bai",so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
-{n:"Chanterelle en tube",so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
-{n:"Coulemelle",so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
+{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,11,17,22],tw:14,ev:2,ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
+{n:"Girolle",ev:2,so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
+{n:"Morille",ev:1,warm:1,so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
+{n:"Trompette de la mort",ev:0,so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
+{n:"Pied-de-mouton",ev:0,so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
+{n:"Lactaire délicieux",ev:2,so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
+{n:"Bolet bai",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
+{n:"Chanterelle en tube",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
+{n:"Coulemelle",ev:0,so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
 ];
 // nom, lat, lon, altitude, sol (a acide, c calcaire, n neutre), forêt (f feuillus, r résineux, m mixte), microclimat
 const REF=`Landes de Gascogne,44.2,-0.9,60,a,r,.1
@@ -186,17 +199,18 @@ const clamp=x=>Math.max(0,Math.min(1,x));
 const km=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)*r/2);return 6371*Math.sqrt(x*x+y*y)};
 const $=id=>document.getElementById(id);
 const BASE=[5,6,9,12,15,19,21.5,21.5,18,14,9,6];
-let st={off:14,sp:0,day:0,home:CITIES["Toulouse"],cityName:"Toulouse",rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
+let st={view:"dur",off:14,sp:0,day:0,home:CITIES["Toulouse"],cityName:"Toulouse",rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
 const dateOf=d=>{const x=new Date();x.setDate(x.getDate()+d);return x};
 // ---------- Météo ----------
 // lag : la pluie qui compte est celle tombée lag à lag+14 jours avant la date visée.
-function weather(z,d,lag){
+function weather(z,d,lag,tw){
   if(st.live&&st.live[z.i]){
     const L=st.live[z.i],P=L.p,T=L.t,i=Math.min(st.off+d,P.length-1);
     const iLag=Math.max(0,Math.min(i-(lag||0)+4,P.length-1));
     let r=0;for(let k=Math.max(0,iLag-13);k<=iLag;k++)r+=P[k]||0;
-    let t=0;for(let k=Math.max(0,i-6);k<=i;k++)t+=T[k]||0;
-    const w={R:r,T:t/7,src:"live"};
+    const n=tw||7;let t=0,nt=0;for(let k=Math.max(0,i-n+1);k<=i;k++){t+=T[k]||0;nt++}
+    const w={R:r,T:t/Math.max(nt,1),src:"live"};
+    {let a=0,b=0,na=0,nb=0;for(let k=Math.max(0,i-6);k<=i;k++){a+=T[k]||0;na++}for(let k=Math.max(0,i-13);k<=i-7;k++){b+=T[k]||0;nb++}if(na&&nb)w.warm=a/na-b/nb}
     if(L.tn){ // gel 3 derniers jours : fort (<-3°C) ou léger (-3..0°C)
       let hard=0,light=0;
       for(let k=Math.max(0,i-2);k<=i;k++){if(L.tn[k]<-3)hard=1;else if(L.tn[k]<0)light=1}
@@ -219,8 +233,8 @@ function weather(z,d,lag){
 }
 // ---------- Score ----------
 function score(sp,z,d){
-  const w=weather(z,d,sp.lag),mo=dateOf(d).getMonth();
-  const so=sp.so[z.so],fo=z.nf?.05:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
+  const w=weather(z,d,sp.lag,sp.tw),mo=dateOf(d).getMonth();
+  const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const tf=trap(w.T,...sp.t);
   // humidité : sol réel mappé sur la plage de l'espèce si dispo, sinon pluie décalée
   let rf;
@@ -240,14 +254,39 @@ function score(sp,z,d){
   if(w.frostHard)frMul=1-.9*Math.abs(sp.frost);
   else if(w.frostLight)frMul=sp.frost<0?1.15:1-.6*sp.frost;
   // choc thermique : amplitude jour/nuit 6-13°C documentée favorable
-  const ampMul=w.amp!=null?(.9+.2*trap(w.amp,2,6,13,20)):1;
+  let ampMul=w.amp!=null?(.9+.2*trap(w.amp,2,6,13,20)):1;
+  if(sp.warm&&w.warm!=null)ampMul*=1+.12*Math.max(-1,Math.min(1,w.warm/3)); // morille : sol qui se réchauffe
   const hab=Math.pow(so*fo*Math.max(al,.001),.7);
   const sc=Math.min(100,100*hab*Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul);
   return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w};
 }
-const col=s=>`hsl(${Math.round(s*1.25)},${55+s*.1}%,${50-s*.1}%)`;
+// Incolore (peu favorable) -> vert foncé (très favorable). Sous 25 : transparent.
+const gA=s=>s<25?0:Math.min(.95,Math.pow((s-25)/55,1.15)*.95);
+const gC=s=>`hsl(${Math.round(135-s*.06)},${Math.round(48+s*.14)}%,${Math.round(60-s*.36)}%)`;
+const DARK=matchMedia("(prefers-color-scheme:dark)").matches;
+const col=s=>s<25?"var(--mute)":`hsl(131,52%,${DARK?Math.round(62-s*.1):Math.round(42-s*.16)}%)`;
+// ---------- Vues : jour / durable (8 jours) / meilleur jour / habitat ----------
+const VIEWS=[
+ {k:"day",t:"Jour choisi",note:"Score du jour sélectionné, d'après la météo réelle ou prévue."},
+ {k:"dur",t:"Zones durables",note:"Moyenne pondérée des 8 prochains jours (les jours lointains comptent moins). Ressortent les zones bonnes longtemps, pas juste un jour."},
+ {k:"best",t:"Meilleur jour",note:"Le meilleur score de la semaine pour chaque zone."},
+ {k:"hab",t:"Habitat",note:"Sol, forêt et altitude seulement, sans la météo : les grands massifs durablement propices. Villes et cultures s'effacent."}
+];
+const WD=[1,1,.9,.8,.7,.6,.5,.4];
+function habOnly(sp,z){
+  const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
+  return{sc:Math.round(Math.min(100,100*Math.pow(so*fo*Math.max(al,.001),.7))),so,fo,al};
+}
+function viewScore(sp,z){
+  const v=st.view;
+  if(v=="hab")return habOnly(sp,z);
+  if(v=="day")return score(sp,z,st.day);
+  const a=[...Array(8)].map((_,d)=>score(sp,z,d).sc);
+  const sc=v=="best"?Math.max(...a):a.reduce((s,x,i)=>s+x*WD[i],0)/WD.reduce((s,x)=>s+x,0);
+  return{sc:Math.round(sc)};
+}
 // ---------- Carte Leaflet ----------
-let map,selMarker=null,homeMarker=null,radCircle=null;
+let map,selMarker=null,homeMarker=null,radCircle=null,topLayer=null;
 function initMap(){
   map=L.map("map",{preferCanvas:true,zoomControl:true,minZoom:5,maxZoom:14,zoomSnap:.5,wheelPxPerZoomLevel:90,
     maxBounds:[[40.5,-6.5],[52.2,11.5]],maxBoundsViscosity:.8});
@@ -281,18 +320,19 @@ function buildHeat(){
   const py=lat=>(my1-mercY(lat))/(my1-my0)*H;
   heatGeom={W,H,px,py,dLat,dLon};
   heatBounds=[[lat0,lon0],[lat1,lon1]];
-  heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:.82,interactive:false}).addTo(map);
+  heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:1,interactive:false}).addTo(map);
 }
 function paintHeat(sc){
   if(!heatGeom)return;
+  const mx=Math.max(...sc.map(o=>o.r.sc)),gain=85/Math.max(60,mx);
   const{W,H,px,py,dLat,dLon}=heatGeom;
   const c1=document.createElement("canvas");c1.width=W;c1.height=H;
   const g=c1.getContext("2d");
   sc.forEach(({z,r})=>{
     const x0=px(z.lon-dLon/2),x1=px(z.lon+dLon/2);
     const y0=py(z.lat+dLat/2),y1=py(z.lat-dLat/2);
-    g.globalAlpha=.68+.32*r.sc/100;
-    g.fillStyle=col(r.sc);
+    const v=Math.min(100,r.sc*gain);g.globalAlpha=gA(v);
+    g.fillStyle=gC(v);
     g.fillRect(x0-.5,y0-.5,x1-x0+1,y1-y0+1);
   });
   const c2=document.createElement("canvas");c2.width=W;c2.height=H;
@@ -307,6 +347,8 @@ function build(){
   Z.forEach((z,i)=>z.i=i);
   $("chips").innerHTML=SP.map((s,i)=>`<button aria-pressed="${i==st.sp}" data-i="${i}">${s.n}</button>`).join("");
   $("chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.sp=+b.dataset.i;render()};
+  $("views").innerHTML=VIEWS.map(v=>`<button data-v="${v.k}" aria-pressed="${v.k==st.view}">${v.t}</button>`).join("");
+  $("views").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.view=b.dataset.v;render()};
   $("days").innerHTML=[...Array(8)].map((_,i)=>{const dt=dateOf(i);const t=i==0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric"});return`<button data-d="${i}" aria-pressed="${i==st.day}">${t}</button>`}).join("");
   $("days").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.day=+b.dataset.d;render()};
   $("city").innerHTML=Object.keys(CITIES).map(c=>`<option${c==st.cityName?" selected":""}>${c}</option>`).join("");
@@ -325,6 +367,9 @@ function render(){
   const sp=SP[st.sp],d=st.day;
   document.querySelectorAll("#chips button").forEach((b,i)=>b.setAttribute("aria-pressed",i==st.sp));
   document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
+  document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
+  $("viewnote").textContent=VIEWS.find(v=>v.k==st.view).note;
+  $("days").classList.toggle("dim",st.view=="dur"||st.view=="best");
   $("rainv").textContent=st.rain+" % de la normale";
   $("dtv").textContent=(st.dt>0?"+":"")+st.dt+" °C";
   $("radv").textContent=$("rad").value+" km";
@@ -335,8 +380,11 @@ function render(){
   $("fetched").style.display=st.fetchedAt?"":"none";
   if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
   // chaleur
-  const sc=Z.map(z=>({z,r:score(sp,z,d)}));
+  const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
   paintHeat(sc);
+  if(topLayer){topLayer.remove();topLayer=null}
+  const mx=Math.max(...sc.map(o=>o.r.sc)),gn=85/Math.max(60,mx);
+  topLayer=L.layerGroup(sc.filter(o=>o.r.sc>=35&&o.r.sc*gn>=75).map(o=>L.circleMarker([o.z.lat,o.z.lon],{radius:3.2,weight:1.2,color:"#fff",fillColor:"hsl(129,65%,22%)",fillOpacity:1,interactive:false}))).addTo(map);
   // sélection
   if(selMarker){selMarker.remove();selMarker=null}
   const zsel=st.sel!=null?Z[st.sel]:null;
@@ -359,13 +407,16 @@ function render(){
   $("near").innerHTML=(msg?`<li style="cursor:default;border:0">${msg}</li>`:"")+l.map(o=>`<li class="z" data-i="${o.z.i}"><span>${o.z.n}<br><span class="sub">${Math.round(o.k)} km · ${o.z.alt} m</span></span><b style="color:${col(o.r.sc)}">${o.r.sc}</b></li>`).join("");
   // détail
   if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte pour voir le détail de la zone la plus proche : sol, forêt, altitude, météo et saison.</p>`;return}
-  const r=score(sp,zsel,d);
+  const r=score(sp,zsel,d),rv=viewScore(sp,zsel);
+  const arr=[...Array(8)].map((_,k)=>score(sp,zsel,k).sc);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
   const top=SP.map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
-  $("detail").innerHTML=`<h2>${zsel.n}</h2><div class="sub" style="margin-bottom:6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b> · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  $("detail").innerHTML=`<h2>${zsel.n}</h2><div class="sub" style="margin-bottom:6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
+  <div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm · température moyenne : ${r.w.T.toFixed(1)} °C</div>
-  <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
+  <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
+  <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p>`;
 }
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------
 async function loadLive(){
@@ -388,7 +439,8 @@ async function loadLive(){
       const noForest=("fo" in tr)&&!tr.fo; // IGN consulté : pas de forêt ici
       // nom honnête : le massif seulement s'il est vraiment proche
       const nom=bd<=25?"Secteur "+best.n:"Zone "+c[0].toFixed(2)+"°N, "+c[1].toFixed(2)+"°E";
-      return{i,n:nom,lat:c[0],lon:c[1],alt:c[2],so,fo,mi:best.mi,nf:noForest,ph:tr.ph};
+      const urb=noForest&&("ph" in tr)&&tr.ph==null; // SoilGrids sans valeur et pas de forêt : urbain, eau ou très artificialisé
+      return{i,n:nom,lat:c[0],lon:c[1],alt:c[2],so,fo,mi:best.mi,nf:noForest,urb,ph:tr.ph};
     });
     st.live=j.cells.map(c=>({p:c[3],t:c[4],tn:c[5],sm:c[6],et:c[7]}));
     if(j.generated){const g=new Date(j.generated);st.fetchedAt=g.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+" à "+g.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}

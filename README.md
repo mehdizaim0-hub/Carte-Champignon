@@ -80,6 +80,22 @@ Puis ouvrir http://localhost:8000 (badge « Météo réelle » attendu).
 Ne pas ouvrir `index.html` par double-clic : le navigateur bloquerait la
 lecture de `data.json`.
 
+## Les quatre vues de la carte
+
+- **Jour choisi** : score d'une date (météo réelle ou prévue).
+- **Zones durables** : moyenne pondérée des 8 prochains jours, pour faire ressortir ce qui reste bon.
+- **Meilleur jour** : le pic de la semaine pour chaque zone.
+- **Habitat** : sol + forêt + altitude, sans météo. Les massifs propices ressortent en permanence, villes et
+  grandes cultures restent incolores.
+
+Le dégradé va de l'incolore (peu favorable) au vert foncé (très favorable). Les meilleures zones du moment
+sont renforcées et marquées d'un point. Une espèce hors saison reste incolore partout.
+
+## Sources et calibrage
+
+Voir `research/sources-recoupees-oct2026.md` (études, niveau de preuve par espèce). Pour croiser avec des
+observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (saisons et altitudes par espèce).
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le
