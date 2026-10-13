@@ -4,71 +4,100 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carte des champignons – France</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
-:root{--bg:#eef0e4;--panel:#fbfbf5;--ink:#1d2a1a;--mute:#5d6b57;--line:#cfd5bf;--sea:#dfe8e4;--land:#f6f4e6;--acc:#8a4b1f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b12;--panel:#1c2619;--ink:#e6ecd8;--mute:#98a78d;--line:#33422f;--sea:#18241f;--land:#222d1f;--acc:#e0a56b}}
-:root[data-theme="dark"]{--bg:#141b12;--panel:#1c2619;--ink:#e6ecd8;--mute:#98a78d;--line:#33422f;--sea:#18241f;--land:#222d1f;--acc:#e0a56b}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+:root{
+  --paper:#f3efe4;--panel:#fcfaf2;--ink:#232a1d;--mute:#67705c;--line:#d6d2bd;
+  --acc:#b4690e;--acc-ink:#8a4b1f;--blue:#2d7dd2;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);--ease-in:cubic-bezier(0.7,0,0.84,0);--ease-in-out:cubic-bezier(0.65,0,0.35,1);
+  --dur-micro:120ms;--dur-short:220ms;--dur-long:420ms;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#161b12;--panel:#1e2518;--ink:#e8ead9;--mute:#9aa58c;--line:#39412f;
+  --acc:#e0a56b;--acc-ink:#e0a56b;
+}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Bricolage Grotesque',system-ui,sans-serif}
-header{padding:18px 18px 6px;max-width:1200px;margin:auto}
-h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em}
-header p{margin:4px 0 0;color:var(--mute);max-width:70ch}
-main{max-width:1200px;margin:auto;padding:10px 18px 30px;display:grid;gap:14px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
-@media(max-width:860px){main{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+html,body{height:100%;overflow-x:clip}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 'Bricolage Grotesque',system-ui,sans-serif}
+#app{display:grid;grid-template-columns:440px minmax(0,1fr);height:100dvh}
+@media(max-width:860px){
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:52dvh 1fr}
+  aside{order:2;border-right:0;border-top:1px solid var(--line)}
+  #map{order:1}
+}
+aside{overflow-y:auto;min-width:0;border-right:1px solid var(--line);background:var(--paper);padding:18px 18px 30px;display:grid;gap:16px;align-content:start}
+h1{margin:0;font-family:Fraunces,serif;font-weight:700;font-size:clamp(23px,6vw,30px);line-height:1.1;letter-spacing:-.01em;overflow-wrap:anywhere;min-width:0}
+h1 em{font-style:normal;color:var(--acc-ink)}
+.lede{margin:4px 0 0;color:var(--mute);font-size:14px;max-width:52ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-width:0}
+h2{font-family:Fraunces,serif;font-size:17.5px;font-weight:700;margin:0 0 8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chips button{font:inherit;font-size:13px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
-.chips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips button{font:inherit;font-size:14px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;transition:background var(--dur-micro) var(--ease-in-out),color var(--dur-micro) var(--ease-in-out),border-color var(--dur-micro) var(--ease-in-out)}
+.chips button:hover{border-color:var(--ink)}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
-.row label{font-size:13px;color:var(--mute);min-width:150px}
-input[type=range]{flex:1;min-width:120px;accent-color:var(--acc)}
-.v{font-weight:600;min-width:90px;text-align:right}
-select,.btn{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
-.btn{cursor:pointer}
-.badge{display:inline-block;font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.row label{font-size:13.5px;color:var(--mute);min-width:150px}
+input[type=range]{flex:1;min-width:110px;accent-color:var(--acc)}
+.v{font-weight:600;min-width:84px;text-align:right;font-variant-numeric:tabular-nums}
+select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.btn{cursor:pointer;transition:border-color var(--dur-micro) var(--ease-in-out)}
+.btn:hover{border-color:var(--ink)}
+.badge{display:inline-block;font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
 .badge.live{color:#2f7a2f;border-color:#2f7a2f}
-svg{width:100%;height:auto;display:block;border-radius:8px;background:var(--sea)}
-.land{fill:var(--land);stroke:var(--mute);stroke-width:.8}
-.pt{cursor:pointer}
-.pt circle.d{stroke:var(--ink);stroke-width:.8}
-.pt:focus-visible circle.d{stroke-width:2.5;stroke:var(--acc)}
-.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin-top:8px}
+.legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
 .bar{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0,60%,55%),hsl(60,65%,52%),hsl(125,55%,40%))}
-h2{font-size:15px;margin:0 0 8px;font-weight:800}
 ol{list-style:none;margin:0;padding:0}
-li.z{display:flex;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+li.z{display:flex;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background var(--dur-micro) var(--ease-in-out)}
+li.z:hover{background:color-mix(in srgb,var(--line) 30%,transparent)}
 li.z:last-child{border:0}
 li.z b{font-variant-numeric:tabular-nums}
-.sub{font-size:12px;color:var(--mute)}
-.m{display:grid;grid-template-columns:90px 1fr 38px;gap:8px;align-items:center;font-size:13px;margin:5px 0}
+.sub{font-size:13px;color:var(--mute)}
+.m{display:grid;grid-template-columns:92px 1fr 38px;gap:8px;align-items:center;font-size:13.5px;margin:5px 0}
 .m i{display:block;height:7px;border-radius:4px;background:var(--line);overflow:hidden}
-.m i span{display:block;height:100%;background:var(--acc)}
+.m i span{display:block;height:100%;background:var(--acc);transition:width var(--dur-short) var(--ease-out)}
 .note{font-size:12px;color:var(--mute);margin-top:8px}
-.side{display:grid;gap:14px;align-content:start}
+#map{min-height:0;background:#cfdacc}
+.leaflet-container{font:inherit}
+/* marqueur sélection : pulsation */
+.selpin{position:relative}
+.selpin .dot{position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;background:var(--acc);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.selpin .ring{position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;border:2px solid var(--acc);animation:pulse 1.6s var(--ease-out) infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+.homepin{width:16px;height:16px;border-radius:50%;background:var(--blue);border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+/* orchestration d'entrée : une seule séquence */
+aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(--ease-out) forwards;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes enter{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+  aside>*{opacity:1;transform:none}
+  .selpin .ring{display:none}
+}
 </style>
 </head>
 <body>
-<header>
-<h1>Carte des champignons de France</h1>
-<p>Zones favorables par espèce, selon la météo des 14 derniers jours, le sol, la forêt, l'altitude et le microclimat. Choisissez une date jusqu'à J+7.</p>
+<div id="app">
+<aside>
+<header style="--i:0">
+<h1>Où poussent les <em>champignons</em> ?</h1>
+<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7.</p>
 </header>
-<main>
-<section class="card" aria-label="Carte">
+<section class="card" style="--i:1" aria-label="Espèce et jour">
 <div class="chips" id="chips" role="group" aria-label="Espèce"></div>
-<div class="row"><label for="day">Jour</label><input type="range" id="day" min="0" max="7" value="0"><span class="v" id="dayv"></span></div>
+<div class="row"><label>Jour</label></div>
+<div class="chips" id="days" role="group" aria-label="Jour" style="margin-top:4px"></div>
 <div id="manual">
 <div class="row"><label for="rain">Pluie 14 derniers jours</label><input type="range" id="rain" min="0" max="250" step="5" value="100"><span class="v" id="rainv"></span></div>
 <div class="row"><label for="dt">Écart de température</label><input type="range" id="dt" min="-6" max="6" step="0.5" value="0"><span class="v" id="dtv"></span></div>
 </div>
-<div class="row"><span class="badge" id="status"></span></div>
-<div style="margin-top:10px"><svg id="map" viewBox="0 0 620 590" role="img" aria-label="Carte de France des zones favorables"></svg></div>
-<div class="legend"><span>peu favorable</span><div class="bar"></div><span>très favorable</span></div>
+<div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
+<div class="legend" style="margin-top:10px"><span>peu favorable</span><div class="bar"></div><span>très favorable</span></div>
 </section>
-<div class="side">
-<section class="card">
+<section class="card" style="--i:2">
 <h2>Autour de chez moi</h2>
 <div class="row" style="margin-top:0">
 <select id="city" aria-label="Ville"></select>
@@ -77,23 +106,40 @@ li.z b{font-variant-numeric:tabular-nums}
 <div class="row"><label for="rad">Rayon</label><input type="range" id="rad" min="30" max="400" step="10" value="150"><span class="v" id="radv"></span></div>
 <ol id="near" style="margin-top:6px"></ol>
 </section>
-<section class="card" id="detail" aria-live="polite"></section>
+<section class="card" id="detail" style="--i:3" aria-live="polite"></section>
+<details class="card" style="--i:4">
+<summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>
+<div class="sub" style="margin-top:8px;line-height:1.6">
+<p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 14 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
+<p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol plutôt acide ou calcaire (cartes mondiales des sols SoilGrids), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN).</p>
+<p style="margin:0 0 8px"><b>On sait quand chaque champignon sort.</b> Les calendriers viennent de milliers d'observations réelles de cueilleurs et naturalistes en France (base GBIF). Exemple : le cèpe sort surtout en septembre-octobre, la morille en avril.</p>
+<p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus elle est verte sur la carte.</p>
+<p style="margin:0"><b>À savoir.</b> La carte indique où les conditions sont réunies, pas où les champignons sont à coup sûr. Rien ne remplace la connaissance de ses coins !</p>
 </div>
-</main>
+</details>
+<p class="note" style="--i:5">Les scores sont un modèle écologique : ils disent où chercher, pas où trouver. Fond de carte © OpenStreetMap / OpenTopoMap.</p>
+</aside>
+<div id="map" role="application" aria-label="Carte de France des zones favorables"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-// ---------- Données ----------
+// ---------- Modèle : espèces (paramètres sourcés, voir research/synthese-modele.md) ----------
+// lag : jours entre la pluie déclencheuse et la pousse. ro : pluie seuil (mm/14j).
+// t : trapèze sur T°moyenne 7j. hu : plage d'humidité du sol (m³/m³).
+// frost : 1 = gel tue, 0..1 = sensibilité, négatif = gel léger stimule.
+// gb : poids mensuels (jan..déc) issus des observations réelles GBIF France.
 const SP=[
-{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,10,17,22],ro:40,s:[8,11],txt:"Hêtres, chênes, châtaigniers, épicéas. Après des pluies suivies de nuits douces."},
-{n:"Girolle",so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,13,19,24],ro:35,s:[6,10],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude."},
-{n:"Morille",so:{a:.3,c:1,n:.8},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[4,8,14,18],ro:25,s:[3,5],txt:"Sols calcaires, frênes, ormes, vergers. Sortie au printemps, nuits fraîches et sol qui se réchauffe."},
-{n:"Trompette de la mort",so:{a:.8,c:1,n:1},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[8,12,18,22],ro:35,s:[8,11],txt:"Hêtraies et chênaies fraîches, talus ombragés humides."},
-{n:"Pied-de-mouton",so:{a:.5,c:1,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[4,8,14,18],ro:35,s:[9,12],txt:"Fin d'automne, clairières et lisières, sols plutôt calcaires."},
-{n:"Lactaire délicieux",so:{a:.8,c:1,n:.9},fo:{f:.1,r:1,m:.7},al:[0,100,1500,2000],t:[6,11,18,22],ro:30,s:[8,11],txt:"Associé aux pins et aux épicéas."},
-{n:"Bolet bai",so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[5,10,17,21],ro:35,s:[8,11],txt:"Sols acides sous conifères, souvent avec le cèpe."},
-{n:"Chanterelle en tube",so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[200,500,1500,2000],t:[2,6,12,16],ro:35,s:[10,12],txt:"Résineux moussus, frais et humides, en arrière-saison."},
-{n:"Coulemelle",so:{a:.7,c:1,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,800,1400],t:[10,14,20,25],ro:30,s:[8,10],txt:"Lisières, prairies et clairières sèches mais arrosées."}
+{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,12,19,23],ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
+{n:"Girolle",so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
+{n:"Morille",so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
+{n:"Trompette de la mort",so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
+{n:"Pied-de-mouton",so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
+{n:"Lactaire délicieux",so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
+{n:"Bolet bai",so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
+{n:"Chanterelle en tube",so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
+{n:"Coulemelle",so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
 ];
-// nom, lat, lon, altitude, sol (a acide, c calcaire, n neutre), forêt (f feuillus, r résineux, m mixte), microclimat (-1 sec/exposé … +1 frais/humide)
+// nom, lat, lon, altitude, sol (a acide, c calcaire, n neutre), forêt (f feuillus, r résineux, m mixte), microclimat
 const REF=`Landes de Gascogne,44.2,-0.9,60,a,r,.1
 Sologne,47.5,2.0,120,a,m,0
 Fontainebleau,48.4,2.65,120,a,m,0
@@ -131,120 +177,232 @@ Tanargue (Ardèche),44.7,4.1,900,a,f,.3
 Haguenau (Alsace),48.8,7.8,150,a,m,0
 Mormal (Nord),50.2,3.65,130,c,f,0
 Rambouillet,48.65,1.8,150,n,m,0`.split("\n").map(l=>{const p=l.split(",");return{n:p[0],lat:+p[1],lon:+p[2],alt:+p[3],so:p[4],fo:p[5],mi:+p[6]}});
-let Z=REF.slice(),HR=26,PR=5;
+let Z=REF.slice();
 const SOIL={a:"acide",c:"calcaire",n:"neutre"},FOR={f:"feuillus",r:"résineux",m:"mixte"};
 const CITIES={"Paris":[48.86,2.35],"Lyon":[45.76,4.84],"Marseille":[43.3,5.37],"Toulouse":[43.6,1.44],"Bordeaux":[44.84,-0.58],"Nantes":[47.22,-1.55],"Lille":[50.63,3.06],"Strasbourg":[48.58,7.75],"Nice":[43.7,7.26],"Rennes":[48.11,-1.68],"Clermont-Ferrand":[45.78,3.08],"Grenoble":[45.19,5.72],"Dijon":[47.32,5.04],"Limoges":[45.83,1.26]};
-const FR="2.55,51.08 1.85,50.95 1.55,50.2 0.1,49.5 -1.6,49.65 -1.5,48.65 -2.0,48.65 -3.0,48.85 -4.7,48.4 -4.7,48.0 -3.4,47.7 -3.1,47.5 -2.2,47.25 -2.2,46.9 -1.2,46.15 -1.05,45.6 -1.1,45.0 -1.25,44.65 -1.55,43.5 -1.8,43.37 -1.45,43.05 -0.7,42.85 0.7,42.8 1.45,42.45 2.0,42.35 3.1,42.43 3.05,42.7 3.2,43.15 3.7,43.4 4.5,43.4 4.85,43.35 5.35,43.2 6.0,43.1 6.7,43.4 7.2,43.7 7.5,43.78 7.0,44.2 6.9,44.6 6.6,45.1 7.05,45.9 6.8,46.4 6.1,46.15 6.15,46.4 6.9,47.0 7.55,47.6 7.6,48.0 8.2,48.97 6.4,49.45 5.8,49.55 4.85,50.1 4.2,50.3 3.1,50.75";
-const CO="9.35,42.95 9.5,42.6 9.4,41.9 9.15,41.4 8.8,41.6 8.6,42.0 8.65,42.5 9.2,42.75";
 // ---------- Utilitaires ----------
-const S=60,K=Math.cos(46.5*Math.PI/180);
-const px=(lon,lat)=>[(lon+5.5)*K*S,(51.3-lat)*S];
 const trap=(x,a,b,c,d)=>x<=a||x>=d?0:x<b?(x-a)/(b-a):x<=c?1:(d-x)/(d-c);
-const clamp=(x)=>Math.max(0,Math.min(1,x));
+const clamp=x=>Math.max(0,Math.min(1,x));
 const km=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)*r/2);return 6371*Math.sqrt(x*x+y*y)};
 const $=id=>document.getElementById(id);
 const BASE=[5,6,9,12,15,19,21.5,21.5,18,14,9,6];
-let st={off:14,sp:0,day:0,home:CITIES["Paris"],cityName:"Paris",rain:100,dt:0,live:null,sel:null};
+let st={off:14,sp:0,day:0,home:CITIES["Toulouse"],cityName:"Toulouse",rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
 const dateOf=d=>{const x=new Date();x.setDate(x.getDate()+d);return x};
 // ---------- Météo ----------
-function weather(z,d){
+// lag : la pluie qui compte est celle tombée lag à lag+14 jours avant la date visée.
+function weather(z,d,lag){
   if(st.live&&st.live[z.i]){
-    const L=st.live[z.i],P=L.p,T=L.t,i=Math.min(st.off+d,P.length-1);let r=0;
-    for(let k=i-13;k<=i;k++)r+=P[k]||0;
-    let t=0;for(let k=i-6;k<=i;k++)t+=T[k]||0;
-    return{R:r,T:t/7,src:"live"};
+    const L=st.live[z.i],P=L.p,T=L.t,i=Math.min(st.off+d,P.length-1);
+    const iLag=Math.max(0,Math.min(i-(lag||0)+4,P.length-1));
+    let r=0;for(let k=Math.max(0,iLag-13);k<=iLag;k++)r+=P[k]||0;
+    let t=0;for(let k=Math.max(0,i-6);k<=i;k++)t+=T[k]||0;
+    const w={R:r,T:t/7,src:"live"};
+    if(L.tn){ // gel 3 derniers jours : fort (<-3°C) ou léger (-3..0°C)
+      let hard=0,light=0;
+      for(let k=Math.max(0,i-2);k<=i;k++){if(L.tn[k]<-3)hard=1;else if(L.tn[k]<0)light=1}
+      w.frostHard=hard;w.frostLight=light&&!hard;
+      // choc thermique : amplitude jour/nuit ~ 2x(Tmoy-Tmin), moyenne 3 j
+      let amp=0,na=0;for(let k=Math.max(0,i-2);k<=i;k++){amp+=2*(T[k]-L.tn[k]);na++}
+      w.amp=na?amp/na:8;
+    }
+    if(L.sm){ // humidité du sol moyenne 7 j (m³/m³) + bilan hydrique pluie-ET0 14 j
+      let s=0,c=0;for(let k=Math.max(0,i-6);k<=i;k++){if(L.sm[k]>0){s+=L.sm[k];c++}}
+      if(c)w.SM=s/c;
+      if(L.et){let bal=0;for(let k=Math.max(0,i-13);k<=i;k++)bal+=(P[k]||0)-(L.et[k]||0);w.bal=bal}
+    }
+    return w;
   }
   const m=dateOf(d).getMonth();
   const Tn=BASE[m]-0.0065*z.alt-0.5*(z.lat-46);
   const Rn=28+z.alt*0.012+z.mi*6;
   return{R:Rn*st.rain/100,T:Tn+st.dt,src:"sim"};
 }
-// ---------- Modèle ----------
+// ---------- Score ----------
 function score(sp,z,d){
-  const w=weather(z,d),mo=dateOf(d).getMonth()+1;
-  const so=sp.so[z.so],fo=sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
-  const tf=trap(w.T,...sp.t),rf=Math.pow(clamp(w.R*(1+.15*z.mi)/sp.ro),.8)*(w.R>sp.ro*5?.6:1);
-  const sf=mo>=sp.s[0]&&mo<=sp.s[1]?1:(mo==sp.s[0]-1||mo==sp.s[1]+1)?.5:.15;
+  const w=weather(z,d,sp.lag),mo=dateOf(d).getMonth();
+  const so=sp.so[z.so],fo=z.nf?.05:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
+  const tf=trap(w.T,...sp.t);
+  // humidité : sol réel mappé sur la plage de l'espèce si dispo, sinon pluie décalée
+  let rf;
+  if(w.SM!=null){
+    const[h0,h1]=sp.hu||[.12,.3];
+    rf=clamp((w.SM-h0)/(h1-h0));
+    if(w.bal!=null&&w.bal<-40)rf*=.6;                // dessèchement net malgré tout
+  }else{
+    rf=Math.pow(clamp(w.R*(1+.15*z.mi)/sp.ro),.8)*(w.R>sp.ro*5?.6:1);
+  }
+  // saison : poids mensuels GBIF (observations réelles), interpolés au jour
+  const day=dateOf(d).getDate(),dim=new Date(dateOf(d).getFullYear(),mo+1,0).getDate();
+  const g0=sp.gb[mo],g1=sp.gb[(mo+1)%12];
+  const sf=Math.max(.05,g0+(g1-g0)*(day/dim));
+  // gel : fort = coupe selon sensibilité ; léger = coupe (sensibles) ou stimule (frost<0)
+  let frMul=1;
+  if(w.frostHard)frMul=1-.9*Math.abs(sp.frost);
+  else if(w.frostLight)frMul=sp.frost<0?1.15:1-.6*sp.frost;
+  // choc thermique : amplitude jour/nuit 6-13°C documentée favorable
+  const ampMul=w.amp!=null?(.9+.2*trap(w.amp,2,6,13,20)):1;
   const hab=Math.pow(so*fo*Math.max(al,.001),.7);
-  const sc=100*hab*Math.pow(Math.max(tf*rf,0),.9)*sf;
+  const sc=Math.min(100,100*hab*Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul);
   return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w};
 }
 const col=s=>`hsl(${Math.round(s*1.25)},${55+s*.1}%,${50-s*.1}%)`;
-// ---------- Rendu ----------
+// ---------- Carte Leaflet ----------
+let map,selMarker=null,homeMarker=null,radCircle=null;
+function initMap(){
+  map=L.map("map",{preferCanvas:true,zoomControl:true,minZoom:5,maxZoom:14,zoomSnap:.5,wheelPxPerZoomLevel:90,
+    maxBounds:[[40.5,-6.5],[52.2,11.5]],maxBoundsViscosity:.8});
+  map.setView([46.6,2.6],6);
+  const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"});
+  const topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap, SRTM · © OpenTopoMap (CC-BY-SA)"});
+  osm.addTo(map);
+  L.control.layers({"Plan":osm,"Relief et forêts":topo},null,{position:"topright"}).addTo(map);
+  map.on("click",e=>{
+    let bi=null,bk=1e9;
+    Z.forEach(z=>{const k=km(e.latlng.lat,e.latlng.lng,z.lat,z.lon);if(k<bk){bk=k;bi=z.i}});
+    st.sel=(bi!=null&&bk<(st.live?35:90))?bi:null;
+    render();
+  });
+}
+// ---------- Couche de chaleur : un seul canvas lissé (pas de cercles superposés) ----------
+let heatOverlay=null,heatBounds=null,heatGeom=null;
+const mercY=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+function buildHeat(){
+  if(heatOverlay){heatOverlay.remove();heatOverlay=null}
+  if(!Z.length)return;
+  const lats=Z.map(z=>z.lat),lons=Z.map(z=>z.lon);
+  // pas de la grille : plus petit écart non nul
+  const step=a=>{const u=[...new Set(a)].sort((x,y)=>x-y);let m=1e9;for(let i=1;i<u.length;i++)m=Math.min(m,u[i]-u[i-1]);return m<1e9?m:1};
+  const dLat=step(lats),dLon=step(lons);
+  const lat0=Math.min(...lats)-dLat/2,lat1=Math.max(...lats)+dLat/2;
+  const lon0=Math.min(...lons)-dLon/2,lon1=Math.max(...lons)+dLon/2;
+  const W=720,H=Math.round(W*(mercY(lat1)-mercY(lat0))/((lon1-lon0)*Math.PI/180));
+  const my0=mercY(lat0),my1=mercY(lat1);
+  const px=lon=>(lon-lon0)/(lon1-lon0)*W;
+  const py=lat=>(my1-mercY(lat))/(my1-my0)*H;
+  heatGeom={W,H,px,py,dLat,dLon};
+  heatBounds=[[lat0,lon0],[lat1,lon1]];
+  heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:.82,interactive:false}).addTo(map);
+}
+function paintHeat(sc){
+  if(!heatGeom)return;
+  const{W,H,px,py,dLat,dLon}=heatGeom;
+  const c1=document.createElement("canvas");c1.width=W;c1.height=H;
+  const g=c1.getContext("2d");
+  sc.forEach(({z,r})=>{
+    const x0=px(z.lon-dLon/2),x1=px(z.lon+dLon/2);
+    const y0=py(z.lat+dLat/2),y1=py(z.lat-dLat/2);
+    g.globalAlpha=.68+.32*r.sc/100;
+    g.fillStyle=col(r.sc);
+    g.fillRect(x0-.5,y0-.5,x1-x0+1,y1-y0+1);
+  });
+  const c2=document.createElement("canvas");c2.width=W;c2.height=H;
+  const g2=c2.getContext("2d");
+  const blur=Math.max(3,Math.round(px(dLon)-px(0)));
+  g2.filter="blur("+blur+"px)";
+  g2.drawImage(c1,0,0);
+  heatOverlay.setUrl(c2.toDataURL("image/png"));
+}
+// ---------- UI ----------
 function build(){
   Z.forEach((z,i)=>z.i=i);
   $("chips").innerHTML=SP.map((s,i)=>`<button aria-pressed="${i==st.sp}" data-i="${i}">${s.n}</button>`).join("");
   $("chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.sp=+b.dataset.i;render()};
-  $("city").innerHTML=Object.keys(CITIES).map(c=>`<option>${c}</option>`).join("");
-  $("city").onchange=e=>{st.home=CITIES[e.target.value];st.cityName=e.target.value;render()};
+  $("days").innerHTML=[...Array(8)].map((_,i)=>{const dt=dateOf(i);const t=i==0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric"});return`<button data-d="${i}" aria-pressed="${i==st.day}">${t}</button>`}).join("");
+  $("days").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.day=+b.dataset.d;render()};
+  $("city").innerHTML=Object.keys(CITIES).map(c=>`<option${c==st.cityName?" selected":""}>${c}</option>`).join("");
+  $("city").onchange=e=>{st.home=CITIES[e.target.value];st.cityName=e.target.value;flyHome();render()};
   $("geo").onclick=()=>{if(!navigator.geolocation){$("geo").textContent="Indisponible";return}
-    navigator.geolocation.getCurrentPosition(p=>{st.home=[p.coords.latitude,p.coords.longitude];st.cityName="votre position";render()},()=>{$("geo").textContent="Refusé : choisissez une ville"})};
-  [["day","day",1],["rain","rain",1],["dt","dt",1],["rad","rad",1]].forEach(([id,k])=>$(id).oninput=e=>{st[k]=+e.target.value;render()});
-  const svg=$("map");
-  svg.innerHTML=`<defs><filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter><clipPath id="cl"><polygon id="cp1"/><polygon id="cp2"/></clipPath></defs>
-<polygon class="land" id="p1"/><polygon class="land" id="p2"/><g id="heat" filter="url(#bl)" clip-path="url(#cl)"></g><g id="pts"></g><g id="home"></g>`;
-  const poly=s=>s.split(" ").map(p=>{const[a,b]=p.split(",");return px(+a,+b).map(v=>v.toFixed(1)).join(",")}).join(" ");
-  ["p1","cp1"].forEach(i=>svg.querySelector("#"+i).setAttribute("points",poly(FR)));
-  ["p2","cp2"].forEach(i=>svg.querySelector("#"+i).setAttribute("points",poly(CO)));
-  $("pts").onclick=e=>{const g=e.target.closest(".pt");if(g){st.sel=+g.dataset.i;render()}};
-  $("pts").onkeydown=e=>{if(e.key=="Enter"||e.key==" "){const g=e.target.closest(".pt");if(g){e.preventDefault();st.sel=+g.dataset.i;render()}}};
-  $("near").onclick=e=>{const l=e.target.closest("li");if(l){st.sel=+l.dataset.i;render()}};
+    navigator.geolocation.getCurrentPosition(p=>{st.home=[p.coords.latitude,p.coords.longitude];st.cityName="votre position";flyHome();render()},()=>{$("geo").textContent="Refusé : choisissez une ville"})};
+  [["rain","rain"],["dt","dt"],["rad","rad"]].forEach(([id,k])=>$(id).oninput=e=>{st[k]=+e.target.value;render()});
+  $("near").onclick=e=>{const l=e.target.closest("li");if(l&&l.dataset.i!=null){st.sel=+l.dataset.i;const z=Z[st.sel];map.flyTo([z.lat,z.lon],9,{duration:.8});render()}};
+}
+function flyHome(){
+  const R=+$("rad").value;
+  const zm=R>250?6:R>120?7:8;
+  map.flyTo(st.home,zm,{duration:.8});
 }
 function render(){
-  const sp=SP[st.sp],d=st.day,dt=dateOf(d);
+  const sp=SP[st.sp],d=st.day;
   document.querySelectorAll("#chips button").forEach((b,i)=>b.setAttribute("aria-pressed",i==st.sp));
-  $("dayv").textContent=d==0?"Aujourd'hui":"J+"+d+" · "+dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+  document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
   $("rainv").textContent=st.rain+" % de la normale";
   $("dtv").textContent=(st.dt>0?"+":"")+st.dt+" °C";
   $("radv").textContent=$("rad").value+" km";
   const live=!!st.live;
   $("manual").style.display=live?"none":"";
-  $("day").disabled=false;
   $("status").className="badge"+(live?" live":"");
-  $("status").textContent=live?"Météo réelle (Open-Meteo), grille de "+Z.length+" mailles, mise à jour quotidienne":"Météo simulée : normales de saison, ajustez les curseurs";
+  $("status").textContent=live?(st.off>15?"⚠ Données du "+st.dataDate+" (anciennes) : lancez une mise à jour":"Météo réelle (Open-Meteo), grille de "+Z.length+" mailles"):"Météo simulée : normales de saison, ajustez les curseurs";
+  $("fetched").style.display=st.fetchedAt?"":"none";
+  if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
+  // chaleur
   const sc=Z.map(z=>({z,r:score(sp,z,d)}));
-  $("heat").innerHTML=sc.map(({z,r})=>{const[x,y]=px(z.lon,z.lat);return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${HR}" fill="${col(r.sc)}" opacity="${(.2+.7*r.sc/100).toFixed(2)}"/>`}).join("");
-  $("pts").innerHTML=sc.map(({z,r})=>{const[x,y]=px(z.lon,z.lat);const sel=st.sel===z.i;
-    return`<g class="pt" data-i="${z.i}" tabindex="0" role="button" aria-label="${z.n}, score ${r.sc}"><circle class="d" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${sel?8:PR}" fill="${col(r.sc)}"/>${sel?`<text x="${(x+10).toFixed(1)}" y="${(y+4).toFixed(1)}" font-size="12" font-weight="700" fill="var(--ink)" stroke="var(--land)" stroke-width="3" paint-order="stroke">${z.n}</text>`:""}</g>`}).join("");
-  const[hx,hy]=px(st.home[1],st.home[0]);
-  $("home").innerHTML=`<path d="M${hx} ${hy-9}l6 9h-3v6h-6v-6h-3z" fill="var(--acc)" stroke="var(--bg)" stroke-width="1.5"/>`;
-  // proches
+  paintHeat(sc);
+  // sélection
+  if(selMarker){selMarker.remove();selMarker=null}
+  const zsel=st.sel!=null?Z[st.sel]:null;
+  if(zsel){
+    selMarker=L.marker([zsel.lat,zsel.lon],{interactive:false,icon:L.divIcon({className:"",html:`<div class="selpin" style="width:38px;height:38px"><div class="ring"></div><div class="dot"></div></div>`,iconSize:[38,38],iconAnchor:[19,19]})}).addTo(map);
+  }
+  // chez moi + rayon
   const R=+$("rad").value;
+  if(homeMarker)homeMarker.remove();
+  homeMarker=L.marker(st.home,{interactive:false,icon:L.divIcon({className:"",html:`<div class="homepin"></div>`,iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map);
+  if(radCircle)radCircle.remove();
+  radCircle=L.circle(st.home,{radius:R*1000,fill:true,fillColor:"#2d7dd2",fillOpacity:.05,color:"#2d7dd2",weight:1.6,dashArray:"6 5",interactive:false}).addTo(map);
+  // proches
   let n=sc.map(o=>({...o,k:km(st.home[0],st.home[1],o.z.lat,o.z.lon)})).sort((a,b)=>a.k-b.k);
-  let l=n.filter(o=>o.k<=R).sort((a,b)=>b.r.sc-a.r.sc).slice(0,5);
+  let within=n.filter(o=>o.k<=R).sort((a,b)=>b.r.sc-a.r.sc);
+  const seen=new Set();let l=[];
+  for(const o of within){if(!seen.has(o.z.n)){seen.add(o.z.n);l.push(o);if(l.length==5)break}}
   let msg="";
   if(!l.length){l=n.slice(0,3);msg=`<div class="note">Aucune zone suivie dans ${R} km autour de ${st.cityName}. Les 3 plus proches :</div>`}
   $("near").innerHTML=(msg?`<li style="cursor:default;border:0">${msg}</li>`:"")+l.map(o=>`<li class="z" data-i="${o.z.i}"><span>${o.z.n}<br><span class="sub">${Math.round(o.k)} km · ${o.z.alt} m</span></span><b style="color:${col(o.r.sc)}">${o.r.sc}</b></li>`).join("");
   // détail
-  const z=st.sel!=null?Z[st.sel]:null;
-  if(!z){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez une zone sur la carte pour voir le détail du score : sol, forêt, altitude, météo et saison.</p>`;return}
-  const r=score(sp,z,d);
+  if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte pour voir le détail de la zone la plus proche : sol, forêt, altitude, météo et saison.</p>`;return}
+  const r=score(sp,zsel,d);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
-  const top=SP.map(s=>({s,v:score(s,z,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
-  $("detail").innerHTML=`<h2>${z.n} · ${sp.n} : ${r.sc}/100</h2>
-  <div class="sub">${z.alt} m · sol ${SOIL[z.so]} · ${FOR[z.fo]} · microclimat ${z.mi>.25?"frais et humide":z.mi<-.1?"chaud et exposé":"neutre"}</div>
+  const top=SP.map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
+  $("detail").innerHTML=`<h2>${zsel.n}</h2><div class="sub" style="margin-bottom:6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b> · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm · température moyenne : ${r.w.T.toFixed(1)} °C</div>
-  <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
-  <p class="note">${sp.txt}</p>`;
+  <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
 }
-// ---------- Grille quotidienne (data.json produit par build_data.py) ----------
+// ---------- Données quotidiennes (data.json produit par build_data.py) ----------
 async function loadLive(){
   try{
     const r=await fetch("data.json",{cache:"no-cache"});if(!r.ok)return;
     const j=await r.json();if(!j.cells||!j.cells.length)return;
+    // terrain.json (optionnel) : pH du sol et forêt réels par maille
+    let terrain={};
+    try{const t=await fetch("terrain.json",{cache:"no-cache"});if(t.ok)terrain=await t.json()}catch(e){}
+    const phToSoil=ph=>ph==null?null:ph<5.5?"a":ph>6.8?"c":"n";
     const t0=new Date(j.start+"T12:00:00"),t1=new Date();t1.setHours(12,0,0,0);
     st.off=Math.round((t1-t0)/864e5);
+    st.dataDate=t0.toLocaleDateString("fr-FR",{day:"numeric",month:"long"});
+    const REFZ=REF;
     Z=j.cells.map((c,i)=>{
-      let best=null,bd=1e9;REF.forEach(q=>{const k=km(c[0],c[1],q.lat,q.lon);if(k<bd){bd=k;best=q}});
-      return{i,n:"Secteur "+best.n+" ("+c[0].toFixed(2)+"°N, "+c[1].toFixed(2)+"°E)",lat:c[0],lon:c[1],alt:c[2],so:best.so,fo:best.fo,mi:best.mi};
+      let best=null,bd=1e9;REFZ.forEach(q=>{const k=km(c[0],c[1],q.lat,q.lon);if(k<bd){bd=k;best=q}});
+      const tr=terrain[c[0]+","+c[1]]||{};
+      const so=phToSoil(tr.ph)||best.so;
+      const fo=tr.fo||best.fo;
+      const noForest=("fo" in tr)&&!tr.fo; // IGN consulté : pas de forêt ici
+      // nom honnête : le massif seulement s'il est vraiment proche
+      const nom=bd<=25?"Secteur "+best.n:"Zone "+c[0].toFixed(2)+"°N, "+c[1].toFixed(2)+"°E";
+      return{i,n:nom,lat:c[0],lon:c[1],alt:c[2],so,fo,mi:best.mi,nf:noForest,ph:tr.ph};
     });
-    st.live=j.cells.map(c=>({p:c[3],t:c[4]}));
-    HR=15;PR=3.2;st.sel=null;
+    st.live=j.cells.map(c=>({p:c[3],t:c[4],tn:c[5],sm:c[6],et:c[7]}));
+    if(j.generated){const g=new Date(j.generated);st.fetchedAt=g.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+" à "+g.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+    st.sel=null;
+    buildHeat();
     render();
   }catch(e){}
 }
-build();render();loadLive();
+if(typeof L=="undefined"){
+  $("map").innerHTML='<p style="padding:20px;color:var(--mute)">La bibliothèque de carte (Leaflet) n\'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.</p>';
+  build();render=()=>{};
+}else{
+  initMap();build();buildHeat();render();loadLive();
+}
 </script>
 </body>
 </html>
