@@ -92,6 +92,10 @@ Le dégradé va de l'incolore (peu favorable) à l'orange vif puis rouille (trè
 cerne les meilleures zones de la vue et du jour choisis, et change avec la date. Une espèce hors saison reste
 incolore partout.
 
+La couleur est superposée en mode « multiply » sur un fond de carte grisé (case à décocher sous la légende) :
+routes, noms de lieux et relief restent lisibles à travers. Les contours sont calculés sur un champ lissé
+(interpolation entre mailles), pas sur les carrés de la grille.
+
 ## Sources et calibrage
 
 Voir `research/sources-recoupees-oct2026.md` (études, niveau de preuve par espèce). Pour croiser avec des

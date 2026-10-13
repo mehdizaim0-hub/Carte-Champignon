@@ -52,6 +52,9 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
 .bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(40,100%,55%,.45) 28%,hsl(27,100%,50%) 62%,hsl(14,95%,38%) 100%)}
 .dim{opacity:.4;pointer-events:none}
+.leaflet-image-layer{mix-blend-mode:multiply}
+#map.gray .leaflet-tile-pane{filter:grayscale(1) contrast(.88) brightness(1.1)}
+.opt{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--mute);margin-top:8px;cursor:pointer}
 .spark{display:flex;align-items:flex-end;gap:4px;height:46px;margin:8px 0 2px}
 .spark div{flex:1;text-align:center;font-size:10px;color:var(--mute);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
 .spark i{display:block;border-radius:3px 3px 0 0;min-height:2px;background:hsl(24,100%,46%)}
@@ -104,6 +107,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 </div>
 <div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
 <div class="note" style="margin:8px 0 0"><span style="display:inline-block;width:22px;height:10px;border:2.5px solid #4a148c;box-shadow:0 0 0 1.5px #fff;border-radius:2px;vertical-align:-2px;margin-right:6px"></span>Contour violet : les meilleures zones pour la vue et le jour choisis (il change avec la date). Une espèce hors saison reste incolore.</div>
+<label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (noms et routes plus lisibles sous la couleur)</label>
 <div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>orange vif à rouille : très favorable</span></div>
 </section>
 <section class="card" style="--i:2">
@@ -262,8 +266,12 @@ function score(sp,z,d){
 }
 // Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
 // Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
-const gA=s=>s<22?0:Math.min(.96,.35+.61*Math.pow(Math.min(1,(s-22)/50),.85));
-const gC=s=>`hsl(${Math.round(42-s*.28)},100%,${Math.round(60-s*.22)}%)`;
+const gA=s=>s<22?0:Math.min(.8,.28+.52*Math.pow(Math.min(1,(s-22)/50),.85));
+const gH=s=>42-s*.28,gL=s=>60-s*.22;
+const gC=s=>`hsl(${Math.round(gH(s))},100%,${Math.round(gL(s))}%)`;
+function hsl2rgb(h,sa,l){h/=360;const q=l<.5?l*(1+sa):l+sa-l*sa,p=2*l-q,f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<1/2?q:t<2/3?p+(q-p)*(2/3-t)*6:p};return[f(h+1/3),f(h),f(h-1/3)].map(x=>Math.round(x*255))}
+let _lut=null;
+function lut(){if(_lut)return _lut;_lut=new Uint8ClampedArray(101*4);for(let v=0;v<=100;v++){const c=hsl2rgb(gH(v),1,gL(v)/100);_lut.set([c[0],c[1],c[2],Math.round(gA(v)*255)],v*4)}return _lut}
 const DARK=matchMedia("(prefers-color-scheme:dark)").matches;
 const col=s=>s<25?"var(--mute)":`hsl(${Math.round(30-s*.14)},95%,${DARK?Math.round(64-s*.08):Math.round(40-s*.1)}%)`;
 // ---------- Vues : jour / durable (8 jours) / meilleur jour / habitat ----------
@@ -319,28 +327,66 @@ function buildHeat(){
   const my0=mercY(lat0),my1=mercY(lat1);
   const px=lon=>(lon-lon0)/(lon1-lon0)*W;
   const py=lat=>(my1-mercY(lat))/(my1-my0)*H;
-  heatGeom={W,H,px,py,dLat,dLon,la0:Math.min(...lats),lo0:Math.min(...lons)};
+  heatGeom={W,H,px,py,dLat,dLon,la0:Math.min(...lats),lo0:Math.min(...lons),lon0,lon1,my0,my1};
   heatBounds=[[lat0,lon0],[lat1,lon1]];
   heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:1,interactive:false}).addTo(map);
 }
-// Contour des meilleures zones : arêtes entre mailles « très favorables » et les autres (recalculé à chaque vue/jour).
-function outlineSegs(sc){
-  if(!heatGeom||!st.live)return[];
+// Champ continu : scores des mailles posés sur une grille, légèrement lissés (centre .4, côtés .1, diagonales .05),
+// puis interpolés en bilinéaire. Sert au rendu des couleurs ET aux contours, donc les deux coïncident.
+function buildField(sc){
+  if(!heatGeom||!st.live)return null;
   const{dLat,dLon,la0,lo0}=heatGeom;
-  const mx=Math.max(...sc.map(o=>o.r.sc)),thr=Math.max(35,.82*mx); // le haut du panier de la vue affichée, jamais sous 35
-  const on=new Set(),cells=[];
-  sc.forEach(o=>{if(o.r.sc>=thr){const i=Math.round((o.z.lat-la0)/dLat),j=Math.round((o.z.lon-lo0)/dLon);on.add(i+","+j);cells.push([o.z,i,j])}});
+  let ni=0,nj=0;
+  const idx=sc.map(o=>{const i=Math.round((o.z.lat-la0)/dLat),j=Math.round((o.z.lon-lo0)/dLon);if(i+1>ni)ni=i+1;if(j+1>nj)nj=j+1;return[i,j,o.r.sc]});
+  const w=nj+4,h=ni+4,A=new Float32Array(w*h),G=new Float32Array(w*h);   // marge de 2 cases à zéro
+  idx.forEach(([i,j,v])=>{A[(i+2)*w+(j+2)]=v});
+  for(let i=1;i<h-1;i++)for(let j=1;j<w-1;j++){const k=i*w+j;G[k]=.4*A[k]+.1*(A[k-1]+A[k+1]+A[k-w]+A[k+w])+.05*(A[k-w-1]+A[k-w+1]+A[k+w-1]+A[k+w+1])}
+  let mx=0;for(let k=0;k<G.length;k++)if(G[k]>mx)mx=G[k];
+  return{G,w,h,mx,gain:85/Math.max(60,mx)};
+}
+// Contours lissés (marching squares sur le champ, sous-échantillonné x5) : le haut du panier de la vue affichée
+// (au moins 82 % du meilleur niveau, jamais sous 35).
+function outlineSegs(F){
+  if(!F||F.mx<35)return[];
+  const{G,w,h}=F,thr=Math.max(35,.78*F.mx),R=5,{dLat,dLon,la0,lo0}=heatGeom;
+  const P=(h-1)*R+1,Q=(w-1)*R+1,val=new Float32Array(P*Q);
+  for(let p=0;p<P;p++){const fi=p/R,i0=Math.min(Math.floor(fi),h-2),a=fi-i0;
+    for(let q=0;q<Q;q++){const fj=q/R,j0=Math.min(Math.floor(fj),w-2),b=fj-j0,k=i0*w+j0;
+      val[p*Q+q]=G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b}}
+  // on retire les îlots minuscules (moins de ~2,5 mailles) : ils ne désignent pas une zone, juste un pic isolé
+  {const seen=new Uint8Array(P*Q),stk=new Int32Array(P*Q);
+   for(let s0=0;s0<P*Q;s0++){
+     if(seen[s0]||val[s0]<thr)continue;
+     let top=0;const comp=[];stk[top++]=s0;seen[s0]=1;
+     while(top){const k=stk[--top];comp.push(k);const p=(k/Q)|0,q=k-p*Q;
+       if(q>0&&!seen[k-1]&&val[k-1]>=thr){seen[k-1]=1;stk[top++]=k-1}
+       if(q<Q-1&&!seen[k+1]&&val[k+1]>=thr){seen[k+1]=1;stk[top++]=k+1}
+       if(p>0&&!seen[k-Q]&&val[k-Q]>=thr){seen[k-Q]=1;stk[top++]=k-Q}
+       if(p<P-1&&!seen[k+Q]&&val[k+Q]>=thr){seen[k+Q]=1;stk[top++]=k+Q}}
+     if(comp.length<60)for(const k of comp)val[k]=0;
+   }}
+  const ll=(p,q)=>[la0+(p/R-2)*dLat,lo0+(q/R-2)*dLon];
+  const X=(p1,q1,v1,p2,q2,v2)=>{const t=(thr-v1)/(v2-v1);return ll(p1+(p2-p1)*t,q1+(q2-q1)*t)};
   const segs=[];
-  cells.forEach(([z,i,j])=>{
-    const a=z.lat-dLat/2,b=z.lat+dLat/2,c=z.lon-dLon/2,d=z.lon+dLon/2;
-    if(!on.has((i+1)+","+j))segs.push([[b,c],[b,d]]);
-    if(!on.has((i-1)+","+j))segs.push([[a,c],[a,d]]);
-    if(!on.has(i+","+(j+1)))segs.push([[a,d],[b,d]]);
-    if(!on.has(i+","+(j-1)))segs.push([[a,c],[b,c]]);
-  });
+  for(let p=0;p<P-1;p++)for(let q=0;q<Q-1;q++){
+    const a=val[p*Q+q],b=val[p*Q+q+1],d=val[(p+1)*Q+q],c2=val[(p+1)*Q+q+1];
+    const c=(a>=thr?1:0)|(b>=thr?2:0)|(c2>=thr?4:0)|(d>=thr?8:0);
+    if(c==0||c==15)continue;
+    const T=()=>X(p,q,a,p,q+1,b),Rt=()=>X(p,q+1,b,p+1,q+1,c2),Bt=()=>X(p+1,q,d,p+1,q+1,c2),Lf=()=>X(p,q,a,p+1,q,d);
+    switch(c){
+      case 1:case 14:segs.push([Lf(),T()]);break;
+      case 2:case 13:segs.push([T(),Rt()]);break;
+      case 3:case 12:segs.push([Lf(),Rt()]);break;
+      case 4:case 11:segs.push([Rt(),Bt()]);break;
+      case 6:case 9:segs.push([T(),Bt()]);break;
+      case 7:case 8:segs.push([Lf(),Bt()]);break;
+      default:{const m=(a+b+d+c2)/4>=thr,A=[[Lf(),T()],[Rt(),Bt()]],B=[[T(),Rt()],[Lf(),Bt()]];
+        segs.push(...((c==5)==m?B:A))}
+    }
+  }
   return segs;
 }
-function paintHeat(sc){
+function paintHeatRects(sc){
   if(!heatGeom)return;
   const mx=Math.max(...sc.map(o=>o.r.sc)),gain=85/Math.max(60,mx);
   const{W,H,px,py,dLat,dLon}=heatGeom;
@@ -360,11 +406,35 @@ function paintHeat(sc){
   g2.drawImage(c1,0,0);
   heatOverlay.setUrl(c2.toDataURL("image/png"));
 }
+function paintHeat(sc){
+  if(!heatGeom)return;
+  const F=st.F;
+  if(!F){paintHeatRects(sc);return}
+  const{W,H,dLat,dLon,la0,lo0,lon0,lon1,my0,my1}=heatGeom,{G,w,h,gain}=F,LUT=lut();
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const g=cv.getContext("2d"),im=g.createImageData(W,H),d=im.data;
+  for(let y=0;y<H;y++){
+    const my=my1-(y+.5)/H*(my1-my0),lat=(2*Math.atan(Math.exp(my))-Math.PI/2)*180/Math.PI;
+    const fi=(lat-la0)/dLat+2,i0=Math.floor(fi);if(i0<0||i0>=h-1)continue;const a=fi-i0;
+    for(let x=0;x<W;x++){
+      const fj=((lon0+(x+.5)/W*(lon1-lon0))-lo0)/dLon+2,j0=Math.floor(fj);if(j0<0||j0>=w-1)continue;
+      const b=fj-j0,k=i0*w+j0;
+      const v=(G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b)*gain;
+      if(v<22)continue;
+      const L=Math.min(100,Math.round(v))*4,p=(y*W+x)*4;
+      d[p]=LUT[L];d[p+1]=LUT[L+1];d[p+2]=LUT[L+2];d[p+3]=LUT[L+3];
+    }
+  }
+  g.putImageData(im,0,0);
+  heatOverlay.setUrl(cv.toDataURL("image/png"));
+}
 // ---------- UI ----------
 function build(){
   Z.forEach((z,i)=>z.i=i);
   $("chips").innerHTML=SP.map((s,i)=>`<button aria-pressed="${i==st.sp}" data-i="${i}">${s.n}</button>`).join("");
   $("chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.sp=+b.dataset.i;render()};
+  $("gray").onchange=e=>$("map").classList.toggle("gray",e.target.checked);
+  $("map").classList.toggle("gray",$("gray").checked);
   $("views").innerHTML=VIEWS.map(v=>`<button data-v="${v.k}" aria-pressed="${v.k==st.view}">${v.t}</button>`).join("");
   $("views").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.view=b.dataset.v;render()};
   $("days").innerHTML=[...Array(8)].map((_,i)=>{const dt=dateOf(i);const t=i==0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric"});return`<button data-d="${i}" aria-pressed="${i==st.day}">${t}</button>`}).join("");
@@ -399,13 +469,14 @@ function render(){
   if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
   // chaleur
   const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
+  st.F=buildField(sc);
   paintHeat(sc);
   if(topLayer){topLayer.remove();topLayer=null}
-  const segs=outlineSegs(sc);
+  const segs=outlineSegs(st.F);
   if(segs.length){
     topLayer=L.layerGroup([
-      L.polyline(segs,{color:"#fff",weight:6,opacity:.95,lineJoin:"round",lineCap:"round",interactive:false}),
-      L.polyline(segs,{color:"#4a148c",weight:2.8,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
+      L.polyline(segs,{color:"#fff",weight:5.5,opacity:.95,lineJoin:"round",lineCap:"round",interactive:false}),
+      L.polyline(segs,{color:"#4a148c",weight:2.4,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
     ]).addTo(map);
   }
   // sélection
