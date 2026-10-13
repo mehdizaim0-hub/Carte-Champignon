@@ -88,8 +88,9 @@ lecture de `data.json`.
 - **Habitat** : sol + forêt + altitude, sans météo. Les massifs propices ressortent en permanence, villes et
   grandes cultures restent incolores.
 
-Le dégradé va de l'incolore (peu favorable) au vert foncé (très favorable). Les meilleures zones du moment
-sont renforcées et marquées d'un point. Une espèce hors saison reste incolore partout.
+Le dégradé va de l'incolore (peu favorable) à l'orange vif puis rouille (très favorable). Un contour violet
+cerne les meilleures zones de la vue et du jour choisis, et change avec la date. Une espèce hors saison reste
+incolore partout.
 
 ## Sources et calibrage
 

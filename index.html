@@ -50,11 +50,11 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .badge{display:inline-block;font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
 .badge.live{color:#2f7a2f;border-color:#2f7a2f}
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
-.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(133,50%,58%,.35) 30%,hsl(131,56%,36%) 70%,hsl(129,62%,24%) 100%)}
+.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(40,100%,55%,.45) 28%,hsl(27,100%,50%) 62%,hsl(14,95%,38%) 100%)}
 .dim{opacity:.4;pointer-events:none}
 .spark{display:flex;align-items:flex-end;gap:4px;height:46px;margin:8px 0 2px}
 .spark div{flex:1;text-align:center;font-size:10px;color:var(--mute);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
-.spark i{display:block;border-radius:3px 3px 0 0;min-height:2px;background:hsl(131,56%,36%)}
+.spark i{display:block;border-radius:3px 3px 0 0;min-height:2px;background:hsl(24,100%,46%)}
 .spark div.sel i{outline:2px solid var(--acc)}
 ol{list-style:none;margin:0;padding:0}
 li.z{display:flex;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background var(--dur-micro) var(--ease-in-out)}
@@ -89,7 +89,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <aside>
 <header style="--i:0">
 <h1>Où poussent les <em>champignons</em> ?</h1>
-<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en vert : plus c'est foncé, plus les conditions sont réunies.</p>
+<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en orange : plus c'est vif et foncé, plus les conditions sont réunies. Un contour violet cerne les meilleures zones de la date ou de la vue affichée.</p>
 </header>
 <section class="card" style="--i:1" aria-label="Espèce et jour">
 <div class="chips" id="chips" role="group" aria-label="Espèce"></div>
@@ -103,8 +103,8 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <div class="row"><label for="dt">Écart de température</label><input type="range" id="dt" min="-6" max="6" step="0.5" value="0"><span class="v" id="dtv"></span></div>
 </div>
 <div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
-<div class="note" style="margin:8px 0 0">Les meilleures zones du moment sont renforcées et marquées d'un point vert foncé ; une espèce hors saison reste incolore.</div>
-<div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>vert foncé : très favorable</span></div>
+<div class="note" style="margin:8px 0 0"><span style="display:inline-block;width:22px;height:10px;border:2.5px solid #4a148c;box-shadow:0 0 0 1.5px #fff;border-radius:2px;vertical-align:-2px;margin-right:6px"></span>Contour violet : les meilleures zones pour la vue et le jour choisis (il change avec la date). Une espèce hors saison reste incolore.</div>
+<div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>orange vif à rouille : très favorable</span></div>
 </section>
 <section class="card" style="--i:2">
 <h2>Autour de chez moi</h2>
@@ -123,7 +123,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol plutôt acide ou calcaire (cartes mondiales des sols SoilGrids), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN).</p>
 <p style="margin:0 0 8px"><b>On sait quand chaque champignon sort.</b> Les calendriers viennent de milliers d'observations réelles de cueilleurs et naturalistes en France (base GBIF). Exemple : le cèpe sort surtout en septembre-octobre, la morille en avril.</p>
 <p style="margin:0 0 8px"><b>Quatre vues.</b> « Jour choisi » montre une date. « Zones durables » garde celles qui restent bonnes sur la semaine. « Meilleur jour » retient le pic de chaque zone. « Habitat » ignore la météo et montre les massifs propices en permanence ; villes et grandes cultures y restent incolores.</p>
-<p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus elle est verte sur la carte.</p>
+<p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus elle est orange sur la carte.</p>
 <p style="margin:0"><b>À savoir.</b> La carte indique où les conditions sont réunies, pas où les champignons sont à coup sûr. Rien ne remplace la connaissance de ses coins !</p>
 </div>
 </details>
@@ -260,11 +260,12 @@ function score(sp,z,d){
   const sc=Math.min(100,100*hab*Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul);
   return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w};
 }
-// Incolore (peu favorable) -> vert foncé (très favorable). Sous 25 : transparent.
-const gA=s=>s<25?0:Math.min(.95,Math.pow((s-25)/55,1.15)*.95);
-const gC=s=>`hsl(${Math.round(135-s*.06)},${Math.round(48+s*.14)}%,${Math.round(60-s*.36)}%)`;
+// Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
+// Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
+const gA=s=>s<22?0:Math.min(.96,.35+.61*Math.pow(Math.min(1,(s-22)/50),.85));
+const gC=s=>`hsl(${Math.round(42-s*.28)},100%,${Math.round(60-s*.22)}%)`;
 const DARK=matchMedia("(prefers-color-scheme:dark)").matches;
-const col=s=>s<25?"var(--mute)":`hsl(131,52%,${DARK?Math.round(62-s*.1):Math.round(42-s*.16)}%)`;
+const col=s=>s<25?"var(--mute)":`hsl(${Math.round(30-s*.14)},95%,${DARK?Math.round(64-s*.08):Math.round(40-s*.1)}%)`;
 // ---------- Vues : jour / durable (8 jours) / meilleur jour / habitat ----------
 const VIEWS=[
  {k:"day",t:"Jour choisi",note:"Score du jour sélectionné, d'après la météo réelle ou prévue."},
@@ -318,9 +319,26 @@ function buildHeat(){
   const my0=mercY(lat0),my1=mercY(lat1);
   const px=lon=>(lon-lon0)/(lon1-lon0)*W;
   const py=lat=>(my1-mercY(lat))/(my1-my0)*H;
-  heatGeom={W,H,px,py,dLat,dLon};
+  heatGeom={W,H,px,py,dLat,dLon,la0:Math.min(...lats),lo0:Math.min(...lons)};
   heatBounds=[[lat0,lon0],[lat1,lon1]];
   heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:1,interactive:false}).addTo(map);
+}
+// Contour des meilleures zones : arêtes entre mailles « très favorables » et les autres (recalculé à chaque vue/jour).
+function outlineSegs(sc){
+  if(!heatGeom||!st.live)return[];
+  const{dLat,dLon,la0,lo0}=heatGeom;
+  const mx=Math.max(...sc.map(o=>o.r.sc)),thr=Math.max(35,.82*mx); // le haut du panier de la vue affichée, jamais sous 35
+  const on=new Set(),cells=[];
+  sc.forEach(o=>{if(o.r.sc>=thr){const i=Math.round((o.z.lat-la0)/dLat),j=Math.round((o.z.lon-lo0)/dLon);on.add(i+","+j);cells.push([o.z,i,j])}});
+  const segs=[];
+  cells.forEach(([z,i,j])=>{
+    const a=z.lat-dLat/2,b=z.lat+dLat/2,c=z.lon-dLon/2,d=z.lon+dLon/2;
+    if(!on.has((i+1)+","+j))segs.push([[b,c],[b,d]]);
+    if(!on.has((i-1)+","+j))segs.push([[a,c],[a,d]]);
+    if(!on.has(i+","+(j+1)))segs.push([[a,d],[b,d]]);
+    if(!on.has(i+","+(j-1)))segs.push([[a,c],[b,c]]);
+  });
+  return segs;
 }
 function paintHeat(sc){
   if(!heatGeom)return;
@@ -337,7 +355,7 @@ function paintHeat(sc){
   });
   const c2=document.createElement("canvas");c2.width=W;c2.height=H;
   const g2=c2.getContext("2d");
-  const blur=Math.max(3,Math.round(px(dLon)-px(0)));
+  const blur=Math.max(2,Math.round(.6*(px(dLon)-px(0))));
   g2.filter="blur("+blur+"px)";
   g2.drawImage(c1,0,0);
   heatOverlay.setUrl(c2.toDataURL("image/png"));
@@ -383,8 +401,13 @@ function render(){
   const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
   paintHeat(sc);
   if(topLayer){topLayer.remove();topLayer=null}
-  const mx=Math.max(...sc.map(o=>o.r.sc)),gn=85/Math.max(60,mx);
-  topLayer=L.layerGroup(sc.filter(o=>o.r.sc>=35&&o.r.sc*gn>=75).map(o=>L.circleMarker([o.z.lat,o.z.lon],{radius:3.2,weight:1.2,color:"#fff",fillColor:"hsl(129,65%,22%)",fillOpacity:1,interactive:false}))).addTo(map);
+  const segs=outlineSegs(sc);
+  if(segs.length){
+    topLayer=L.layerGroup([
+      L.polyline(segs,{color:"#fff",weight:6,opacity:.95,lineJoin:"round",lineCap:"round",interactive:false}),
+      L.polyline(segs,{color:"#4a148c",weight:2.8,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
+    ]).addTo(map);
+  }
   // sélection
   if(selMarker){selMarker.remove();selMarker=null}
   const zsel=st.sel!=null?Z[st.sel]:null;
