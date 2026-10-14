@@ -118,6 +118,19 @@ observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (sa
   L'essence (feuillus/résineux) est déduite de la couleur de la légende IGN : approximative ; la présence de forêt
   est fiable. Sans `forets.json`, la carte fonctionne comme avant (mailles de 17 km).
 
+## Fiche espèce, avis sur un point, agglomérations et routes (oct. 2026)
+
+- **Fiche espèce** : photo (Wikipédia / Wikimedia Commons, auteur et licence affichés), arbres hôtes, sol, saison,
+  altitude, déclencheurs et critères de reconnaissance. Les photos sont lues en direct depuis Wikipédia.
+- **Avis sur un point** : niveau (très peu propice à très propice), comparaison avec le reste de la France, lieu
+  (sol, forêt, altitude) distinct des conditions du moment (météo, saison), principal frein, tendance sur 8 jours.
+- **Agglomérations et axes routiers** : aucun point n'y est affiché et un point choisi y est déclaré « non propice ».
+  `build_urbain.py` (CORINE Land Cover 2018, surfaces artificialisées par blocs de 1,4 km, hors petits villages
+  de moins de 25 ha) écrit `urbain.json` ; `build_routes.py` (BD TOPO, importance 1 : autoroutes et grands axes)
+  écrit `routes.json`, avec une zone tampon d'environ 140 m visible à partir du zoom 10.
+  Lancement : Actions > « Masques agglomérations et routes » > Run workflow (15 à 30 min).
+- **Rayon de recherche** : 100 km maximum.
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le
