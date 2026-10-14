@@ -396,7 +396,7 @@ function buildFineField(sc,sp){
   const{K,FW,FH,ni,nj,cls}=FINE,{la0,lo0,dLat,dLon}=heatGeom;
   const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(ni*nj);
   sc.forEach(({z,r})=>{Mc[(z.ci+1)*cw+z.cj+1]=r.M!=null?r.M:0;Hc[z.ci*nj+z.cj]=r.Ha||0});
-  const SPARSE=.4;   // un bloc à demi boisé pèse 40 % d'un vrai massif : évite que le bocage ressemble à une forêt
+  const SPARSE=.55;  // un bloc boisé à 25-60 % (lisières, massifs aérés, bocage) pèse 55 % d'un bloc très boisé
   const FP=[Math.pow(.03,.7),Math.pow(sp.fo.f,.7),Math.pow(sp.fo.r,.7),Math.pow(sp.fo.m,.7)];
   FP.push(Math.pow(sp.fo.f*SPARSE,.7),Math.pow(sp.fo.r*SPARSE,.7),Math.pow(sp.fo.m*SPARSE,.7));
   const pad=2,w=FW+2*pad,h=FH+2*pad,A=new Float32Array(w*h),G=new Float32Array(w*h);
