@@ -1,0 +1,6 @@
+tools/bouconne_a.png 13636 b'\x89PNG\r\n\x1a\n\x00\x00\x00\r'
+tools/bouconne_b.png 70838 b'\x89PNG\r\n\x1a\n\x00\x00\x00\r'
+tools/cell_96.png 17671 b'\x89PNG\r\n\x1a\n\x00\x00\x00\r'
+tools/cell_480.png 128606 b'\x89PNG\r\n\x1a\n\x00\x00\x00\r'
+tools/legend.png 19103 b'\x89PNG\r\n\x1a\n\x00\x00\x00\r'
+tools/bouconne_plan.png 449 b'<?xml versio'
