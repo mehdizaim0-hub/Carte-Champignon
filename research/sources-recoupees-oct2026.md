@@ -47,3 +47,17 @@ rapports de ce dossier et d'interpolations prudentes.
 ## Observations réelles (GBIF)
 Les calendriers mensuels viennent déjà de GBIF (champ `gb`). `calibrate_gbif.py` ajoute l'altitude et un
 profil mensuel par espèce, à lancer en local (l'API GBIF n'est pas joignable depuis tous les environnements).
+
+## Forêt à fine échelle (IGN BD Forêt v2) — mesures du 14/10/2026
+- Couche WMS `LANDCOVER.FORESTINVENTORY.V2` (data.geopf.fr). Sa légende donne les classes : forêts fermées par essence
+  (verts = feuillus, bleus/violets/cyan = conifères, orange/rouge = mélanges), forêts ouvertes (gris et pastels),
+  peupleraie, lande, formation herbacée (jaunes/beiges). `build_forets.py` en déduit feuillus / résineux / mélange et
+  ignore les jaunes, beiges, gris et pastels.
+- **La résolution demandée change le résultat** : le serveur gonfle le boisement des paysages morcelés quand
+  l'image est petite. Part boisée mesurée sur une même maille (96 / 192 / 288 / 480 / 720 px) :
+  Gers 51 / 38 / 34 / 29 / 26 % ; Landes 68 / 57 / 51 / 46 / 43 % ; Beauce 8 / 5 / 4,5 / 3,7 / 3,4 % ;
+  Vosges 80 / 80 / 79 / 77 / 76 %. Le script utilise donc 480 px (environ 36 m par pixel) ; au-delà de 720 px
+  le serveur refuse la requête.
+- Un bloc compte comme forêt s'il est boisé à 25 % au moins (« bois épars », poids 0,4 dans le score) ou à 60 %
+  au moins (« massif », poids 1).
+- Limite : l'essence est déduite de la couleur de la légende, la présence de forêt est la donnée fiable.
