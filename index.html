@@ -52,6 +52,10 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
 .bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(40,100%,55%,.45) 28%,hsl(27,100%,50%) 62%,hsl(14,95%,38%) 100%)}
 .dim{opacity:.4;pointer-events:none}
+.inp{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);flex:1;min-width:150px}
+.opt select{font-size:13px;padding:4px 8px}
+.prov{font-size:12px;color:var(--mute);margin:6px 0 0;line-height:1.5}
+.prov b{color:var(--ink);font-weight:600}
 .leaflet-image-layer{mix-blend-mode:multiply}
 #map.gray .leaflet-tile-pane{filter:grayscale(1) contrast(.88) brightness(1.1)}
 .opt{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--mute);margin-top:8px;cursor:pointer}
@@ -92,7 +96,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <aside>
 <header style="--i:0">
 <h1>Où poussent les <em>champignons</em> ?</h1>
-<p class="lede">Zones favorables par espèce selon la météo réelle des 14 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en orange : plus c'est vif et foncé, plus les conditions sont réunies. Un contour violet cerne les meilleures zones de la date ou de la vue affichée.</p>
+<p class="lede">Zones favorables par espèce selon la météo réelle des 40 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en orange : plus c'est vif et foncé, plus les conditions sont réunies. Un contour violet cerne les meilleures zones de la date ou de la vue affichée.</p>
 </header>
 <section class="card" style="--i:1" aria-label="Espèce et jour">
 <div class="chips" id="chips" role="group" aria-label="Espèce"></div>
@@ -107,8 +111,15 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 </div>
 <div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
 <div class="note" style="margin:8px 0 0"><span style="display:inline-block;width:22px;height:10px;border:2.5px solid #4a148c;box-shadow:0 0 0 1.5px #fff;border-radius:2px;vertical-align:-2px;margin-right:6px"></span>Contour violet : les meilleures zones pour la vue et le jour choisis (il change avec la date). Une espèce hors saison reste incolore.</div>
+<label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
+<div class="note" style="margin:4px 0 0">Nuage de points : plus les points sont serrés et gros, plus le score est élevé.</div>
 <label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (noms et routes plus lisibles sous la couleur)</label>
 <div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>orange vif à rouille : très favorable</span></div>
+</section>
+<section class="card" style="--i:2" aria-label="Point GPS">
+<h2>Un point précis</h2>
+<div class="row" style="margin-top:0"><input class="inp" id="gps" type="text" inputmode="decimal" placeholder="43.6612, 1.1305" aria-label="Coordonnées GPS : latitude, longitude"><button class="btn" id="gpsgo">Voir</button><button class="btn" id="gpsme">Ma position</button></div>
+<div class="note" id="gpsmsg" style="margin-top:6px">Touchez la carte ou saisissez des coordonnées : la météo, la forêt, le sol et l'altitude sont interrogés exactement à cet endroit.</div>
 </section>
 <section class="card" style="--i:2">
 <h2>Autour de chez moi</h2>
@@ -123,11 +134,11 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <details class="card" style="--i:4">
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>
 <div class="sub" style="margin-top:8px;line-height:1.6">
-<p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 14 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
-<p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol plutôt acide ou calcaire (cartes mondiales des sols SoilGrids), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN).</p>
+<p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 40 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
+<p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol plutôt acide ou calcaire (cartes mondiales des sols SoilGrids), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN). La forêt est lue à fine échelle (blocs d'environ 1,4 km) pour repérer les petits massifs et îlots forestiers, même au milieu de zones bâties ou cultivées. Pour un point précis, on interroge la météo, la forêt et le sol directement à cet endroit.</p>
 <p style="margin:0 0 8px"><b>On sait quand chaque champignon sort.</b> Les calendriers viennent de milliers d'observations réelles de cueilleurs et naturalistes en France (base GBIF). Exemple : le cèpe sort surtout en septembre-octobre, la morille en avril.</p>
 <p style="margin:0 0 8px"><b>Quatre vues.</b> « Jour choisi » montre une date. « Zones durables » garde celles qui restent bonnes sur la semaine. « Meilleur jour » retient le pic de chaque zone. « Habitat » ignore la météo et montre les massifs propices en permanence ; villes et grandes cultures y restent incolores.</p>
-<p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus elle est orange sur la carte.</p>
+<p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus les points sont serrés et gros (ou plus l'aplat est orange) sur la carte. Pour certaines espèces (cèpe, lactaire), la pluie des 26 à 35 derniers jours compte aussi : le champignon se souvient des pluies passées.</p>
 <p style="margin:0"><b>À savoir.</b> La carte indique où les conditions sont réunies, pas où les champignons sont à coup sûr. Rien ne remplace la connaissance de ses coins !</p>
 </div>
 </details>
@@ -144,14 +155,15 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 // gb : poids mensuels (jan..déc) issus des observations réelles GBIF France.
 // tw : fenêtre (jours) de la température moyenne (7 par défaut ; cèpe 14, étude 20 j en hêtraie).
 // warm : la morille réagit au réchauffement du sol (Buscot 1989) : bonus si la semaine est plus chaude que la précédente.
+// rw/rr : fenêtre longue de pluie (jours) et cumul (mm) pour la pleine intensité : cèpe 26 j (étude de 10 ans en hêtraie), lactaire ~5 semaines.
 // ev : solidité des paramètres (2 = études directes, 1 = partielle, 0 = estimé par prudence).
 const SP=[
-{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,11,17,22],tw:14,ev:2,ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
+{n:"Cèpe de Bordeaux",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,11,17,22],tw:14,rw:26,rr:60,ev:2,ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
 {n:"Girolle",ev:2,so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
 {n:"Morille",ev:1,warm:1,so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
 {n:"Trompette de la mort",ev:0,so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
 {n:"Pied-de-mouton",ev:0,so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
-{n:"Lactaire délicieux",ev:2,so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
+{n:"Lactaire délicieux",ev:2,rw:35,rr:50,so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
 {n:"Bolet bai",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
 {n:"Chanterelle en tube",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
 {n:"Coulemelle",ev:0,so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
@@ -203,17 +215,19 @@ const clamp=x=>Math.max(0,Math.min(1,x));
 const km=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)*r/2);return 6371*Math.sqrt(x*x+y*y)};
 const $=id=>document.getElementById(id);
 const BASE=[5,6,9,12,15,19,21.5,21.5,18,14,9,6];
-let st={view:"dur",off:14,sp:0,day:0,home:CITIES["Toulouse"],cityName:"Toulouse",rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
+let st={view:"dur",mode:"dots",past:14,pt:null,ptZ:null,ptTok:0,forets:null,off:14,sp:0,day:0,home:CITIES["Toulouse"],cityName:"Toulouse",rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
 const dateOf=d=>{const x=new Date();x.setDate(x.getDate()+d);return x};
 // ---------- Météo ----------
 // lag : la pluie qui compte est celle tombée lag à lag+14 jours avant la date visée.
-function weather(z,d,lag,tw){
-  if(st.live&&st.live[z.i]){
-    const L=st.live[z.i],P=L.p,T=L.t,i=Math.min(st.off+d,P.length-1);
+function weather(z,d,lag,tw,rw){
+  const L=z.L||(st.live&&z.i>=0?st.live[z.i]:null);
+  if(L){
+    const P=L.p,T=L.t,i=Math.min((L.off!=null?L.off:st.off)+d,P.length-1);
     const iLag=Math.max(0,Math.min(i-(lag||0)+4,P.length-1));
     let r=0;for(let k=Math.max(0,iLag-13);k<=iLag;k++)r+=P[k]||0;
     const n=tw||7;let t=0,nt=0;for(let k=Math.max(0,i-n+1);k<=i;k++){t+=T[k]||0;nt++}
     const w={R:r,T:t/Math.max(nt,1),src:"live"};
+    if(rw){let rs=0,nn=0;for(let k=Math.max(0,iLag-rw+1);k<=iLag;k++){rs+=P[k]||0;nn++}w.RL=nn?rs*rw/nn:0} // fenêtre longue, ramenée à rw jours si l'historique est plus court
     {let a=0,b=0,na=0,nb=0;for(let k=Math.max(0,i-6);k<=i;k++){a+=T[k]||0;na++}for(let k=Math.max(0,i-13);k<=i-7;k++){b+=T[k]||0;nb++}if(na&&nb)w.warm=a/na-b/nb}
     if(L.tn){ // gel 3 derniers jours : fort (<-3°C) ou léger (-3..0°C)
       let hard=0,light=0;
@@ -237,7 +251,7 @@ function weather(z,d,lag,tw){
 }
 // ---------- Score ----------
 function score(sp,z,d){
-  const w=weather(z,d,sp.lag,sp.tw),mo=dateOf(d).getMonth();
+  const w=weather(z,d,sp.lag,sp.tw,sp.rw),mo=dateOf(d).getMonth();
   const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const tf=trap(w.T,...sp.t);
   // humidité : sol réel mappé sur la plage de l'espèce si dispo, sinon pluie décalée
@@ -249,6 +263,7 @@ function score(sp,z,d){
   }else{
     rf=Math.pow(clamp(w.R*(1+.15*z.mi)/sp.ro),.8)*(w.R>sp.ro*5?.6:1);
   }
+  if(sp.rr&&w.RL!=null)rf*=.55+.45*clamp(w.RL/sp.rr); // pluie cumulée sur la fenêtre longue (cèpe, lactaire)
   // saison : poids mensuels GBIF (observations réelles), interpolés au jour
   const day=dateOf(d).getDate(),dim=new Date(dateOf(d).getFullYear(),mo+1,0).getDate();
   const g0=sp.gb[mo],g1=sp.gb[(mo+1)%12];
@@ -260,9 +275,10 @@ function score(sp,z,d){
   // choc thermique : amplitude jour/nuit 6-13°C documentée favorable
   let ampMul=w.amp!=null?(.9+.2*trap(w.amp,2,6,13,20)):1;
   if(sp.warm&&w.warm!=null)ampMul*=1+.12*Math.max(-1,Math.min(1,w.warm/3)); // morille : sol qui se réchauffe
-  const hab=Math.pow(so*fo*Math.max(al,.001),.7);
-  const sc=Math.min(100,100*hab*Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul);
-  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w};
+  // score = 100 x habitat(sol, altitude) x forêt^0,7 x météo : Ha et M sont exposés pour recalculer le score bloc par bloc
+  const Ha=Math.pow(so*Math.max(al,.001),.7),M=Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul;
+  const sc=Math.min(100,100*Ha*Math.pow(fo,.7)*M);
+  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha};
 }
 // Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
 // Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
@@ -284,15 +300,16 @@ const VIEWS=[
 const WD=[1,1,.9,.8,.7,.6,.5,.4];
 function habOnly(sp,z){
   const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
-  return{sc:Math.round(Math.min(100,100*Math.pow(so*fo*Math.max(al,.001),.7))),so,fo,al};
+  const Ha=Math.pow(so*Math.max(al,.001),.7);
+  return{sc:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha};
 }
 function viewScore(sp,z){
   const v=st.view;
   if(v=="hab")return habOnly(sp,z);
   if(v=="day")return score(sp,z,st.day);
-  const a=[...Array(8)].map((_,d)=>score(sp,z,d).sc);
-  const sc=v=="best"?Math.max(...a):a.reduce((s,x,i)=>s+x*WD[i],0)/WD.reduce((s,x)=>s+x,0);
-  return{sc:Math.round(sc)};
+  const a=[...Array(8)].map((_,d)=>score(sp,z,d)),r0=a[0];
+  const M=v=="best"?Math.max(...a.map(x=>x.M)):a.reduce((s,x,i)=>s+x.M*WD[i],0)/WD.reduce((s,x)=>s+x,0);
+  return{sc:Math.round(Math.min(100,100*r0.Ha*Math.pow(r0.fo,.7)*M)),M,Ha:r0.Ha,fo:r0.fo};
 }
 // ---------- Carte Leaflet ----------
 let map,selMarker=null,homeMarker=null,radCircle=null,topLayer=null;
@@ -304,12 +321,8 @@ function initMap(){
   const topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap, SRTM · © OpenTopoMap (CC-BY-SA)"});
   osm.addTo(map);
   L.control.layers({"Plan":osm,"Relief et forêts":topo},null,{position:"topright"}).addTo(map);
-  map.on("click",e=>{
-    let bi=null,bk=1e9;
-    Z.forEach(z=>{const k=km(e.latlng.lat,e.latlng.lng,z.lat,z.lon);if(k<bk){bk=k;bi=z.i}});
-    st.sel=(bi!=null&&bk<(st.live?35:90))?bi:null;
-    render();
-  });
+  initDots();
+  map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
 }
 // ---------- Couche de chaleur : un seul canvas lissé (pas de cercles superposés) ----------
 let heatOverlay=null,heatBounds=null,heatGeom=null;
@@ -331,60 +344,121 @@ function buildHeat(){
   heatBounds=[[lat0,lon0],[lat1,lon1]];
   heatOverlay=L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAAAAACw=",heatBounds,{opacity:1,interactive:false}).addTo(map);
 }
-// Champ continu : scores des mailles posés sur une grille, légèrement lissés (centre .4, côtés .1, diagonales .05),
-// puis interpolés en bilinéaire. Sert au rendu des couleurs ET aux contours, donc les deux coïncident.
+// ---------- Champ de score ----------
+// Un champ F = grille G (w x h) + transformation indice -> coordonnées : lat = Alat + i*Blat, lon = Alon + j*Blon.
+// Mode grossier : mailles de 17 km lissées. Mode fin : blocs de forêt d'environ 1,4 km (si forets.json est présent),
+// ce qui fait ressortir les petits massifs et îlots forestiers au milieu de zones bâties ou cultivées.
 function buildField(sc){
   if(!heatGeom||!st.live)return null;
   const{dLat,dLon,la0,lo0}=heatGeom;
   let ni=0,nj=0;
   const idx=sc.map(o=>{const i=Math.round((o.z.lat-la0)/dLat),j=Math.round((o.z.lon-lo0)/dLon);if(i+1>ni)ni=i+1;if(j+1>nj)nj=j+1;return[i,j,o.r.sc]});
-  const w=nj+4,h=ni+4,A=new Float32Array(w*h),G=new Float32Array(w*h);   // marge de 2 cases à zéro
+  const w=nj+4,h=ni+4,A=new Float32Array(w*h),G=new Float32Array(w*h);
   idx.forEach(([i,j,v])=>{A[(i+2)*w+(j+2)]=v});
   for(let i=1;i<h-1;i++)for(let j=1;j<w-1;j++){const k=i*w+j;G[k]=.4*A[k]+.1*(A[k-1]+A[k+1]+A[k-w]+A[k+w])+.05*(A[k-w-1]+A[k-w+1]+A[k+w-1]+A[k+w+1])}
   let mx=0;for(let k=0;k<G.length;k++)if(G[k]>mx)mx=G[k];
-  return{G,w,h,mx,gain:85/Math.max(60,mx)};
+  return{kind:"coarse",G,w,h,mx,gain:85/Math.max(60,mx),Alat:la0-2*dLat,Blat:dLat,Alon:lo0-2*dLon,Blon:dLon,R:5,minComp:60};
 }
-// Contours lissés (marching squares sur le champ, sous-échantillonné x5) : le haut du panier de la vue affichée
-// (au moins 82 % du meilleur niveau, jamais sous 35).
-function outlineSegs(F){
-  if(!F||F.mx<35)return[];
-  const{G,w,h}=F,thr=Math.max(35,.78*F.mx),R=5,{dLat,dLon,la0,lo0}=heatGeom;
-  const P=(h-1)*R+1,Q=(w-1)*R+1,val=new Float32Array(P*Q);
-  for(let p=0;p<P;p++){const fi=p/R,i0=Math.min(Math.floor(fi),h-2),a=fi-i0;
-    for(let q=0;q<Q;q++){const fj=q/R,j0=Math.min(Math.floor(fj),w-2),b=fj-j0,k=i0*w+j0;
-      val[p*Q+q]=G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b}}
-  // on retire les îlots minuscules (moins de ~2,5 mailles) : ils ne désignent pas une zone, juste un pic isolé
-  {const seen=new Uint8Array(P*Q),stk=new Int32Array(P*Q);
-   for(let s0=0;s0<P*Q;s0++){
-     if(seen[s0]||val[s0]<thr)continue;
-     let top=0;const comp=[];stk[top++]=s0;seen[s0]=1;
-     while(top){const k=stk[--top];comp.push(k);const p=(k/Q)|0,q=k-p*Q;
-       if(q>0&&!seen[k-1]&&val[k-1]>=thr){seen[k-1]=1;stk[top++]=k-1}
-       if(q<Q-1&&!seen[k+1]&&val[k+1]>=thr){seen[k+1]=1;stk[top++]=k+1}
-       if(p>0&&!seen[k-Q]&&val[k-Q]>=thr){seen[k-Q]=1;stk[top++]=k-Q}
-       if(p<P-1&&!seen[k+Q]&&val[k+Q]>=thr){seen[k+Q]=1;stk[top++]=k+Q}}
-     if(comp.length<60)for(const k of comp)val[k]=0;
-   }}
-  const ll=(p,q)=>[la0+(p/R-2)*dLat,lo0+(q/R-2)*dLon];
-  const X=(p1,q1,v1,p2,q2,v2)=>{const t=(thr-v1)/(v2-v1);return ll(p1+(p2-p1)*t,q1+(q2-q1)*t)};
-  const segs=[];
-  for(let p=0;p<P-1;p++)for(let q=0;q<Q-1;q++){
-    const a=val[p*Q+q],b=val[p*Q+q+1],d=val[(p+1)*Q+q],c2=val[(p+1)*Q+q+1];
-    const c=(a>=thr?1:0)|(b>=thr?2:0)|(c2>=thr?4:0)|(d>=thr?8:0);
-    if(c==0||c==15)continue;
-    const T=()=>X(p,q,a,p,q+1,b),Rt=()=>X(p,q+1,b,p+1,q+1,c2),Bt=()=>X(p+1,q,d,p+1,q+1,c2),Lf=()=>X(p,q,a,p+1,q,d);
-    switch(c){
-      case 1:case 14:segs.push([Lf(),T()]);break;
-      case 2:case 13:segs.push([T(),Rt()]);break;
-      case 3:case 12:segs.push([Lf(),Rt()]);break;
-      case 4:case 11:segs.push([Rt(),Bt()]);break;
-      case 6:case 9:segs.push([T(),Bt()]);break;
-      case 7:case 8:segs.push([Lf(),Bt()]);break;
-      default:{const m=(a+b+d+c2)/4>=thr,A=[[Lf(),T()],[Rt(),Bt()]],B=[[T(),Rt()],[Lf(),Bt()]];
-        segs.push(...((c==5)==m?B:A))}
+function fieldAt(F,lat,lon){
+  const fi=(lat-F.Alat)/F.Blat,fj=(lon-F.Alon)/F.Blon,i0=Math.floor(fi),j0=Math.floor(fj);
+  if(i0<0||j0<0||i0>=F.h-1||j0>=F.w-1)return 0;
+  const a=fi-i0,b=fj-j0,k=i0*F.w+j0,G=F.G,w=F.w;
+  return G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b;
+}
+// Grille fine des classes de forêt (0 aucune, 1 feuillus, 2 résineux, 3 autre/mixte), alignée sur la grille des mailles.
+let FINE=null;
+function indexCells(){
+  st.cellMap=new Map();
+  if(!heatGeom||!st.live)return;
+  const{la0,lo0,dLat,dLon}=heatGeom;
+  Z.forEach(z=>{z.ci=Math.round((z.lat-la0)/dLat);z.cj=Math.round((z.lon-lo0)/dLon);st.cellMap.set(z.ci+","+z.cj,z)});
+}
+function buildFineGrid(){
+  FINE=null;
+  if(!st.forets||!heatGeom||!st.live)return;
+  const K=st.forets.K,cells=st.forets.cells;
+  let ni=0,nj=0;Z.forEach(z=>{if(z.ci+1>ni)ni=z.ci+1;if(z.cj+1>nj)nj=z.cj+1});
+  const FW=nj*K,FH=ni*K,cls=new Uint8Array(FW*FH),idx=new Int32Array(ni*nj).fill(-1);
+  let have=0;
+  Z.forEach(z=>{
+    idx[z.ci*nj+z.cj]=z.i;
+    const s=cells[z.lat+","+z.lon];if(s)have++;
+    const cc=z.nf?0:(z.fo=="f"?1:z.fo=="r"?2:3);   // repli : type de la maille entière
+    for(let r=0;r<K;r++){const a=K-1-r;for(let b=0;b<K;b++){
+      let c=cc;
+      if(s){const ch=s[r*K+b];c=ch=="."?0:(ch=="f"||ch=="F")?1:(ch=="r"||ch=="R")?2:3}
+      cls[(z.ci*K+a)*FW+z.cj*K+b]=c}}
+  });
+  FINE={K,FW,FH,ni,nj,cls,idx,have};
+}
+function buildFineField(sc,sp){
+  if(!FINE)return null;
+  const{K,FW,FH,ni,nj,cls}=FINE,{la0,lo0,dLat,dLon}=heatGeom;
+  const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(ni*nj);
+  sc.forEach(({z,r})=>{Mc[(z.ci+1)*cw+z.cj+1]=r.M!=null?r.M:0;Hc[z.ci*nj+z.cj]=r.Ha||0});
+  const FP=[Math.pow(.03,.7),Math.pow(sp.fo.f,.7),Math.pow(sp.fo.r,.7),Math.pow(sp.fo.m,.7)];
+  const pad=2,w=FW+2*pad,h=FH+2*pad,A=new Float32Array(w*h),G=new Float32Array(w*h);
+  for(let y=0;y<FH;y++){
+    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0,ci=Math.floor(y/K);
+    for(let x=0;x<FW;x++){
+      const gx=(x+.5)/K-.5,j0=Math.floor(gx),fx=gx-j0,k=(i0+1)*cw+(j0+1);
+      const M=Mc[k]*(1-fy)*(1-fx)+Mc[k+1]*(1-fy)*fx+Mc[k+cw]*fy*(1-fx)+Mc[k+cw+1]*fy*fx;   // météo lissée entre mailles
+      const v=100*Hc[ci*nj+Math.floor(x/K)]*FP[cls[y*FW+x]]*M;
+      A[(y+pad)*w+x+pad]=v>100?100:v;
     }
   }
-  return segs;
+  for(let i=1;i<h-1;i++)for(let j=1;j<w-1;j++){const k=i*w+j;G[k]=.6*A[k]+.08*(A[k-1]+A[k+1]+A[k-w]+A[k+w])+.02*(A[k-w-1]+A[k-w+1]+A[k+w-1]+A[k+w+1])}
+  let mx=0;for(let k=0;k<G.length;k++)if(G[k]>mx)mx=G[k];
+  const bl=dLat/K,bo=dLon/K;
+  return{kind:"fine",G,w,h,mx,gain:85/Math.max(60,mx),Alat:la0-dLat/2+(-pad+.5)*bl,Blat:bl,Alon:lo0-dLon/2+(-pad+.5)*bo,Blon:bo,R:1,minComp:3};
+}
+// Contours lissés (marching squares) : le haut du panier de la vue affichée (>= 78 % du meilleur niveau, jamais sous 35).
+function outlineSegs(F){
+  if(!F||F.mx<35)return[];
+  const{G,w,h,R,minComp}=F;
+  let thr=Math.max(35,.78*F.mx);
+  const P=(h-1)*R+1,Q=(w-1)*R+1;
+  for(let essai=0;essai<3;essai++){
+    const val=new Float32Array(P*Q);
+    if(R==1)val.set(G);
+    else for(let p=0;p<P;p++){const fi=p/R,i0=Math.min(Math.floor(fi),h-2),a=fi-i0;
+      for(let q=0;q<Q;q++){const fj=q/R,j0=Math.min(Math.floor(fj),w-2),b=fj-j0,k=i0*w+j0;
+        val[p*Q+q]=G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b}}
+    // retire les pics isolés trop petits pour désigner une zone
+    {const seen=new Uint8Array(P*Q),stk=new Int32Array(P*Q);
+     for(let s0=0;s0<P*Q;s0++){
+       if(seen[s0]||val[s0]<thr)continue;
+       let top=0;const comp=[];stk[top++]=s0;seen[s0]=1;
+       while(top){const k=stk[--top];comp.push(k);const p=(k/Q)|0,q=k-p*Q;
+         if(q>0&&!seen[k-1]&&val[k-1]>=thr){seen[k-1]=1;stk[top++]=k-1}
+         if(q<Q-1&&!seen[k+1]&&val[k+1]>=thr){seen[k+1]=1;stk[top++]=k+1}
+         if(p>0&&!seen[k-Q]&&val[k-Q]>=thr){seen[k-Q]=1;stk[top++]=k-Q}
+         if(p<P-1&&!seen[k+Q]&&val[k+Q]>=thr){seen[k+Q]=1;stk[top++]=k+Q}}
+       if(comp.length<minComp)for(const k of comp)val[k]=0;
+     }}
+    const ll=(p,q)=>[F.Alat+(p/R)*F.Blat,F.Alon+(q/R)*F.Blon];
+    const X=(p1,q1,v1,p2,q2,v2)=>{const t=(thr-v1)/(v2-v1);return ll(p1+(p2-p1)*t,q1+(q2-q1)*t)};
+    const segs=[];
+    for(let p=0;p<P-1;p++)for(let q=0;q<Q-1;q++){
+      const a=val[p*Q+q],b=val[p*Q+q+1],d=val[(p+1)*Q+q],c2=val[(p+1)*Q+q+1];
+      const c=(a>=thr?1:0)|(b>=thr?2:0)|(c2>=thr?4:0)|(d>=thr?8:0);
+      if(c==0||c==15)continue;
+      const T=()=>X(p,q,a,p,q+1,b),Rt=()=>X(p,q+1,b,p+1,q+1,c2),Bt=()=>X(p+1,q,d,p+1,q+1,c2),Lf=()=>X(p,q,a,p+1,q,d);
+      switch(c){
+        case 1:case 14:segs.push([Lf(),T()]);break;
+        case 2:case 13:segs.push([T(),Rt()]);break;
+        case 3:case 12:segs.push([Lf(),Rt()]);break;
+        case 4:case 11:segs.push([Rt(),Bt()]);break;
+        case 6:case 9:segs.push([T(),Bt()]);break;
+        case 7:case 8:segs.push([Lf(),Bt()]);break;
+        default:{const m=(a+b+d+c2)/4>=thr,A=[[Lf(),T()],[Rt(),Bt()]],B=[[T(),Rt()],[Lf(),Bt()]];
+          segs.push(...((c==5)==m?B:A))}
+      }
+    }
+    if(segs.length<30000||essai==2)return segs;
+    thr+=8;   // trop de contours (ex. vue « Habitat ») : on ne garde que le meilleur
+  }
+  return[];
 }
 function paintHeatRects(sc){
   if(!heatGeom)return;
@@ -410,16 +484,13 @@ function paintHeat(sc){
   if(!heatGeom)return;
   const F=st.F;
   if(!F){paintHeatRects(sc);return}
-  const{W,H,dLat,dLon,la0,lo0,lon0,lon1,my0,my1}=heatGeom,{G,w,h,gain}=F,LUT=lut();
+  const{W,H,lon0,lon1,my0,my1}=heatGeom,gain=F.gain,LUT=lut();
   const cv=document.createElement("canvas");cv.width=W;cv.height=H;
   const g=cv.getContext("2d"),im=g.createImageData(W,H),d=im.data;
   for(let y=0;y<H;y++){
     const my=my1-(y+.5)/H*(my1-my0),lat=(2*Math.atan(Math.exp(my))-Math.PI/2)*180/Math.PI;
-    const fi=(lat-la0)/dLat+2,i0=Math.floor(fi);if(i0<0||i0>=h-1)continue;const a=fi-i0;
     for(let x=0;x<W;x++){
-      const fj=((lon0+(x+.5)/W*(lon1-lon0))-lo0)/dLon+2,j0=Math.floor(fj);if(j0<0||j0>=w-1)continue;
-      const b=fj-j0,k=i0*w+j0;
-      const v=(G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b)*gain;
+      const v=fieldAt(F,lat,lon0+(x+.5)/W*(lon1-lon0))*gain;
       if(v<22)continue;
       const L=Math.min(100,Math.round(v))*4,p=(y*W+x)*4;
       d[p]=LUT[L];d[p+1]=LUT[L+1];d[p+2]=LUT[L+2];d[p+3]=LUT[L+3];
@@ -428,11 +499,52 @@ function paintHeat(sc){
   g.putImageData(im,0,0);
   heatOverlay.setUrl(cv.toDataURL("image/png"));
 }
+// ---------- Nuage de points : la densité et la taille des points suivent le score ----------
+// Réseau régulier en pixels « monde » (stable quand on déplace la carte), léger décalage aléatoire,
+// un point est tracé avec une probabilité qui croît avec le score. Recalculé à chaque déplacement/zoom.
+let dotsCanvas=null;
+const DOTC=[...Array(101)].map((_,v)=>gC(v));
+function hash3(a,b,c){let h=Math.imul(a|0,374761393)+Math.imul(b|0,668265263)+Math.imul(c|0,2246822519)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
+function initDots(){
+  map.createPane("dots");const pn=map.getPane("dots");pn.style.zIndex=395;pn.style.pointerEvents="none";
+  dotsCanvas=L.DomUtil.create("canvas","",pn);dotsCanvas.style.position="absolute";
+  map.on("moveend zoomend resize",drawDots);
+  map.on("zoomstart",()=>{dotsCanvas.style.opacity=0});
+}
+function drawDots(){
+  const c=dotsCanvas;if(!c||!map)return;
+  const F=st.F,on=st.mode=="dots"&&F;
+  if(!on){c.width=1;c.height=1;return}
+  const sz=map.getSize(),padx=Math.round(sz.x*.25),pady=Math.round(sz.y*.25),dpr=window.devicePixelRatio||1;
+  const wpx=sz.x+2*padx,hpx=sz.y+2*pady;
+  c.width=wpx*dpr;c.height=hpx*dpr;c.style.width=wpx+"px";c.style.height=hpx+"px";c.style.opacity=1;
+  const g=c.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);
+  const zoom=map.getZoom(),pb=map.getPixelBounds(),org=map.getPixelOrigin();
+  const wx0=pb.min.x-padx,wy0=pb.min.y-pady;
+  L.DomUtil.setPosition(c,L.point(wx0-org.x,wy0-org.y));
+  const size=256*Math.pow(2,zoom),S=6,gain=F.gain;
+  const a0=Math.floor(wx0/S),a1=Math.ceil((wx0+wpx)/S),b0=Math.floor(wy0/S),b1=Math.ceil((wy0+hpx)/S);
+  g.globalAlpha=.95;
+  for(let b=b0;b<=b1;b++)for(let a=a0;a<=a1;a++){
+    const wx=(a+.5+(hash3(a,b,1)-.5)*.8)*S,wy=(b+.5+(hash3(a,b,2)-.5)*.8)*S;
+    const lon=wx/size*360-180,lat=180/Math.PI*Math.atan(Math.sinh(Math.PI-2*Math.PI*wy/size));
+    const v=Math.min(100,fieldAt(F,lat,lon)*gain);
+    if(v<20)continue;
+    if(hash3(a,b,3)>Math.min(1,(v-16)/55))continue;
+    g.fillStyle=DOTC[Math.round(v)];
+    g.beginPath();g.arc(wx-wx0,wy-wy0,1.1+1.9*Math.min(1,v/90),0,6.2832);g.fill();
+  }
+}
 // ---------- UI ----------
 function build(){
   Z.forEach((z,i)=>z.i=i);
   $("chips").innerHTML=SP.map((s,i)=>`<button aria-pressed="${i==st.sp}" data-i="${i}">${s.n}</button>`).join("");
   $("chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.sp=+b.dataset.i;render()};
+  $("mode").onchange=e=>{st.mode=e.target.value;render()};
+  $("gpsgo").onclick=()=>gpsFromInput();
+  $("gps").onkeydown=e=>{if(e.key=="Enter")gpsFromInput()};
+  $("gpsme").onclick=()=>{if(!navigator.geolocation){$("gpsmsg").textContent="Géolocalisation indisponible sur cet appareil.";return}
+    navigator.geolocation.getCurrentPosition(p=>setPoint(p.coords.latitude,p.coords.longitude,true),()=>{$("gpsmsg").textContent="Position refusée : saisissez des coordonnées ou touchez la carte."})};
   $("gray").onchange=e=>$("map").classList.toggle("gray",e.target.checked);
   $("map").classList.toggle("gray",$("gray").checked);
   $("views").innerHTML=VIEWS.map(v=>`<button data-v="${v.k}" aria-pressed="${v.k==st.view}">${v.t}</button>`).join("");
@@ -444,7 +556,7 @@ function build(){
   $("geo").onclick=()=>{if(!navigator.geolocation){$("geo").textContent="Indisponible";return}
     navigator.geolocation.getCurrentPosition(p=>{st.home=[p.coords.latitude,p.coords.longitude];st.cityName="votre position";flyHome();render()},()=>{$("geo").textContent="Refusé : choisissez une ville"})};
   [["rain","rain"],["dt","dt"],["rad","rad"]].forEach(([id,k])=>$(id).oninput=e=>{st[k]=+e.target.value;render()});
-  $("near").onclick=e=>{const l=e.target.closest("li");if(l&&l.dataset.i!=null){st.sel=+l.dataset.i;const z=Z[st.sel];map.flyTo([z.lat,z.lon],9,{duration:.8});render()}};
+  $("near").onclick=e=>{const l=e.target.closest("li");if(l&&l.dataset.i!=null){const z=Z[+l.dataset.i];setPoint(z.lat,z.lon,true)}};
 }
 function flyHome(){
   const R=+$("rad").value;
@@ -464,13 +576,15 @@ function render(){
   const live=!!st.live;
   $("manual").style.display=live?"none":"";
   $("status").className="badge"+(live?" live":"");
-  $("status").textContent=live?(st.off>15?"⚠ Données du "+st.dataDate+" (anciennes) : lancez une mise à jour":"Météo réelle (Open-Meteo), grille de "+Z.length+" mailles"):"Météo simulée : normales de saison, ajustez les curseurs";
+  $("status").textContent=live?(st.off>st.past+1?"⚠ Données du "+st.dataDate+" (anciennes) : lancez une mise à jour":"Météo réelle (Open-Meteo), grille de "+Z.length+" mailles"):"Météo simulée : normales de saison, ajustez les curseurs";
   $("fetched").style.display=st.fetchedAt?"":"none";
   if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
-  // chaleur
+  // champ de score : fin (forêt à 1,4 km) si disponible, sinon grossier
   const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
-  st.F=buildField(sc);
-  paintHeat(sc);
+  st.F=(st.live&&FINE)?buildFineField(sc,sp):buildField(sc);
+  const dots=st.mode=="dots"&&!!st.F;
+  if(dots){if(heatOverlay)heatOverlay.setOpacity(0)}else{if(heatOverlay)heatOverlay.setOpacity(1);paintHeat(sc)}
+  drawDots();
   if(topLayer){topLayer.remove();topLayer=null}
   const segs=outlineSegs(st.F);
   if(segs.length){
@@ -479,12 +593,7 @@ function render(){
       L.polyline(segs,{color:"#4a148c",weight:2.4,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
     ]).addTo(map);
   }
-  // sélection
-  if(selMarker){selMarker.remove();selMarker=null}
-  const zsel=st.sel!=null?Z[st.sel]:null;
-  if(zsel){
-    selMarker=L.marker([zsel.lat,zsel.lon],{interactive:false,icon:L.divIcon({className:"",html:`<div class="selpin" style="width:38px;height:38px"><div class="ring"></div><div class="dot"></div></div>`,iconSize:[38,38],iconAnchor:[19,19]})}).addTo(map);
-  }
+  renderPointMarker();
   // chez moi + rayon
   const R=+$("rad").value;
   if(homeMarker)homeMarker.remove();
@@ -499,17 +608,96 @@ function render(){
   let msg="";
   if(!l.length){l=n.slice(0,3);msg=`<div class="note">Aucune zone suivie dans ${R} km autour de ${st.cityName}. Les 3 plus proches :</div>`}
   $("near").innerHTML=(msg?`<li style="cursor:default;border:0">${msg}</li>`:"")+l.map(o=>`<li class="z" data-i="${o.z.i}"><span>${o.z.n}<br><span class="sub">${Math.round(o.k)} km · ${o.z.alt} m</span></span><b style="color:${col(o.r.sc)}">${o.r.sc}</b></li>`).join("");
-  // détail
-  if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte pour voir le détail de la zone la plus proche : sol, forêt, altitude, météo et saison.</p>`;return}
+  renderDetail();
+}
+// ---------- Point GPS précis ----------
+function renderPointMarker(){
+  if(selMarker){selMarker.remove();selMarker=null}
+  if(st.pt)selMarker=L.marker([st.pt.lat,st.pt.lon],{interactive:false,icon:L.divIcon({className:"",html:`<div class="selpin" style="width:38px;height:38px"><div class="ring"></div><div class="dot"></div></div>`,iconSize:[38,38],iconAnchor:[19,19]})}).addTo(map);
+}
+function gpsFromInput(){
+  const nums=($("gps").value||"").match(/-?\d+(?:[.,]\d+)?/g);
+  if(!nums||nums.length!=2){$("gpsmsg").textContent="Format attendu : latitude, longitude (ex. 43.6612, 1.1305).";return}
+  const lat=parseFloat(nums[0].replace(",",".")),lon=parseFloat(nums[1].replace(",","."));
+  if(!(lat>=41&&lat<=51.5&&lon>=-5.5&&lon<=10)){$("gpsmsg").textContent="Ces coordonnées sont hors de la France métropolitaine.";return}
+  setPoint(lat,lon,true);
+}
+function setPoint(lat,lon,fly){
+  if(!(lat>=41&&lat<=51.5&&lon>=-5.5&&lon<=10))return;
+  st.pt={lat,lon};st.ptZ=makeZone(lat,lon);
+  try{history.replaceState(null,"","#p="+lat.toFixed(5)+","+lon.toFixed(5))}catch(e){}
+  $("gps").value=lat.toFixed(5)+", "+lon.toFixed(5);
+  $("gpsmsg").textContent="Point choisi. Les données exactes arrivent en quelques secondes.";
+  if(fly&&map)map.flyTo([lat,lon],Math.max(map.getZoom(),9),{duration:.8});
+  renderPointMarker();renderDetail();refinePoint(st.ptZ);
+}
+// Zone « virtuelle » au point : météo interpolée entre les 4 mailles voisines, terrain de la maille ou du bloc forestier.
+function makeZone(lat,lon){
+  const base={i:-1,lat,lon,n:"Point "+lat.toFixed(4)+"°N, "+lon.toFixed(4)+"°E",src:{w:"normales de saison (simulée)",a:"de la maille",f:"de la maille (17 km)",s:"de la maille (17 km)"}};
+  if(!st.live||!heatGeom||!st.cellMap){
+    let b=null,bk=1e9;Z.forEach(z=>{const k=km(lat,lon,z.lat,z.lon);if(k<bk){bk=k;b=z}});
+    return Object.assign({},b,base,{near:b?b.n:""});
+  }
+  const{la0,lo0,dLat,dLon}=heatGeom,fi=(lat-la0)/dLat,fj=(lon-lo0)/dLon,i0=Math.floor(fi),j0=Math.floor(fj),a=fi-i0,b=fj-j0;
+  let ws=[[i0,j0,(1-a)*(1-b)],[i0,j0+1,(1-a)*b],[i0+1,j0,a*(1-b)],[i0+1,j0+1,a*b]].map(([i,j,w])=>[st.cellMap.get(i+","+j),w]).filter(x=>x[0]&&x[1]>0);
+  if(!ws.length){let bz=null,bk=1e9;Z.forEach(z=>{const k=km(lat,lon,z.lat,z.lon);if(k<bk){bk=k;bz=z}});ws=[[bz,1]]}
+  const tot=ws.reduce((s,x)=>s+x[1],0),nz=[...ws].sort((x,y)=>y[1]-x[1])[0][0],N=st.live[nz.i].p.length;
+  const mix=key=>{if(!st.live[nz.i][key])return null;const o=new Array(N).fill(0);ws.forEach(([z,w])=>{const arr=st.live[z.i][key];if(arr)for(let k=0;k<N;k++)o[k]+=(arr[k]||0)*w/tot});return o};
+  const z=Object.assign({},nz,base,{near:nz.n,alt:Math.round(ws.reduce((s,x)=>s+x[0].alt*x[1],0)/tot),
+    L:{p:mix("p"),t:mix("t"),tn:mix("tn"),sm:mix("sm"),et:mix("et"),off:st.off}});
+  z.src={w:"interpolée entre "+ws.length+" mailles de 17 km",a:"interpolée (17 km)",f:"de la maille (17 km)",s:"de la maille (17 km)"};
+  if(FINE){
+    const{K,FW,FH,cls}=FINE,fy=Math.floor((lat-(la0-dLat/2))/(dLat/K)),fx=Math.floor((lon-(lo0-dLon/2))/(dLon/K));
+    if(fy>=0&&fx>=0&&fy<FH&&fx<FW){const c=cls[fy*FW+fx];z.nf=c==0;z.urb=false;if(c)z.fo=c==1?"f":c==2?"r":"m";z.src.f="bloc de 1,4 km (IGN) : "+(c==0?"pas de forêt":"forêt")}
+  }
+  return z;
+}
+// Données exactes au point, depuis le navigateur (IGN, Open-Meteo, SoilGrids acceptent les appels depuis une page web).
+async function refinePoint(z){
+  const tok=++st.ptTok,ok=()=>tok===st.ptTok&&st.ptZ===z;
+  const J=async(url,ms)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(t)}};
+  const f=a=>(a||[]).map(v=>typeof v=="number"?v:0);
+  const tasks=[
+    (async()=>{try{
+      const o=await J("https://api.open-meteo.com/v1/forecast?latitude="+z.lat+"&longitude="+z.lon+"&daily=precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_moisture_0_to_10cm_mean,et0_fao_evapotranspiration&past_days="+st.past+"&forecast_days=8&timezone=Europe%2FParis",15000);
+      if(!ok())return;const d=o.daily;
+      z.L={p:f(d.precipitation_sum),t:f(d.temperature_2m_mean),tn:f(d.temperature_2m_min),sm:f(d.soil_moisture_0_to_10cm_mean),et:f(d.et0_fao_evapotranspiration),off:st.past};
+      if(typeof o.elevation=="number")z.alt=Math.round(o.elevation);
+      z.src.w="exacte au point (Open-Meteo)";z.src.a="exacte au point";renderDetail();
+    }catch(e){}})(),
+    (async()=>{try{
+      const dd=.0008,o=await J("https://data.geopf.fr/wms-v/ows?"+new URLSearchParams({SERVICE:"WMS",VERSION:"1.3.0",REQUEST:"GetFeatureInfo",LAYERS:"LANDCOVER.FORESTINVENTORY.V2",QUERY_LAYERS:"LANDCOVER.FORESTINVENTORY.V2",CRS:"EPSG:4326",BBOX:[z.lat-dd,z.lon-dd,z.lat+dd,z.lon+dd].join(","),WIDTH:10,HEIGHT:10,I:5,J:5,INFO_FORMAT:"application/json"}),15000);
+      if(!ok())return;
+      const ft=(o.features||[])[0];
+      if(!ft){z.nf=true;z.urb=false;z.src.f="IGN au point : pas de forêt";renderDetail();return}
+      const pr=ft.properties||{},txt=((pr.tfv_g11||"")+" "+(pr.tfv||"")+" "+(pr.essence||"")).toLowerCase();
+      z.nf=false;z.urb=false;z.fo=txt.includes("mixte")?"m":txt.includes("feuillus")?"f":/conif|pin|sapin|epicea|épicéa/.test(txt)?"r":"m";
+      z.src.f="IGN au point : "+(pr.tfv||pr.essence||"forêt");renderDetail();
+    }catch(e){}})(),
+    (async()=>{try{
+      const o=await J("https://rest.isric.org/soilgrids/v2.0/properties/query?lon="+z.lon+"&lat="+z.lat+"&property=phh2o&depth=0-5cm&value=mean",9000);
+      if(!ok())return;
+      const v=o.properties.layers[0].depths[0].values.mean;
+      if(typeof v=="number"){z.ph=Math.round(v)/10;z.so=z.ph<5.5?"a":z.ph>6.8?"c":"n";z.src.s="SoilGrids au point";renderDetail()}
+    }catch(e){}})()
+  ];
+  await Promise.all(tasks);
+  if(ok())$("gpsmsg").textContent="Données du point : "+[z.src.w.includes("exacte")?"météo":null,z.src.f.includes("IGN au point")?"forêt":null,z.src.s.includes("au point")?"sol":null].filter(Boolean).join(", ")+" lus sur place ; le reste vient des mailles voisines.";
+}
+function renderDetail(){
+  const sp=SP[st.sp],d=st.day,zsel=st.ptZ;
+  if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte ou saisissez des coordonnées GPS : on calcule les conditions exactement à cet endroit (météo, forêt, sol, altitude).</p>`;return}
   const r=score(sp,zsel,d),rv=viewScore(sp,zsel);
   const arr=[...Array(8)].map((_,k)=>score(sp,zsel,k).sc);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
   const top=SP.map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
-  $("detail").innerHTML=`<h2>${zsel.n}</h2><div class="sub" style="margin-bottom:6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  const src=zsel.src||{};
+  $("detail").innerHTML=`<h2>${zsel.n}</h2>${zsel.near?`<div class="sub">près de ${zsel.near}</div>`:""}<div class="sub" style="margin:4px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
   <div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>
-  <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm · température moyenne : ${r.w.T.toFixed(1)} °C</div>
+  <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
+  <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p>`;
 }
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------
@@ -537,11 +725,25 @@ async function loadLive(){
       return{i,n:nom,lat:c[0],lon:c[1],alt:c[2],so,fo,mi:best.mi,nf:noForest,urb,ph:tr.ph};
     });
     st.live=j.cells.map(c=>({p:c[3],t:c[4],tn:c[5],sm:c[6],et:c[7]}));
+    st.past=Math.max(1,j.cells[0][3].length-8);
     if(j.generated){const g=new Date(j.generated);st.fetchedAt=g.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+" à "+g.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
-    st.sel=null;
-    buildHeat();
+    st.pt=null;st.ptZ=null;
+    buildHeat();indexCells();
     render();
+    await loadForets();
+    applyHash();
   }catch(e){}
+}
+async function loadForets(){
+  try{
+    const r=await fetch("forets.json",{cache:"no-cache"});if(!r.ok)return;
+    const j=await r.json();if(!j.cells||!j.K)return;
+    st.forets=j;buildFineGrid();if(FINE)render();
+  }catch(e){}
+}
+function applyHash(){
+  const m=/#p=(-?[\d.]+),(-?[\d.]+)/.exec(location.hash||"");
+  if(m)setPoint(parseFloat(m[1]),parseFloat(m[2]),true);
 }
 if(typeof L=="undefined"){
   $("map").innerHTML='<p style="padding:20px;color:var(--mute)">La bibliothèque de carte (Leaflet) n\'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.</p>';

@@ -101,6 +101,23 @@ routes, noms de lieux et relief restent lisibles à travers. Les contours sont c
 Voir `research/sources-recoupees-oct2026.md` (études, niveau de preuve par espèce). Pour croiser avec des
 observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (saisons et altitudes par espèce).
 
+## Rendu, point GPS, forêt fine (oct. 2026)
+
+- **Nuage de points** (rendu par défaut) : la densité et la taille des points suivent le score ; case « Aplat de
+  couleur » pour l'ancien rendu. Le contour violet cerne toujours le haut du panier de la vue affichée.
+- **Point GPS précis** : toucher la carte, ou saisir « 43.6612, 1.1305 ». La page interroge directement, depuis le
+  navigateur, Open-Meteo (météo et altitude exactes), l'IGN (forêt au point) et SoilGrids (pH du sol). Ces trois
+  services acceptent les appels depuis une page web (CORS vérifié le 13/10/2026). L'adresse du point est
+  partageable (`#p=lat,lon`). Si un service ne répond pas, on garde la valeur de la maille et la page le dit.
+- **40 jours de météo passée** (`PAST_DAYS = 40` dans build_data.py) : le cèpe (26 j) et le lactaire (35 j)
+  tiennent compte de la pluie cumulée sur une fenêtre longue.
+- **Îlots forestiers** : `build_forets.py` demande à l'IGN une image de la forêt par maille et la résume en blocs
+  d'environ 1,4 km (`forets.json`). Les petits massifs au milieu de zones bâties ou cultivées apparaissent donc
+  quand les conditions sont réunies. À lancer une fois (20 à 40 min, reprend où il s'est arrêté) :
+  `python build_forets.py`, ou depuis GitHub : Actions > « Forêt à fine échelle » > Run workflow.
+  L'essence (feuillus/résineux) est déduite de la couleur de la légende IGN : approximative ; la présence de forêt
+  est fiable. Sans `forets.json`, la carte fonctionne comme avant (mailles de 17 km).
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le
