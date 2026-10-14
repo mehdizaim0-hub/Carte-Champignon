@@ -13,6 +13,6 @@ jobs:
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
           git add forets.json
-          git commit -m "forêt fine IGN" || echo "rien"
+          git commit -m "forêt fine IGN (480 px)" || echo "rien"
           git pull --rebase
           git push

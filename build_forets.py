@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Forêt à fine échelle (IGN BD Forêt v2) : petits massifs et îlots forestiers.
 
-Pour chaque maille de la grille, demande à l'IGN une image de la couche forêt (96x96 px) et la résume en
-12 x 12 blocs d'environ 1,4 km. Résultat : forets.json  (clé "lat,lon" -> 144 caractères, du nord au sud,
+Pour chaque maille de la grille, demande à l'IGN une image de la couche forêt (480x480 px, environ 36 m par pixel)
+et la résume en 12 x 12 blocs d'environ 1,4 km. (À 96 px l'IGN gonfle le boisement des paysages morcelés : 51 %
+mesuré dans le Gers contre 29 % à 480 px et 26 % à 720 px.) Résultat : forets.json  (clé "lat,lon" -> 144 caractères, du nord au sud,
 d'ouest en est) :  . pas de forêt | f/F feuillus | r/R résineux | m/M autre ou mixte
 (minuscule = 25-60 % du bloc boisé, majuscule = plus de 60 %).
 
 Lancer :  python build_forets.py          (reprend là où il s'est arrêté)
           python build_forets.py --force  (tout refaire)
-Durée : 20 à 40 minutes. Aucune dépendance. Le type (feuillus/résineux) est déduit de la couleur de la légende
+Durée : 15 à 30 minutes (3 requêtes en parallèle). Aucune dépendance. Le type (feuillus/résineux) est déduit de la couleur de la légende
 IGN : c'est une approximation, la présence de forêt est fiable, l'essence l'est moins.
 """
 import colorsys, json, os, struct, sys, time, urllib.parse, urllib.request, zlib
+from concurrent.futures import ThreadPoolExecutor
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -20,7 +22,8 @@ except Exception:
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA, OUT = os.path.join(HERE, "data.json"), os.path.join(HERE, "forets.json")
 IGN, LAYER = "https://data.geopf.fr/wms-v/ows", "LANDCOVER.FORESTINVENTORY.V2"
-K, PX = 12, 8            # blocs par maille, pixels par bloc
+K, PX = 12, 40           # blocs par maille, pixels par bloc (image de 480 px)
+WORKERS = 3
 MIN_FOREST = 0.25        # part minimale de pixels boisés pour qu'un bloc compte comme forêt
 STRONG = 0.60
 
@@ -65,16 +68,28 @@ def png_decode(b):
     return w, h, out
 
 
+_cache = {}
+
+
 def classify(px):
-    """0 pas de forêt, 1 feuillus (verts), 2 résineux (cyan, bleu, violet), 3 autre/mixte (rouge, magenta)."""
+    """0 pas de forêt, 1 feuillus, 2 résineux, 3 mélange/autre. D'après la légende de la couche IGN :
+    verts = feuillus (chênes, hêtre, châtaignier, mélange de feuillus), bleus/violets/cyan = conifères (pins, sapin,
+    épicéa, mélèze, douglas), orange/rouge = mélange feuillus-conifères. Ignorés : jaunes/beiges (peupleraie, lande,
+    formation herbacée, coupe), gris et pastels (forêt ouverte, faible couvert)."""
     r, g, b, a = px
     if a < 128: return 0
-    h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255); h *= 360
-    if 30 <= h <= 75 and s > .15: return 0          # jaunes/beiges : landes, formations herbacées
-    if s < .15: return 0                            # gris/blanc : fond ou légende
-    if 80 <= h < 165: return 1
-    if 165 <= h < 330: return 2
-    return 3
+    key = (r, g, b)
+    c = _cache.get(key)
+    if c is None:
+        h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255); h *= 360
+        if s < .35: c = 0
+        elif 25 <= h < 66: c = 0
+        elif 10 <= h < 25 and v < .7: c = 1          # robinier (brun)
+        elif 66 <= h < 165: c = 1
+        elif 165 <= h < 330: c = 2
+        else: c = 3
+        _cache[key] = c
+    return c
 
 
 def summarize(w, h, px):
@@ -123,22 +138,33 @@ def main():
     dlat, dlon = steps([p[0] for p in pts]), steps([p[1] for p in pts])
     res = {}
     if os.path.exists(OUT) and not force:
-        res = json.load(open(OUT, encoding="utf-8")).get("cells", {})
-        print("reprise : %d mailles déjà faites" % len(res))
+        old = json.load(open(OUT, encoding="utf-8"))
+        if old.get("px") == PX:
+            res = old.get("cells", {})
+            print("reprise : %d mailles déjà faites" % len(res))
+        else:
+            print("forets.json existant à une autre résolution : on repart de zéro")
     todo = [p for p in pts if "%s,%s" % p not in res]
     print("%d mailles à traiter (pas %.3f x %.3f)" % (len(todo), dlat, dlon))
     t0 = time.time()
-    for n, (lat, lon) in enumerate(todo, 1):
-        s = fetch_cell(lat, lon, dlat, dlon)
-        if s is not None: res["%s,%s" % (lat, lon)] = s
-        if n % 50 == 0 or n == len(todo):
-            json.dump({"K": K, "cells": res}, open(OUT, "w", encoding="utf-8"), separators=(",", ":"))
-            print("  %d/%d (sauvegarde)" % (n, len(todo)), flush=True)
-        if budget and time.time() - t0 > budget:
-            json.dump({"K": K, "cells": res}, open(OUT, "w", encoding="utf-8"), separators=(",", ":"))
-            print("temps imparti atteint : relancer pour continuer (%d/%d)" % (n, len(todo))); return
-        time.sleep(0.2)
-    json.dump({"K": K, "cells": res}, open(OUT, "w", encoding="utf-8"), separators=(",", ":"))
+    def save():
+        tmp = OUT + ".tmp"
+        json.dump({"K": K, "px": PX, "cells": res}, open(tmp, "w", encoding="utf-8"), separators=(",", ":"))
+        os.replace(tmp, OUT)
+    def work(p):
+        time.sleep(0.1)
+        return p, fetch_cell(p[0], p[1], dlat, dlon)
+    done = 0
+    for i in range(0, len(todo), 60):                     # lots de 60 : sauvegarde et contrôle du temps entre les lots
+        with ThreadPoolExecutor(WORKERS) as ex:
+            for (lat, lon), s in ex.map(work, todo[i:i + 60]):
+                if s is not None: res["%s,%s" % (lat, lon)] = s
+                done += 1
+        save()
+        print("  %d/%d (sauvegarde, %.0f s)" % (done, len(todo), time.time() - t0), flush=True)
+        if budget and time.time() - t0 > budget and done < len(todo):
+            print("temps imparti atteint : relancer pour continuer (%d/%d)" % (done, len(todo))); return
+    save()
     nf = sum(1 for s in res.values() if s.strip("."))
     print("OK : forets.json (%d mailles, %d avec forêt)" % (len(res), nf))
 
