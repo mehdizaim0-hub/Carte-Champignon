@@ -5,14 +5,14 @@ permissions:
 jobs:
   go:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/grab.py 2>&1 | tee tools/grab_out.txt
       - run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
-          git add tools/*.png tools/grab_out.txt
-          git commit -m "captures IGN" || true
+          git add tools/grab_out.txt
+          git commit -m "mesure résolution IGN" || true
           git pull --rebase
           git push
