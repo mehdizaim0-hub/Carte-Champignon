@@ -1,0 +1,14 @@
+=== WFS : types de routes
+860 types ; routes : ['BDCARTO_ETAT-MAJOR.NIVEAU4:b_1_troncon_de_route', 'BDCARTO_ETAT-MAJOR.NIVEAU3:b_1_troncon_de_route', 'BDCARTO_V5:route_numerotee_ou_nommee', 'BDCARTO_V5:troncon_de_route', 'BDTOPO_V3:route_numerotee_ou_nommee', 'BDTOPO_V3:troncon_de_route', 'BDTOPO_V3_DIFF:route_numerotee_ou_nommee', 'BDTOPO_V3_DIFF:troncon_de_route', 'ZZZ_INAO_LaCiotat:troncon_de_route', 'test_lc_bdtopo_laCiotat:troncon_de_route', 'test_CD_La_Ciotat:troncon_de_route', 'test_nl_bdtopo_la_ciotat:nl_test_troncon_de_route']
+=== échantillon troncon_de_route autour de Toulouse
+0 tronçons
+importance: []
+nature: []
+ERREUR GetFeature list index out of range
+=== nombre de tronçons par importance (France)
+importance 1 68523
+importance 2 545101
+importance 3 1102268
+=== CORINE Land Cover 2018 : image + légende
+clc_toulouse.png ok
+ERREUR CLC HTTP Error 400: Bad Request
