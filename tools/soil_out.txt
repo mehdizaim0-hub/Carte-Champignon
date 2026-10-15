@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/runner/work/Carte-Champignon/Carte-Champignon/tools/soil_test.py", line 6, in <module>
+    import numpy as np, rasterio
+ModuleNotFoundError: No module named 'numpy'
+=== lecture raster : rasterio + VRT SoilGrids
