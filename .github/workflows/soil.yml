@@ -8,7 +8,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/soil_test.py 2>&1 | tee tools/soil_out.txt
+      - run: python3 -m pip install --break-system-packages rasterio numpy 2>&1 | tail -4 | tee tools/soil_out.txt
+      - run: python3 tools/soil_test.py 2>&1 | tee -a tools/soil_out.txt
       - run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
