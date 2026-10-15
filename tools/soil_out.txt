@@ -1,0 +1,10 @@
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 144.2 MB/s eta 0:00:00
+Downloading affine-3.0.1-py3-none-any.whl (10 kB)
+Installing collected packages: numpy, affine, rasterio
+Successfully installed affine-3.0.1 numpy-2.5.4 rasterio-1.5.2
+=== lecture raster : rasterio + VRT SoilGrids
+rasterio 1.5.2
+clay crs PROJCS["Interrupted_Goode_Homolosine",GE taille 159246 x 58034 | ouverture 15.6s
+  lecture 1°x1° (80x80) : 3.5s | valeurs min/médiane/max : -32768 282 353 | nodata -32768.0
+phh2o crs PROJCS["Interrupted_Goode_Homolosine",GE taille 159246 x 58034 | ouverture 9.0s
+  lecture 1°x1° (80x80) : 4.1s | valeurs min/médiane/max : -32768 68 76 | nodata -32768.0
