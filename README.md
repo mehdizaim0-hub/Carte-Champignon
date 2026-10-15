@@ -131,6 +131,14 @@ observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (sa
   Lancement : Actions > « Masques agglomérations et routes » > Run workflow (15 à 30 min).
 - **Rayon de recherche** : 100 km maximum.
 
+## Sol fin (oct. 2026)
+
+`build_sol.py` lit les cartes SoilGrids (pH, sable, argile, carbone organique) par blocs de 2,8 km et écrit `sol.json`
+(prérequis : `pip install rasterio numpy` ; environ 1 à 2 minutes depuis GitHub Actions). Le modèle remplace les trois
+catégories (acide, neutre, calcaire) par un pH continu, ajoute une pénalité d'engorgement (argile) et de sol séchant (sable)
+et, pour la morille et la coulemelle, un bonus d'humus. Détail et niveaux de preuve : `research/sources-recoupees-oct2026.md`.
+Lancement : Actions > « Sol SoilGrids » > Run workflow. Sans `sol.json`, la carte garde les trois catégories.
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le

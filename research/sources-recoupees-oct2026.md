@@ -61,3 +61,31 @@ profil mensuel par espèce, à lancer en local (l'API GBIF n'est pas joignable d
 - Un bloc compte comme forêt s'il est boisé à 25 % au moins (« bois épars », poids 0,4 dans le score) ou à 60 %
   au moins (« massif », poids 1).
 - Limite : l'essence est déduite de la couleur de la légende, la présence de forêt est la donnée fiable.
+
+## Sol : ce qui est modélisé et sur quelles sources (oct. 2026)
+Données : SoilGrids 2.0 (ISRIC, CC BY 4.0), cartes de 250 m moyennées par blocs de 2,8 km (`build_sol.py`) : pH de l'eau
+0-5 cm, sable et argile 5-15 cm, carbone organique 0-5 cm. Le drainage n'est pas une donnée : il est déduit de la
+texture seule (argile > 35 % : engorgement ; sable > 80 % : sol séchant) ; la pente et la nappe ne sont pas prises en compte.
+
+| Espèce | pH optimal | Texture / drainage | Humus | Niveau de preuve |
+|---|---|---|---|---|
+| Cèpe | 4,2 à 6,0 | argile pénalisée ; sable peu | non | pH étayé ; texture partielle |
+| Girolle | 4,0 à 5,6 | argile pénalisée | non | pH étayé ; texture partielle |
+| Morille | 6,5 à 8,0 | argile et sable pénalisés | favorable | partiel |
+| Lactaire délicieux | 4,6 à 6,8 | sable > 80 % nettement pénalisé | non | étayé |
+| Autres espèces | estimé | estimé | coulemelle : favorable (estimé) | estimé |
+
+Sources :
+- Cèpe, pinèdes de pin sylvestre (Soria, Espagne) : pH fortement acide (4 à 5), texture sablo-limoneuse à sableuse, sols pauvres en
+  éléments nutritifs ; étude sur les cistes : sols acides, texture limoneuse. Liste de Bohus (1973, Hongrie) : cèpe sur sols de pH 4,5 à 5.
+  https://www.researchgate.net/publication/51052914 ; https://library.hungaricana.hu/en/view/ORSZ_TTUD_Annales_1973_065/?pg=75
+- Lactaire, Pinus pinaster (Espagne centrale) : acidité du sol favorable, sols sableux et peuplements âgés défavorables.
+  https://www.researchgate.net/publication/304246554
+- Girolle : sols pauvres, acides et sableux (Naturalis) ; préfère les sols acides pauvres en azote, exceptionnellement neutres riches
+  en azote (écologie en taïga, échelles d'Ellenberg) ; chanterelle dorée du Pacifique (autre espèce) : sols bien drainés, limono-sableux à sablo-limoneux.
+  https://mushrooms.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=100580 ; https://journals.rcsi.science/2309-4370/article/view/41943
+- Morille : sites naturels de l'Himalaya, sols sablo-limoneux humifères très aérés, pH 6,5 à 7,0 ; croissance du mycélium entre pH 6,5 et 8
+  selon l'espèce. https://krishi.icar.gov.in/jspui/handle/123456789/21515 ; https://microbiologyjournal.org/download/79424
+
+Limites : ces études sont ponctuelles, souvent hors de France, et ne donnent pas de courbes de réponse. Les pondérations (plancher de
+pH de 0,1 à 0,5 ; pénalité d'argile jusqu'à 30 % ; pénalité de sable jusqu'à 35 %) sont des choix de modélisation, pas des résultats publiés.
