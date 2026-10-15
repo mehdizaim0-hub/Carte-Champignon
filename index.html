@@ -52,14 +52,19 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
 .bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(40,100%,55%,.45) 28%,hsl(27,100%,50%) 62%,hsl(14,95%,38%) 100%)}
 .dim{opacity:.4;pointer-events:none}
-.spc{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:12px;margin:12px 0 4px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-.spc .ph{margin:0}.spc img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:var(--line)}
-.spc figcaption{font-size:10.5px;color:var(--mute);margin-top:4px;line-height:1.35}.spc figcaption a{color:inherit}
-.spc h3{margin:0;font-size:16px;font-weight:800}.spc .lat{font-style:italic;color:var(--mute);font-size:13px;margin-bottom:6px}
-.spc dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px;line-height:1.4}
-.spc dt{color:var(--mute);white-space:nowrap}.spc dd{margin:0}
-.spc .warn{margin:8px 0 0;font-size:11.5px;color:var(--mute);border-top:1px dashed var(--line);padding-top:6px}
-@media(max-width:560px){.spc{grid-template-columns:1fr}.spc img{max-height:200px}}
+.spc{container-type:inline-size;margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.spc .ph{margin:0;position:relative}
+.spc img{display:block;width:100%;height:auto;aspect-ratio:16/10;max-height:240px;object-fit:cover;background:var(--line)}
+.spc figcaption{font-size:11px;color:var(--mute);padding:6px 14px 0;line-height:1.35}.spc figcaption a{color:inherit}
+.spc .spi{padding:10px 14px 14px}
+.spc h3{margin:0;font-size:19px;font-weight:800;line-height:1.2}
+.spc .lat{font-style:italic;color:var(--mute);font-size:13.5px;margin:2px 0 10px}
+.spc dl{margin:0;display:grid;grid-template-columns:minmax(78px,92px) 1fr;font-size:13.5px;line-height:1.5}
+.spc dt{color:var(--mute);padding:7px 10px 7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.spc dd{margin:0;padding:7px 0;border-top:1px solid var(--line)}
+.spc dt:first-of-type,.spc dd:first-of-type{border-top:0}
+.spc .warn{margin:10px 0 0;font-size:12px;color:var(--mute);border-top:1px dashed var(--line);padding-top:8px;line-height:1.45}
+@container (max-width:400px){.spc dl{grid-template-columns:1fr}.spc dt{padding:8px 0 0;border-top:1px solid var(--line);border-bottom:0}.spc dd{padding:1px 0 7px;border-top:0}.spc dt:first-of-type{border-top:0}}
 .verdict{border-radius:10px;padding:10px 12px;margin:2px 0 10px;border:1px solid var(--line);border-left-width:6px}
 .verdict b.lab{font-size:15px}.verdict p{margin:4px 0 0;font-size:12.5px;line-height:1.45}
 .verdict.v4{border-left-color:hsl(14,95%,38%)}.verdict.v3{border-left-color:hsl(27,100%,46%)}.verdict.v2{border-left-color:hsl(40,100%,50%)}.verdict.v1{border-left-color:var(--mute)}.verdict.v0{border-left-color:var(--line);opacity:.95}
@@ -381,6 +386,9 @@ function fieldAt(F,lat,lon){
   const a=fi-i0,b=fj-j0,k=i0*F.w+j0,G=F.G,w=F.w;
   return G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b;
 }
+// Clé de maille identique à celle des scripts Python : un flottant entier s'écrit « 48.0 » côté Python et « 48 » côté JavaScript.
+const nk=v=>Number.isInteger(v)?v.toFixed(1):String(v);
+const ckey=(lat,lon)=>nk(lat)+","+nk(lon);
 // Grille fine des classes de forêt (0 aucune ; 1 feuillus, 2 résineux, 3 autre/mixte ; +3 = bois épars), alignée sur la grille des mailles.
 let FINE=null;
 function indexCells(){
@@ -398,7 +406,7 @@ function buildFineGrid(){
   let have=0;
   Z.forEach(z=>{
     idx[z.ci*nj+z.cj]=z.i;
-    const s=cells[z.lat+","+z.lon];if(s)have++;
+    const s=cells[ckey(z.lat,z.lon)];if(s)have++;
     const cc=z.nf?0:(z.fo=="f"?1:z.fo=="r"?2:3);   // repli : type de la maille entière
     for(let r=0;r<K;r++){const a=K-1-r;for(let b=0;b<K;b++){
       let c=cc;
@@ -408,7 +416,7 @@ function buildFineGrid(){
   // agglomérations : un bloc artificialisé (CORINE) n'est plus une forêt, même si le blocs voisins le sont
   const urb=new Uint8Array(FW*FH);
   if(st.urbain)Z.forEach(z=>{
-    const u=st.urbain.cells[z.lat+","+z.lon];if(!u)return;
+    const u=st.urbain.cells[ckey(z.lat,z.lon)];if(!u)return;
     for(let r=0;r<K;r++){const a=K-1-r;for(let b=0;b<K;b++)if(u[r*K+b]=="#"){const k=(z.ci*K+a)*FW+z.cj*K+b;urb[k]=1;cls[k]=0}}
   });
   FINE={K,FW,FH,ni,nj,cls,idx,have,urb};
@@ -416,18 +424,21 @@ function buildFineGrid(){
 function buildFineField(sc,sp){
   if(!FINE)return null;
   const{K,FW,FH,ni,nj,cls}=FINE,{la0,lo0,dLat,dLon}=heatGeom;
-  const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(ni*nj);
-  sc.forEach(({z,r})=>{Mc[(z.ci+1)*cw+z.cj+1]=r.M!=null?r.M:0;Hc[z.ci*nj+z.cj]=r.Ha||0});
+  const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(cw*(ni+2)),Wc=new Uint8Array(cw*(ni+2));
+  sc.forEach(({z,r})=>{const k=(z.ci+1)*cw+z.cj+1;Mc[k]=r.M!=null?r.M:0;Hc[k]=r.Ha||0;Wc[k]=1});
   const SPARSE=.55;  // un bloc boisé à 25-60 % (lisières, massifs aérés, bocage) pèse 55 % d'un bloc très boisé
   const FP=[Math.pow(.03,.7),Math.pow(sp.fo.f,.7),Math.pow(sp.fo.r,.7),Math.pow(sp.fo.m,.7)];
   FP.push(Math.pow(sp.fo.f*SPARSE,.7),Math.pow(sp.fo.r*SPARSE,.7),Math.pow(sp.fo.m*SPARSE,.7));
   const pad=2,w=FW+2*pad,h=FH+2*pad,A=new Float32Array(w*h),G=new Float32Array(w*h);
   for(let y=0;y<FH;y++){
-    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0,ci=Math.floor(y/K);
+    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0;
     for(let x=0;x<FW;x++){
       const gx=(x+.5)/K-.5,j0=Math.floor(gx),fx=gx-j0,k=(i0+1)*cw+(j0+1);
       const M=Mc[k]*(1-fy)*(1-fx)+Mc[k+1]*(1-fy)*fx+Mc[k+cw]*fy*(1-fx)+Mc[k+cw+1]*fy*fx;   // météo lissée entre mailles
-      const v=100*Hc[ci*nj+Math.floor(x/K)]*FP[cls[y*FW+x]]*M;
+      // habitat (sol, altitude) lissé entre mailles, en ne comptant que les mailles existantes (pas d'effet de bord sur les côtes)
+      const w00=(1-fy)*(1-fx)*Wc[k],w01=(1-fy)*fx*Wc[k+1],w10=fy*(1-fx)*Wc[k+cw],w11=fy*fx*Wc[k+cw+1],wd=w00+w01+w10+w11;
+      const H=wd>0?(Hc[k]*w00+Hc[k+1]*w01+Hc[k+cw]*w10+Hc[k+cw+1]*w11)/wd:0;
+      const v=100*H*FP[cls[y*FW+x]]*M;
       A[(y+pad)*w+x+pad]=v>100?100:v;
     }
   }
@@ -795,7 +806,7 @@ async function loadLive(){
     const REFZ=REF;
     Z=j.cells.map((c,i)=>{
       let best=null,bd=1e9;REFZ.forEach(q=>{const k=km(c[0],c[1],q.lat,q.lon);if(k<bd){bd=k;best=q}});
-      const tr=terrain[c[0]+","+c[1]]||{};
+      const tr=terrain[ckey(c[0],c[1])]||{};
       const so=phToSoil(tr.ph)||best.so;
       const fo=tr.fo||best.fo;
       const noForest=("fo" in tr)&&!tr.fo; // IGN consulté : pas de forêt ici
