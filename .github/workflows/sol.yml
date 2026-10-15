@@ -1,0 +1,19 @@
+name: Sol SoilGrids (manuel)
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  sol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --break-system-packages rasterio numpy
+      - run: python3 build_sol.py
+      - run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add sol.json
+          git commit -m "sol SoilGrids : pH, sable, argile, carbone organique" || echo "rien"
+          git pull --rebase
+          git push
