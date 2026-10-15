@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/runner/work/Carte-Champignon/Carte-Champignon/tools/soil_test.py", line 23, in <module>
+    import numpy as np, rasterio
+ModuleNotFoundError: No module named 'numpy'
+=== REST SoilGrids : une requête multi-propriétés et multi-profondeurs
+OK en 30.7s
+   bdod cg/cm³ d_factor 100 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   cec mmol(c)/kg d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   clay g/kg d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   nitrogen cg/kg d_factor 100 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   phh2o pH*10 d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   sand g/kg d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   silt g/kg d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+   soc dg/kg d_factor 10 [('0-5cm', None), ('5-15cm', None), ('15-30cm', None)]
+=== cadence : 12 appels successifs sur des points différents
+  12 ok, 0 échecs en 234s
+=== lecture raster : rasterio + VRT SoilGrids
