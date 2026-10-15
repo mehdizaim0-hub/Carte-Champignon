@@ -179,15 +179,15 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 // rw/rr : fenêtre longue de pluie (jours) et cumul (mm) pour la pleine intensité : cèpe 26 j (étude de 10 ans en hêtraie), lactaire ~5 semaines.
 // ev : solidité des paramètres (2 = études directes, 1 = partielle, 0 = estimé par prudence).
 const SP=[
-{n:"Cèpe de Bordeaux",det:"le cèpe de Bordeaux",du:"du cèpe de Bordeaux",lat:"Boletus edulis",wiki:"Boletus_edulis",hote:"Hêtre, chênes, châtaignier, épicéas, pins",sol:"Acide à neutre, bien drainé",saison:"Août à novembre, pic en septembre-octobre",alt:"0 à 1 800 m (optimum sous 1 300 m)",id:"Pores blancs puis jaune-vert, pied renflé à fin réseau blanc, chair blanche immuable. Écarter les bolets à pores rouges (dont le bolet de Satan, toxique) et le bolet amer (pores rosés, réseau brun, goût amer).",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,11,17,22],tw:14,rw:26,rr:60,ev:2,ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
-{n:"Girolle",det:"la girolle",du:"de la girolle",lat:"Cantharellus cibarius",wiki:"Cantharellus_cibarius",hote:"Chênes, hêtres, épicéas, pins ; sol moussu",sol:"Acide, plutôt pauvre",saison:"Juin à octobre, pic en septembre",alt:"0 à 1 900 m",id:"Jaune d'œuf, plis décurrents (pas de vraies lames), odeur d'abricot. Confusions : fausse girolle (plis fins, orange, chair fade) et clitocybe de l'olivier (touffes sur bois, toxique).",ev:2,so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
-{n:"Morille",det:"la morille",du:"de la morille",lat:"Morchella spp.",wiki:"Morchella_esculenta",hote:"Frêne, orme, peuplier, pommier ; vergers, lisières, sols remaniés",sol:"Calcaire à neutre (pH 7-8), riche en humus",saison:"Mars à mai selon l'altitude",alt:"0 à 1 600 m",id:"Chapeau alvéolé, entièrement creux jusqu'à la base du pied. Toujours bien cuite (toxique crue). Écarter les gyromitres (chapeau plissé cérébriforme, chair cotonneuse), toxiques.",ev:1,warm:1,so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
-{n:"Trompette de la mort",det:"la trompette de la mort",du:"de la trompette de la mort",lat:"Craterellus cornucopioides",wiki:"Craterellus_cornucopioides",hote:"Hêtre, chênes, charme ; bois frais et moussus",sol:"Acide à neutre, humide",saison:"Août à novembre, pic en octobre",alt:"0 à 1 700 m",id:"Trompette gris-noir, creuse jusqu'à la base, face externe lisse à ridée gris cendré. Pas de confusion dangereuse courante ; vérifier le pied creux.",ev:0,so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
-{n:"Pied-de-mouton",det:"le pied-de-mouton",du:"du pied-de-mouton",lat:"Hydnum repandum",wiki:"Hydnum_repandum",hote:"Feuillus et conifères (hêtre, chênes, châtaignier, épicéa)",sol:"Acide à neutre",saison:"Septembre à décembre",alt:"0 à 1 800 m",id:"Aiguillons crème sous le chapeau (ni lames ni pores), chapeau crème à orangé, chair cassante. Facile à reconnaître, sans sosie toxique courant.",ev:0,so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
-{n:"Lactaire délicieux",det:"le lactaire délicieux",du:"du lactaire délicieux",lat:"Lactarius deliciosus",wiki:"Lactarius_deliciosus",hote:"Pins (sylvestre, noir, maritime), parfois épicéa",sol:"Acide à neutre, souvent sableux",saison:"Août à novembre, pic en octobre",alt:"0 à 1 900 m",id:"Chapeau orange zoné, lait orange carotte qui verdit à la cassure et avec l'âge. Écarter les lactaires à lait blanc ou âcre, indigestes.",ev:2,rw:35,rr:50,so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
-{n:"Bolet bai",det:"le bolet bai",du:"du bolet bai",lat:"Imleria badia",wiki:"Imleria_badia",hote:"Pins, épicéas ; aussi hêtre et chênes",sol:"Acide, souvent sableux",saison:"Août à novembre, pic en octobre",alt:"0 à 1 800 m",id:"Chapeau brun marron un peu visqueux, pores jaune pâle qui bleuissent à la pression, pied sans réseau. Comestible cuit.",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
-{n:"Chanterelle en tube",det:"la chanterelle en tube",du:"de la chanterelle en tube",lat:"Craterellus tubaeformis",wiki:"Craterellus_tubaeformis",hote:"Épicéas, sapins ; aussi hêtres, en forêt moussue et humide",sol:"Acide, très humide",saison:"Septembre à décembre, parfois janvier",alt:"100 à 1 900 m (surtout au-dessus de 500 m)",id:"Chapeau brun-jaune en entonnoir, pied jaune creux, plis gris-jaune décurrents. Comestible ; espèce d'arrière-saison qui supporte les petites gelées.",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
-{n:"Coulemelle",det:"la coulemelle",du:"de la coulemelle",lat:"Macrolepiota procera",wiki:"Macrolepiota_procera",hote:"Aucun (saprophyte) : lisières, prairies, clairières",sol:"Riche, frais à sec",saison:"Août à octobre",alt:"0 à 1 500 m (surtout en plaine)",id:"Grande (20 à 40 cm), pied tigré avec anneau coulissant, chapeau écailleux. Ne pas confondre avec les petites lépiotes (Lepiota), dont certaines sont mortelles : vérifier la taille et l'anneau mobile.",ev:0,so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
+{n:"Cèpe de Bordeaux",ph:[3.4, 4.2, 6.0, 8.2],pf:0.45,wc:0.3,ws:0.1,evp:2,evt:1,sol:"Acide (pH 4 à 6), limono-sableux à sableux, pauvre en éléments nutritifs",det:"le cèpe de Bordeaux",du:"du cèpe de Bordeaux",lat:"Boletus edulis",wiki:"Boletus_edulis",hote:"Hêtre, chênes, châtaignier, épicéas, pins",saison:"Août à novembre, pic en septembre-octobre",alt:"0 à 1 800 m (optimum sous 1 300 m)",id:"Pores blancs puis jaune-vert, pied renflé à fin réseau blanc, chair blanche immuable. Écarter les bolets à pores rouges (dont le bolet de Satan, toxique) et le bolet amer (pores rosés, réseau brun, goût amer).",so:{a:1,c:.6,n:.8},fo:{f:1,r:.8,m:1},al:[0,100,1300,1800],t:[5,11,17,22],tw:14,rw:26,rr:60,ev:2,ro:35,lag:8,frost:1,hu:[.12,.28],gb:[.1,0,0,.09,.02,.06,.06,.25,.73,1,.27,.06],txt:"Hêtres, chênes, châtaigniers, épicéas. Sort 5 à 15 jours après une pluie de 30 mm suivie de nuits douces."},
+{n:"Girolle",ph:[3.2, 4.0, 5.6, 7.8],pf:0.35,wc:0.3,ws:0.05,evp:2,evt:1,sol:"Acide, pauvre en azote, bien aéré (sablo-limoneux)",det:"la girolle",du:"de la girolle",lat:"Cantharellus cibarius",wiki:"Cantharellus_cibarius",hote:"Chênes, hêtres, épicéas, pins ; sol moussu",saison:"Juin à octobre, pic en septembre",alt:"0 à 1 900 m",id:"Jaune d'œuf, plis décurrents (pas de vraies lames), odeur d'abricot. Confusions : fausse girolle (plis fins, orange, chair fade) et clitocybe de l'olivier (touffes sur bois, toxique).",ev:2,so:{a:1,c:.5,n:.8},fo:{f:.9,r:1,m:1},al:[0,200,1400,1900],t:[8,14,20,26],ro:30,lag:6,frost:1,hu:[.12,.28],gb:[.15,0,0,.25,.1,.55,.75,.8,1,.8,.3,.05],txt:"Mousse et sol acide sous chênes et épicéas. Aime l'humidité chaude, sort vite après l'orage."},
+{n:"Morille",ph:[5.2, 6.5, 8.0, 8.8],pf:0.1,wc:0.3,ws:0.15,soc:[15, 50],evp:1,evt:1,evo:1,sol:"pH 6,5 à 8 ; sol meuble et aéré, humifère (indices limités)",det:"la morille",du:"de la morille",lat:"Morchella spp.",wiki:"Morchella_esculenta",hote:"Frêne, orme, peuplier, pommier ; vergers, lisières, sols remaniés",saison:"Mars à mai selon l'altitude",alt:"0 à 1 600 m",id:"Chapeau alvéolé, entièrement creux jusqu'à la base du pied. Toujours bien cuite (toxique crue). Écarter les gyromitres (chapeau plissé cérébriforme, chair cotonneuse), toxiques.",ev:1,warm:1,so:{a:.1,c:1,n:.5},fo:{f:1,r:.4,m:.7},al:[0,100,1000,1600],t:[6,10,16,21],ro:20,lag:5,frost:.7,hu:[.14,.3],gb:[.04,0,.22,1,.39,.09,0,0,0,.02,0,0],txt:"Sols calcaires (pH 7-8), frênes, vergers. Printemps : sol qui se réchauffe, nuits fraîches, gel tardif fatal."},
+{n:"Trompette de la mort",ph:[4.0, 5.0, 7.8, 8.8],pf:0.5,wc:0.15,ws:0.1,evp:0,evt:0,sol:"Acide à neutre, frais et humifère",det:"la trompette de la mort",du:"de la trompette de la mort",lat:"Craterellus cornucopioides",wiki:"Craterellus_cornucopioides",hote:"Hêtre, chênes, charme ; bois frais et moussus",saison:"Août à novembre, pic en octobre",alt:"0 à 1 700 m",id:"Trompette gris-noir, creuse jusqu'à la base, face externe lisse à ridée gris cendré. Pas de confusion dangereuse courante ; vérifier le pied creux.",ev:0,so:{a:1,c:.4,n:.8},fo:{f:1,r:.3,m:.8},al:[0,100,1200,1700],t:[2,7,14,19],ro:30,lag:9,frost:-.25,hu:[.16,.32],gb:[.08,0,0,.19,0,.03,.11,.19,.53,1,.42,.08],txt:"Hêtraies et chênaies fraîches sur sol acide, humide 3-4 semaines. Les gelées légères la stimulent."},
+{n:"Pied-de-mouton",ph:[4.0, 5.0, 8.0, 8.8],pf:0.5,wc:0.2,ws:0.1,evp:0,evt:0,sol:"Acide à neutre",det:"le pied-de-mouton",du:"du pied-de-mouton",lat:"Hydnum repandum",wiki:"Hydnum_repandum",hote:"Feuillus et conifères (hêtre, chênes, châtaignier, épicéa)",saison:"Septembre à décembre",alt:"0 à 1 800 m",id:"Aiguillons crème sous le chapeau (ni lames ni pores), chapeau crème à orangé, chair cassante. Facile à reconnaître, sans sosie toxique courant.",ev:0,so:{a:1,c:.5,n:.9},fo:{f:.8,r:.8,m:1},al:[0,200,1300,1800],t:[3,9,17,21],ro:30,lag:11,frost:-.15,hu:[.13,.29],gb:[.1,0,0,.13,0,.07,.13,.33,.8,1,.43,.17],txt:"Fin d'automne, sols acides (pH ~5,5), lisières. Résiste aux premières gelées."},
+{n:"Lactaire délicieux",ph:[3.8, 4.6, 6.8, 8.2],pf:0.4,wc:0.25,ws:0.35,evp:2,evt:2,sol:"Acide ; sable franc défavorable, sol sablo-limoneux favorable",det:"le lactaire délicieux",du:"du lactaire délicieux",lat:"Lactarius deliciosus",wiki:"Lactarius_deliciosus",hote:"Pins (sylvestre, noir, maritime), parfois épicéa",saison:"Août à novembre, pic en octobre",alt:"0 à 1 900 m",id:"Chapeau orange zoné, lait orange carotte qui verdit à la cassure et avec l'âge. Écarter les lactaires à lait blanc ou âcre, indigestes.",ev:2,rw:35,rr:50,so:{a:1,c:.3,n:.8},fo:{f:.1,r:1,m:.7},al:[0,100,1400,1900],t:[4,10,16,20],ro:20,lag:12,frost:.3,hu:[.13,.3],gb:[.12,0,0,.32,0,.03,.06,.06,.24,1,.85,.15],txt:"Pins et épicéas sur sol acide. Lent : sort 3 à 5 semaines après les grosses pluies."},
+{n:"Bolet bai",ph:[3.2, 4.0, 5.8, 7.8],pf:0.4,wc:0.3,ws:0.15,evp:0,evt:0,sol:"Acide",det:"le bolet bai",du:"du bolet bai",lat:"Imleria badia",wiki:"Imleria_badia",hote:"Pins, épicéas ; aussi hêtre et chênes",saison:"Août à novembre, pic en octobre",alt:"0 à 1 800 m",id:"Chapeau brun marron un peu visqueux, pores jaune pâle qui bleuissent à la pression, pied sans réseau. Comestible cuit.",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.5,r:1,m:.9},al:[0,100,1300,1800],t:[4,11,18,23],ro:30,lag:9,frost:1,hu:[.12,.28],gb:[.08,0,0,0,0,.05,.08,.23,.58,1,.33,.08],txt:"Sols acides sous conifères, souvent avec le cèpe, un peu plus tardif."},
+{n:"Chanterelle en tube",ph:[3.0, 3.8, 5.5, 7.2],pf:0.3,wc:0.1,ws:0.2,evp:0,evt:0,sol:"Acide, humus épais et humide",det:"la chanterelle en tube",du:"de la chanterelle en tube",lat:"Craterellus tubaeformis",wiki:"Craterellus_tubaeformis",hote:"Épicéas, sapins ; aussi hêtres, en forêt moussue et humide",saison:"Septembre à décembre, parfois janvier",alt:"100 à 1 900 m (surtout au-dessus de 500 m)",id:"Chapeau brun-jaune en entonnoir, pied jaune creux, plis gris-jaune décurrents. Comestible ; espèce d'arrière-saison qui supporte les petites gelées.",ev:0,so:{a:1,c:.3,n:.7},fo:{f:.3,r:1,m:.8},al:[100,500,1300,1900],t:[0,4,11,16],ro:30,lag:11,frost:-.2,hu:[.16,.32],gb:[.09,.03,0,.15,0,.03,.03,.15,.56,1,.53,.21],txt:"Résineux moussus d'altitude, très humides. Espèce froide d'arrière-saison, aime les petites gelées."},
+{n:"Coulemelle",ph:[4.6, 5.6, 8.2, 9.0],pf:0.5,wc:0.2,ws:0.1,soc:[15, 45],evp:0,evt:0,evo:0,sol:"Riche en matière organique, frais à sec",det:"la coulemelle",du:"de la coulemelle",lat:"Macrolepiota procera",wiki:"Macrolepiota_procera",hote:"Aucun (saprophyte) : lisières, prairies, clairières",saison:"Août à octobre",alt:"0 à 1 500 m (surtout en plaine)",id:"Grande (20 à 40 cm), pied tigré avec anneau coulissant, chapeau écailleux. Ne pas confondre avec les petites lépiotes (Lepiota), dont certaines sont mortelles : vérifier la taille et l'anneau mobile.",ev:0,so:{a:.8,c:.9,n:1},fo:{f:.6,r:.3,m:1},al:[0,0,500,1500],t:[7,12,19,25],ro:15,lag:6,frost:1,hu:[.1,.24],gb:[.05,0,0,.1,.02,.05,.05,.15,.46,1,.41,.05],txt:"Lisières et prairies de plaine. Saprophyte peu exigeante : un orage et des rosées suffisent."}
 ];
 // nom, lat, lon, altitude, sol (a acide, c calcaire, n neutre), forêt (f feuillus, r résineux, m mixte), microclimat
 const REF=`Landes de Gascogne,44.2,-0.9,60,a,r,.1
@@ -228,6 +228,36 @@ Haguenau (Alsace),48.8,7.8,150,a,m,0
 Mormal (Nord),50.2,3.65,130,c,f,0
 Rambouillet,48.65,1.8,150,n,m,0`.split("\n").map(l=>{const p=l.split(",");return{n:p[0],lat:+p[1],lon:+p[2],alt:+p[3],so:p[4],fo:p[5],mi:+p[6]}});
 let Z=REF.slice();
+// ---------- Sol : pH continu, drainage déduit de la texture, humus ----------
+// Données SoilGrids (250 m, moyennées par blocs de 2,8 km) : pH 0-5 cm, sable et argile 5-15 cm, carbone organique 0-5 cm.
+// Le « drainage » est une déduction de la texture (argile > 35 % : engorgement ; sable > 80 % : sol séchant), sans pente ni nappe.
+const clamp01=x=>Math.max(0,Math.min(1,x));
+function soilFactor(sp,s){
+  let fp=1,fd=1,fo=1;
+  if(s.ph!=null&&sp.ph)fp=sp.pf+(1-sp.pf)*trap(s.ph,...sp.ph);
+  if(s.clay!=null)fd-=sp.wc*clamp01((s.clay-35)/15);
+  if(s.sand!=null)fd-=sp.ws*clamp01((s.sand-80)/15);
+  if(s.soc!=null&&sp.soc)fo=.85+.15*clamp01((s.soc-sp.soc[0])/(sp.soc[1]-sp.soc[0]));
+  fd=Math.max(.2,fd);
+  return{f:fp*fd*fo,fp,fd,fo};
+}
+function texClass(sand,clay){
+  if(sand==null||clay==null)return null;
+  const silt=100-sand-clay;
+  return clay>=35?"argileux":sand>=80?"sableux":sand>=55?"sablo-limoneux":silt>=50?"limoneux":"équilibré (limon, sable, argile)";
+}
+function drainClass(sand,clay){
+  if(sand==null||clay==null)return null;
+  return clay>=40?"lent (risque d'engorgement)":sand>=80?"très rapide (sol séchant)":"bon";
+}
+const fr1=v=>String(Math.round(v*10)/10).replace(".",",");
+function soilModelText(sp){
+  const L=["estimé","partiellement étayé","étayé par des études"],o=[`pH optimal ${fr1(sp.ph[1])} à ${fr1(sp.ph[2])} (${L[sp.evp]})`];
+  o.push(`${sp.ws>=.3?"sable > 80 % nettement pénalisé":"sable > 80 %"} et argile > 35 % pénalisés (${L[sp.evt]})`);
+  if(sp.soc)o.push(`humus favorable (${L[sp.evo||0]})`);
+  return o.join(" ; ");
+}
+let SOL=null;
 const SOIL={a:"acide",c:"calcaire",n:"neutre"},FOR={f:"feuillus",r:"résineux",m:"mixte"};
 const CITIES={"Paris":[48.86,2.35],"Lyon":[45.76,4.84],"Marseille":[43.3,5.37],"Toulouse":[43.6,1.44],"Bordeaux":[44.84,-0.58],"Nantes":[47.22,-1.55],"Lille":[50.63,3.06],"Strasbourg":[48.58,7.75],"Nice":[43.7,7.26],"Rennes":[48.11,-1.68],"Clermont-Ferrand":[45.78,3.08],"Grenoble":[45.19,5.72],"Dijon":[47.32,5.04],"Limoges":[45.83,1.26]};
 // ---------- Utilitaires ----------
@@ -273,7 +303,7 @@ function weather(z,d,lag,tw,rw){
 // ---------- Score ----------
 function score(sp,z,d){
   const w=weather(z,d,sp.lag,sp.tw,sp.rw),mo=dateOf(d).getMonth();
-  const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
+  const sfx=z.sol?soilFactor(sp,z.sol):null,so=sfx?sfx.f:sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const tf=trap(w.T,...sp.t);
   // humidité : sol réel mappé sur la plage de l'espèce si dispo, sinon pluie décalée
   let rf;
@@ -299,7 +329,7 @@ function score(sp,z,d){
   // score = 100 x habitat(sol, altitude) x forêt^0,7 x météo : Ha et M sont exposés pour recalculer le score bloc par bloc
   const Ha=Math.pow(so*Math.max(al,.001),.7),M=Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul;
   const sc=z.anth?0:Math.min(100,100*Ha*Math.pow(fo,.7)*M);   // agglomération ou axe routier : aucune présence possible
-  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha};
+  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha,sfx};
 }
 // Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
 // Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
@@ -320,9 +350,9 @@ const VIEWS=[
 ];
 const WD=[1,1,.9,.8,.7,.6,.5,.4];
 function habOnly(sp,z){
-  const so=sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
+  const sfx=z.sol?soilFactor(sp,z.sol):null,so=sfx?sfx.f:sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const Ha=Math.pow(so*Math.max(al,.001),.7);
-  return{sc:z.anth?0:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha};
+  return{sc:z.anth?0:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha,sfx};
 }
 function viewScore(sp,z){
   const v=st.view;
@@ -330,7 +360,7 @@ function viewScore(sp,z){
   if(v=="day")return score(sp,z,st.day);
   const a=[...Array(8)].map((_,d)=>score(sp,z,d)),r0=a[0];
   const M=v=="best"?Math.max(...a.map(x=>x.M)):a.reduce((s,x,i)=>s+x.M*WD[i],0)/WD.reduce((s,x)=>s+x,0);
-  return{sc:z.anth?0:Math.round(Math.min(100,100*r0.Ha*Math.pow(r0.fo,.7)*M)),M,Ha:r0.Ha,fo:r0.fo};
+  return{sc:z.anth?0:Math.round(Math.min(100,100*r0.Ha*Math.pow(r0.fo,.7)*M)),M,Ha:r0.Ha,fo:r0.fo,al:r0.al,so:r0.so,sfx:r0.sfx};
 }
 // ---------- Carte Leaflet ----------
 let map,selMarker=null,homeMarker=null,radCircle=null,topLayer=null;
@@ -386,6 +416,43 @@ function fieldAt(F,lat,lon){
   const a=fi-i0,b=fj-j0,k=i0*F.w+j0,G=F.G,w=F.w;
   return G[k]*(1-a)*(1-b)+G[k+1]*(1-a)*b+G[k+w]*a*(1-b)+G[k+w+1]*a*b;
 }
+function sf7Grid(sp){
+  st.sf7=st.sf7||{};
+  if(st.sf7[sp.n])return st.sf7[sp.n];
+  const n=SOL.w*SOL.h,out=new Float32Array(n),U=255;
+  for(let i=0;i<n;i++){
+    const ph=SOL.ph[i],sa=SOL.sand[i],cl=SOL.clay[i],so=SOL.soc[i];
+    if(ph==U&&sa==U&&cl==U){out[i]=-1;continue}
+    out[i]=Math.pow(soilFactor(sp,{ph:ph==U?null:ph/10,sand:sa==U?null:sa,clay:cl==U?null:cl,soc:so==U?null:so}).f,.7);
+  }
+  return st.sf7[sp.n]=out;
+}
+function blockSoil(lat,lon){
+  if(!SOL||!heatGeom)return null;
+  const{la0,lo0,dLat,dLon}=heatGeom,K=SOL.K,y=Math.floor((lat-(la0-dLat/2))/(dLat/K)),x=Math.floor((lon-(lo0-dLon/2))/(dLon/K));
+  if(y<0||x<0||y>=SOL.h||x>=SOL.w)return null;
+  const i=y*SOL.w+x,g=(a,d)=>a[i]==255?null:a[i]/d;
+  const o={ph:g(SOL.ph,10),sand:g(SOL.sand,1),clay:g(SOL.clay,1),soc:g(SOL.soc,1)};
+  return(o.ph==null&&o.sand==null)?null:o;
+}
+function setSol(j){
+  const dec=b=>{const t=atob(b),a=new Uint8Array(t.length);for(let i=0;i<t.length;i++)a[i]=t.charCodeAt(i);return a};
+  SOL={K:j.K,w:j.w,h:j.h,ph:dec(j.layers.ph),sand:dec(j.layers.sand),clay:dec(j.layers.clay),soc:dec(j.layers.soc)};
+  st.sf7={};
+}
+function applySol(){   // moyenne du sol par maille (pour les listes et le calcul grossier)
+  if(!SOL||!st.live||!heatGeom)return;
+  const K=SOL.K,W=SOL.w;
+  Z.forEach(z=>{
+    const acc={ph:[0,0],sand:[0,0],clay:[0,0],soc:[0,0]};
+    for(let y=z.ci*K;y<z.ci*K+K;y++)for(let x=z.cj*K;x<z.cj*K+K;x++){const i=y*W+x;for(const k in acc){const v=SOL[k][i];if(v!=255){acc[k][0]+=v;acc[k][1]++}}}
+    const g=(k,d)=>acc[k][1]>=8?acc[k][0]/acc[k][1]/d:null,o={ph:g("ph",10),sand:g("sand",1),clay:g("clay",1),soc:g("soc",1)};
+    z.sol=(o.ph==null&&o.sand==null)?undefined:o;
+  });
+}
+async function loadSol(){
+  try{const r=await fetch("sol.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();if(j.layers&&j.w)setSol(j)}catch(e){}
+}
 // Clé de maille identique à celle des scripts Python : un flottant entier s'écrit « 48.0 » côté Python et « 48 » côté JavaScript.
 const nk=v=>Number.isInteger(v)?v.toFixed(1):String(v);
 const ckey=(lat,lon)=>nk(lat)+","+nk(lon);
@@ -425,19 +492,23 @@ function buildFineField(sc,sp){
   if(!FINE)return null;
   const{K,FW,FH,ni,nj,cls}=FINE,{la0,lo0,dLat,dLon}=heatGeom;
   const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(cw*(ni+2)),Wc=new Uint8Array(cw*(ni+2));
-  sc.forEach(({z,r})=>{const k=(z.ci+1)*cw+z.cj+1;Mc[k]=r.M!=null?r.M:0;Hc[k]=r.Ha||0;Wc[k]=1});
+  const useSol=!!SOL&&K%SOL.K==0,Sc7=new Float32Array(ni*nj),SF7=useSol?sf7Grid(sp):null;
+  sc.forEach(({z,r})=>{const k=(z.ci+1)*cw+z.cj+1;Mc[k]=r.M!=null?r.M:0;Wc[k]=1;
+    Hc[k]=useSol?Math.pow(Math.max(r.al||0,.001),.7):(r.Ha||0);   // avec le sol fin : seule l'altitude reste au niveau de la maille
+    Sc7[z.ci*nj+z.cj]=Math.pow(Math.max(r.so||0,0),.7)});
   const SPARSE=.55;  // un bloc boisé à 25-60 % (lisières, massifs aérés, bocage) pèse 55 % d'un bloc très boisé
   const FP=[Math.pow(.03,.7),Math.pow(sp.fo.f,.7),Math.pow(sp.fo.r,.7),Math.pow(sp.fo.m,.7)];
   FP.push(Math.pow(sp.fo.f*SPARSE,.7),Math.pow(sp.fo.r*SPARSE,.7),Math.pow(sp.fo.m*SPARSE,.7));
   const pad=2,w=FW+2*pad,h=FH+2*pad,A=new Float32Array(w*h),G=new Float32Array(w*h);
   for(let y=0;y<FH;y++){
-    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0;
+    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0,sy=useSol?Math.floor(y*SOL.K/K):0,ci=Math.floor(y/K);
     for(let x=0;x<FW;x++){
       const gx=(x+.5)/K-.5,j0=Math.floor(gx),fx=gx-j0,k=(i0+1)*cw+(j0+1);
       const M=Mc[k]*(1-fy)*(1-fx)+Mc[k+1]*(1-fy)*fx+Mc[k+cw]*fy*(1-fx)+Mc[k+cw+1]*fy*fx;   // météo lissée entre mailles
       // habitat (sol, altitude) lissé entre mailles, en ne comptant que les mailles existantes (pas d'effet de bord sur les côtes)
       const w00=(1-fy)*(1-fx)*Wc[k],w01=(1-fy)*fx*Wc[k+1],w10=fy*(1-fx)*Wc[k+cw],w11=fy*fx*Wc[k+cw+1],wd=w00+w01+w10+w11;
-      const H=wd>0?(Hc[k]*w00+Hc[k+1]*w01+Hc[k+cw]*w10+Hc[k+cw+1]*w11)/wd:0;
+      let H=wd>0?(Hc[k]*w00+Hc[k+1]*w01+Hc[k+cw]*w10+Hc[k+cw+1]*w11)/wd:0;
+      if(useSol){let q=SF7[sy*SOL.w+Math.floor(x*SOL.K/K)];if(q<0)q=Sc7[ci*nj+Math.floor(x/K)];H*=q}   // pH, texture, humus du bloc
       const v=100*H*FP[cls[y*FW+x]]*M;
       A[(y+pad)*w+x+pad]=v>100?100:v;
     }
@@ -655,7 +726,7 @@ const PHOTOS={};
 function renderSpecies(){
   const sp=SP[st.sp];
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";
-  $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+  $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
   const img=$("spimg"),cap=$("spcap"),k=st.sp,P=PHOTOS[k];
   const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";return}img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
   if(P!==undefined){show(P);return}
@@ -719,6 +790,7 @@ function makeZone(lat,lon){
     if(fy>=0&&fx>=0&&fy<FH&&fx<FW){const c=cls[fy*FW+fx],t=c>3?c-3:c;z.nf=c==0;z.urb=false;if(c)z.fo=t==1?"f":t==2?"r":"m";z.src.f="bloc de 1,4 km (IGN) : "+(c==0?"pas de forêt":c>3?"bois épars":"forêt");
       if(FINE.urb[fy*FW+fx]){z.anth="ville";z.src.f="agglomération (CORINE 2018)"}}
   }
+  if(SOL){const bs=blockSoil(lat,lon);if(bs){z.sol=bs;z.src.s="SoilGrids (bloc de 2,8 km)"}}
   if(!z.anth&&nearRoad(lat,lon,140)){z.anth="route";z.src.f="axe routier principal (BD TOPO)"}
   return z;
 }
@@ -748,7 +820,7 @@ async function refinePoint(z){
       const o=await J("https://rest.isric.org/soilgrids/v2.0/properties/query?lon="+z.lon+"&lat="+z.lat+"&property=phh2o&depth=0-5cm&value=mean",9000);
       if(!ok())return;
       const v=o.properties.layers[0].depths[0].values.mean;
-      if(typeof v=="number"){z.ph=Math.round(v)/10;z.so=z.ph<5.5?"a":z.ph>6.8?"c":"n";z.src.s="SoilGrids au point";renderDetail()}
+      if(typeof v=="number"){z.ph=Math.round(v)/10;z.so=z.ph<5.5?"a":z.ph>6.8?"c":"n";z.sol=Object.assign(z.sol||{},{ph:z.ph});z.src.s="SoilGrids au point (pH) et bloc de 2,8 km (texture)";renderDetail()}
     }catch(e){}})()
   ];
   await Promise.all(tasks);
@@ -775,6 +847,14 @@ function verdictHtml(sp,z,r,rv,arr,d){
   <p>${pct!=null?`Mieux que ${pct} % des zones de France sur cette vue. `:""}Lieu <b>${lieu}</b> (sol, forêt, altitude : ${hab}/100) ; conditions du moment <b>${cnd}</b> (${cond}/100).${fac[1]<.6?` Principal frein : ${fac[0]} (${Math.round(fac[1]*100)} %).`:""}${nf}</p>
   <p>Tendance sur 8 jours : <b>${tr}</b>${arr[best]>arr[d]+4?` ; meilleur jour : ${bd} (${arr[best]}).`:"."}</p></div>`;
 }
+function soilLine(z,sp,r){
+  const s=z.sol;
+  if(!s)return `<p class="prov"><b>Sol</b> — catégorie ${SOIL[z.so]} (pas de mesure fine disponible).</p>`;
+  const tx=texClass(s.sand,s.clay),dr=drainClass(s.sand,s.clay),f=r.sfx;
+  const mes=[s.ph!=null?"pH "+fr1(s.ph):null,s.sand!=null?"sable "+Math.round(s.sand)+" %":null,s.clay!=null?"argile "+Math.round(s.clay)+" %":null,s.soc!=null?"carbone organique "+Math.round(s.soc)+" g/kg":null].filter(Boolean).join(" · ");
+  const fac=f?`pH ${Math.round(f.fp*100)} % · drainage ${Math.round(f.fd*100)} %${sp.soc?" · humus "+Math.round(f.fo*100)+" %":""}`:"";
+  return `<p class="prov"><b>Sol</b> (${(z.src&&z.src.s)||"maille"}) — ${mes}${tx?" · texture "+tx:""}${dr?" · drainage "+dr:""} (déduit de la texture seule).${fac?`<br>Adéquation pour ${sp.det} : ${fac}.`:""}</p>`;
+}
 function renderDetail(){
   const sp=SP[st.sp],d=st.day,zsel=st.ptZ;
   if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte ou saisissez des coordonnées GPS : on calcule les conditions exactement à cet endroit (météo, forêt, sol, altitude).</p>`;return}
@@ -788,6 +868,7 @@ function renderDetail(){
   <div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
+  ${soilLine(zsel,sp,r)}
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p>`;
 }
@@ -821,9 +902,10 @@ async function loadLive(){
     st.pt=null;st.ptZ=null;
     buildHeat();indexCells();
     render();
-    await Promise.all([loadForets(),loadMasks()]);
+    await Promise.all([loadForets(),loadMasks(),loadSol()]);
+    applySol();
     buildFineGrid();
-    if(FINE)render();
+    if(FINE||SOL)render();
     applyHash();
   }catch(e){}
 }
