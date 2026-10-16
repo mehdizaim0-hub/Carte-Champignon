@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/home/runner/work/Carte-Champignon/Carte-Champignon/tools/dem_test.py", line 14, in <module>
-    import numpy as np, rasterio
-ModuleNotFoundError: No module named 'numpy'
-=== 1. Tuiles AWS Terrain (terrarium, z10) autour de Toulouse
-https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/516/373.png OK 122 Ko en 0.21s
-https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/531/364.png OK 149 Ko en 0.21s
-=== 2. Copernicus GLO-30 (COG sur AWS) : une tuile 1x1 degré
