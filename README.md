@@ -147,6 +147,15 @@ Le modèle corrige la température selon l'altitude du bloc, favorise versants n
 Détail et niveaux de preuve : `research/sources-recoupees-oct2026.md`. Lancement : Actions > « Relief » > Run workflow.
 Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point précis, la page recalcule pente et exposition sur place.
 
+## Coulemelle en milieu ouvert et meilleurs spots (oct. 2026)
+
+- La coulemelle (saprophyte) n'est plus pénalisée sans forêt : lisières, clairières et prairies sont favorables (valeurs estimées, voir
+  `research/sources-recoupees-oct2026.md`). `build_urbain.py` marque pour cela les prairies et milieux ouverts semi-naturels (CORINE) en plus des
+  agglomérations ; `urbain.json` est en version 2 (caractères `#` agglomération, `p` milieu ouvert, `.` autre).
+  Relance : Actions > « Zones artificialisées et milieux ouverts » > Run workflow.
+- Après le choix d'un point, la page propose ses **cinq meilleurs spots à moins de 1 km** (champignons marron), calculés sur des cases de 50 m à partir de
+  la forêt IGN à environ 10 m et de l'altitude à 200 m. Il faut un accès réseau à l'IGN et à Open-Meteo ; sinon la page le signale et estime à partir du point.
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le

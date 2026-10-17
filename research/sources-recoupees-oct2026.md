@@ -115,3 +115,16 @@ Limites : niveau de preuve « partiel » (études ponctuelles, en climat médite
 sont des choix de modélisation. Un bloc de 2,8 km moyenne des versants opposés (l'exposition se compense dans les vallées étroites). Le microclimat
 des lisières, clairières et fonds de combe de quelques dizaines de mètres n'est pas visible à cette échelle. Pour un point précis, la pente et l'exposition
 sont recalculées sur place à partir de quatre altitudes à environ 100 m.
+
+## Coulemelle et milieux ouverts ; meilleurs spots à 1 km (oct. 2026)
+- **Coulemelle** (*Macrolepiota procera*) : saprophyte, sans arbre hôte ; elle pousse en lisière, clairière, prairie et bord de chemin. Le modèle ne la
+  pénalise donc plus en l'absence de forêt : clairière ou lisière 0,90 ; prairie ou milieu ouvert semi-naturel 0,70 ; autre terrain non bâti (cultures
+  intensives, vignes) 0,15 ; forêt dense 0,6 (feuillus) à 0,3 (résineux) ; bois épars ou lisière 0,95. Ces valeurs sont **estimées d'après l'écologie
+  générale de l'espèce**, sans étude de rendement : niveau de preuve « partiel ».
+- **Milieux ouverts** : `build_urbain.py` (CORINE Land Cover 2018, via l'IGN) marque en plus des agglomérations les blocs de 1,4 km occupés à 35 % au moins
+  par des prairies (231), mosaïques agricoles (242), agriculture avec végétation naturelle (243), agroforesterie (244) ou pelouses (321). Les cultures
+  (211-213), vignes, vergers, landes et broussailles sont exclues.
+- **Meilleurs spots** : autour du point choisi, la page lit l'image de la couche forêt IGN à environ 10 m (200 x 200 px sur 2 km) et l'altitude sur une
+  grille de 11 x 11 points (200 m) ; chaque case de 50 m dans un rayon de 1 km reçoit le score du modèle avec sa forêt (fenêtre de 50 m), son altitude
+  corrigée de la température, sa pente, son exposition et sa position. Les cases d'agglomération (CORINE) ou à moins de 90 m d'un grand axe sont exclues.
+  Les cinq meilleurs spots, espacés d'au moins 250 m, sont affichés. La météo et le sol sont ceux du point : ils ne varient pas dans le rayon.
