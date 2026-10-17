@@ -156,7 +156,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>
 <div class="sub" style="margin-top:8px;line-height:1.6">
 <p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 40 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
-<p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son sol (cartes mondiales SoilGrids, par blocs de 2,8 km : acidité, part de sable et d'argile, carbone organique ; le drainage en est déduit, sans tenir compte de la pente ni de la nappe), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN). La forêt est lue à fine échelle (blocs d'environ 1,4 km) pour repérer les petits massifs et îlots forestiers, même au milieu de zones bâties ou cultivées. Pour un point précis, on interroge la météo, la forêt et le sol directement à cet endroit.</p>
+<p style="margin:0 0 8px"><b>On connaît le terrain de chaque zone.</b> Son altitude (Open-Meteo), son relief (altitude, pente et exposition par blocs de 2,8 km, d'après des modèles d'altitude de 100 m), son sol (cartes mondiales SoilGrids, par blocs de 2,8 km : acidité, part de sable et d'argile, carbone organique ; le drainage en est déduit, sans tenir compte de la pente ni de la nappe), et sa forêt : feuillus, résineux, ou pas de forêt du tout (inventaire forestier de l'IGN). La forêt est lue à fine échelle (blocs d'environ 1,4 km) pour repérer les petits massifs et îlots forestiers, même au milieu de zones bâties ou cultivées. Pour un point précis, on interroge la météo, la forêt et le sol directement à cet endroit.</p>
 <p style="margin:0 0 8px"><b>On sait quand chaque champignon sort.</b> Les calendriers viennent de milliers d'observations réelles de cueilleurs et naturalistes en France (base GBIF). Exemple : le cèpe sort surtout en septembre-octobre, la morille en avril.</p>
 <p style="margin:0 0 8px"><b>Quatre vues.</b> « Jour choisi » montre une date. « Zones durables » garde celles qui restent bonnes sur la semaine. « Meilleur jour » retient le pic de chaque zone. « Habitat » ignore la météo et montre les massifs propices en permanence ; villes et grandes cultures y restent incolores.</p>
 <p style="margin:0 0 8px"><b>On croise tout ça.</b> Pour chaque zone et chaque espèce, on vérifie : le bon sol ? la bonne forêt ? la bonne altitude ? assez d'humidité ? la bonne température ? pas de gel ? la bonne saison ? Plus une zone coche de cases, plus les points sont serrés et gros (ou plus l'aplat est orange) sur la carte. Pour certaines espèces (cèpe, lactaire), la pluie des 26 à 35 derniers jours compte aussi : le champignon se souvient des pluies passées.</p>
@@ -270,19 +270,20 @@ let st={view:"dur",mode:"dots",past:14,pt:null,ptZ:null,ptTok:0,forets:null,off:
 const dateOf=d=>{const x=new Date();x.setDate(x.getDate()+d);return x};
 // ---------- Météo ----------
 // lag : la pluie qui compte est celle tombée lag à lag+14 jours avant la date visée.
-function weather(z,d,lag,tw,rw){
+function weather(z,d,lag,tw,rw,dT){
   const L=z.L||(st.live&&z.i>=0?st.live[z.i]:null);
   if(L){
+    const off=dT!=null?dT:(z.dT||0);   // correction d'altitude : -6,5 °C par km par rapport au point de la série
     const P=L.p,T=L.t,i=Math.min((L.off!=null?L.off:st.off)+d,P.length-1);
     const iLag=Math.max(0,Math.min(i-(lag||0)+4,P.length-1));
     let r=0;for(let k=Math.max(0,iLag-13);k<=iLag;k++)r+=P[k]||0;
     const n=tw||7;let t=0,nt=0;for(let k=Math.max(0,i-n+1);k<=i;k++){t+=T[k]||0;nt++}
-    const w={R:r,T:t/Math.max(nt,1),src:"live"};
+    const w={R:r,T:t/Math.max(nt,1)+off,src:"live"};
     if(rw){let rs=0,nn=0;for(let k=Math.max(0,iLag-rw+1);k<=iLag;k++){rs+=P[k]||0;nn++}w.RL=nn?rs*rw/nn:0} // fenêtre longue, ramenée à rw jours si l'historique est plus court
     {let a=0,b=0,na=0,nb=0;for(let k=Math.max(0,i-6);k<=i;k++){a+=T[k]||0;na++}for(let k=Math.max(0,i-13);k<=i-7;k++){b+=T[k]||0;nb++}if(na&&nb)w.warm=a/na-b/nb}
     if(L.tn){ // gel 3 derniers jours : fort (<-3°C) ou léger (-3..0°C)
       let hard=0,light=0;
-      for(let k=Math.max(0,i-2);k<=i;k++){if(L.tn[k]<-3)hard=1;else if(L.tn[k]<0)light=1}
+      for(let k=Math.max(0,i-2);k<=i;k++){if(L.tn[k]+off<-3)hard=1;else if(L.tn[k]+off<0)light=1}
       w.frostHard=hard;w.frostLight=light&&!hard;
       // choc thermique : amplitude jour/nuit ~ 2x(Tmoy-Tmin), moyenne 3 j
       let amp=0,na=0;for(let k=Math.max(0,i-2);k<=i;k++){amp+=2*(T[k]-L.tn[k]);na++}
@@ -301,8 +302,8 @@ function weather(z,d,lag,tw,rw){
   return{R:Rn*st.rain/100,T:Tn+st.dt,src:"sim"};
 }
 // ---------- Score ----------
-function score(sp,z,d){
-  const w=weather(z,d,sp.lag,sp.tw,sp.rw),mo=dateOf(d).getMonth();
+function score(sp,z,d,dT){
+  const w=weather(z,d,sp.lag,sp.tw,sp.rw,dT),mo=dateOf(d).getMonth();
   const sfx=z.sol?soilFactor(sp,z.sol):null,so=sfx?sfx.f:sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const tf=trap(w.T,...sp.t);
   // humidité : sol réel mappé sur la plage de l'espèce si dispo, sinon pluie décalée
@@ -327,9 +328,10 @@ function score(sp,z,d){
   let ampMul=w.amp!=null?(.9+.2*trap(w.amp,2,6,13,20)):1;
   if(sp.warm&&w.warm!=null)ampMul*=1+.12*Math.max(-1,Math.min(1,w.warm/3)); // morille : sol qui se réchauffe
   // score = 100 x habitat(sol, altitude) x forêt^0,7 x météo : Ha et M sont exposés pour recalculer le score bloc par bloc
-  const Ha=Math.pow(so*Math.max(al,.001),.7),M=Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul;
+  const tfx=z.rel?terrainFactors(z.rel,rf):null;   // point : exposition, dépression, pente (les blocs de la carte les appliquent séparément)
+  const Ha=Math.pow(so*Math.max(al,.001),.7),M=Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul*(tfx?tfx.f:1);
   const sc=z.anth?0:Math.min(100,100*Ha*Math.pow(fo,.7)*M);   // agglomération ou axe routier : aucune présence possible
-  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha,sfx};
+  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha,sfx,tfx};
 }
 // Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
 // Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
@@ -352,7 +354,7 @@ const WD=[1,1,.9,.8,.7,.6,.5,.4];
 function habOnly(sp,z){
   const sfx=z.sol?soilFactor(sp,z.sol):null,so=sfx?sfx.f:sp.so[z.so],fo=z.urb?.01:z.nf?.03:sp.fo[z.fo],al=trap(z.alt,...sp.al.map((v,i)=>i==0&&v==0?-1:v));
   const Ha=Math.pow(so*Math.max(al,.001),.7);
-  return{sc:z.anth?0:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha,sfx};
+  return{sc:z.anth?0:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha,sfx,rf:1};
 }
 function viewScore(sp,z){
   const v=st.view;
@@ -360,7 +362,17 @@ function viewScore(sp,z){
   if(v=="day")return score(sp,z,st.day);
   const a=[...Array(8)].map((_,d)=>score(sp,z,d)),r0=a[0];
   const M=v=="best"?Math.max(...a.map(x=>x.M)):a.reduce((s,x,i)=>s+x.M*WD[i],0)/WD.reduce((s,x)=>s+x,0);
-  return{sc:z.anth?0:Math.round(Math.min(100,100*r0.Ha*Math.pow(r0.fo,.7)*M)),M,Ha:r0.Ha,fo:r0.fo,al:r0.al,so:r0.so,sfx:r0.sfx};
+  const rf=a.reduce((s,x,i)=>s+x.rf*WD[i],0)/WD.reduce((s,x)=>s+x,0);
+  return{sc:z.anth?0:Math.round(Math.min(100,100*r0.Ha*Math.pow(r0.fo,.7)*M)),M,Ha:r0.Ha,fo:r0.fo,al:r0.al,so:r0.so,sfx:r0.sfx,rf};
+}
+// M (facteur météo) de la vue affichée pour un décalage thermique dT : sert à corriger la température selon l'altitude du bloc.
+function viewM(sp,z,dT){
+  const v=st.view;
+  if(v=="hab")return 1;
+  if(v=="day")return score(sp,z,st.day,dT).M;
+  let sum=0,ws=0,mx=0;
+  for(let d=0;d<8;d++){const m=score(sp,z,d,dT).M;sum+=m*WD[d];ws+=WD[d];if(m>mx)mx=m}
+  return v=="best"?mx:sum/ws;
 }
 // ---------- Carte Leaflet ----------
 let map,selMarker=null,homeMarker=null,radCircle=null,topLayer=null;
@@ -453,6 +465,53 @@ function applySol(){   // moyenne du sol par maille (pour les listes et le calcu
 async function loadSol(){
   try{const r=await fetch("sol.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();if(j.layers&&j.w)setSol(j)}catch(e){}
 }
+// ---------- Relief : altitude du bloc, pente, exposition, position topographique ----------
+// Source : tuiles d'altitude AWS (106 m par pixel) agrégées par blocs de 2,8 km (build_relief.py).
+// Effets : (1) température corrigée de l'altitude du bloc (-6,5 °C/km) ; (2) versants nord et dépressions plus frais et humides :
+// bonus jusqu'à +25 % quand l'humidité manque, malus symétrique sur versants sud et crêtes ; (3) pente > 15° pénalisée jusqu'à -30 %.
+// Étayé en Espagne méditerranéenne (rendement croissant avec l'exposition nord, décroissant avec la pente) ; effet inverse signalé
+// en climat humide (Turquie, cèpe) : c'est pourquoi l'effet d'exposition ne joue que lorsque l'humidité est limitante.
+let RLF=null;
+const DT5=[-6,-3,0,3,6];
+function terrainFactors(rel,rf){
+  const mi=.7*(rel.north||0)+.3*Math.max(-1,Math.min(1,-(rel.tpi||0)/40));       // > 0 : frais et humide
+  const fm=1+.25*mi*(1-Math.min(1,rf));
+  const fs=1-.3*clamp01(((rel.slope||0)-15)/25);
+  return{mi,fm,fs,f:fm*fs};
+}
+const b64bytes=b=>{const t=atob(b),a=new Uint8Array(t.length);for(let i=0;i<t.length;i++)a[i]=t.charCodeAt(i);return a};
+function setRelief(j){
+  RLF={K:j.K,w:j.w,h:j.h,elev:b64bytes(j.layers.elev),slope:b64bytes(j.layers.slope),north:b64bytes(j.layers.north),tpi:b64bytes(j.layers.tpi)};
+  const n=RLF.w*RLF.h,MI=new Float32Array(n);
+  for(let i=0;i<n;i++){const nv=RLF.north[i],tv=RLF.tpi[i];MI[i]=(nv==255||tv==255)?0:.7*((nv-127)/127)+.3*Math.max(-1,Math.min(1,-((tv-127)/1.27)/40))}
+  RLF.MI=MI;st.t7={};
+}
+function terr7Grid(sp){
+  st.t7=st.t7||{};
+  if(st.t7[sp.n])return st.t7[sp.n];
+  const n=RLF.w*RLF.h,out=new Float32Array(n),al=sp.al.map((v,i)=>i==0&&v==0?-1:v);
+  for(let i=0;i<n;i++){
+    const e=RLF.elev[i];if(e==255){out[i]=-1;continue}
+    const sl=RLF.slope[i],fs=sl==255?1:1-.3*clamp01((sl-15)/25);
+    out[i]=Math.pow(Math.max(trap(e*20,...al),.001)*fs,.7);
+  }
+  return st.t7[sp.n]=out;
+}
+function applyRelief(){   // amplitude d'altitude dans chaque maille : décide où la correction thermique compte
+  if(!RLF||!st.live||!heatGeom)return;
+  const K=RLF.K,W=RLF.w;
+  Z.forEach(z=>{let mx=0;for(let y=z.ci*K;y<z.ci*K+K;y++)for(let x=z.cj*K;x<z.cj*K+K;x++){const e=RLF.elev[y*W+x];if(e!=255)mx=Math.max(mx,Math.abs(e*20-z.alt))}z.relMax=mx});
+}
+function blockRelief(lat,lon){
+  if(!RLF||!heatGeom)return null;
+  const{la0,lo0,dLat,dLon}=heatGeom,K=RLF.K,y=Math.floor((lat-(la0-dLat/2))/(dLat/K)),x=Math.floor((lon-(lo0-dLon/2))/(dLon/K));
+  if(y<0||x<0||y>=RLF.h||x>=RLF.w)return null;
+  const i=y*RLF.w+x;if(RLF.elev[i]==255)return null;
+  return{elev:RLF.elev[i]*20,slope:RLF.slope[i]==255?0:RLF.slope[i],north:RLF.north[i]==255?0:(RLF.north[i]-127)/127,tpi:RLF.tpi[i]==255?0:(RLF.tpi[i]-127)/1.27};
+}
+async function loadRelief(){
+  try{const r=await fetch("relief.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();if(j.layers&&j.w)setRelief(j)}catch(e){}
+}
 // Clé de maille identique à celle des scripts Python : un flottant entier s'écrit « 48.0 » côté Python et « 48 » côté JavaScript.
 const nk=v=>Number.isInteger(v)?v.toFixed(1):String(v);
 const ckey=(lat,lon)=>nk(lat)+","+nk(lon);
@@ -491,25 +550,49 @@ function buildFineGrid(){
 function buildFineField(sc,sp){
   if(!FINE)return null;
   const{K,FW,FH,ni,nj,cls}=FINE,{la0,lo0,dLat,dLon}=heatGeom;
-  const cw=nj+2,Mc=new Float32Array(cw*(ni+2)),Hc=new Float32Array(cw*(ni+2)),Wc=new Uint8Array(cw*(ni+2));
-  const useSol=!!SOL&&K%SOL.K==0,Sc7=new Float32Array(ni*nj),SF7=useSol?sf7Grid(sp):null;
-  sc.forEach(({z,r})=>{const k=(z.ci+1)*cw+z.cj+1;Mc[k]=r.M!=null?r.M:0;Wc[k]=1;
-    Hc[k]=useSol?Math.pow(Math.max(r.al||0,.001),.7):(r.Ha||0);   // avec le sol fin : seule l'altitude reste au niveau de la maille
-    Sc7[z.ci*nj+z.cj]=Math.pow(Math.max(r.so||0,0),.7)});
+  const cw=nj+2,nc=cw*(ni+2);
+  const Mc=new Float32Array(nc),HcS=new Float32Array(nc),HcA=new Float32Array(nc),Dc=new Float32Array(nc),Ac=new Float32Array(nc),Wc=new Uint8Array(nc);
+  const useSol=!!SOL&&K%SOL.K==0,useRel=!!RLF&&K%RLF.K==0;
+  const Sc7=new Float32Array(ni*nj),Al7c=new Float32Array(ni*nj),SF7=useSol?sf7Grid(sp):null,T7=useRel?terr7Grid(sp):null;
+  const Mtab=useRel?new Float32Array(nc*5):null;
+  sc.forEach(({z,r})=>{
+    const k=(z.ci+1)*cw+z.cj+1;
+    Mc[k]=r.M!=null?r.M:0;Wc[k]=1;
+    HcS[k]=Math.pow(Math.max(r.so||0,0),.7);HcA[k]=Math.pow(Math.max(r.al||0,.001),.7);   // sol et altitude de la maille
+    Dc[k]=r.rf!=null?1-Math.min(1,r.rf):0;Ac[k]=z.alt;
+    Sc7[z.ci*nj+z.cj]=HcS[k];Al7c[z.ci*nj+z.cj]=HcA[k];
+    if(useRel){
+      // table de M pour 5 décalages thermiques, seulement dans les mailles à fort relief (sinon M constant)
+      if(z.relMax>=100&&st.view!="hab")for(let t=0;t<5;t++)Mtab[k*5+t]=viewM(sp,z,DT5[t]);
+      else for(let t=0;t<5;t++)Mtab[k*5+t]=Mc[k];
+    }
+  });
   const SPARSE=.55;  // un bloc boisé à 25-60 % (lisières, massifs aérés, bocage) pèse 55 % d'un bloc très boisé
   const FP=[Math.pow(.03,.7),Math.pow(sp.fo.f,.7),Math.pow(sp.fo.r,.7),Math.pow(sp.fo.m,.7)];
   FP.push(Math.pow(sp.fo.f*SPARSE,.7),Math.pow(sp.fo.r*SPARSE,.7),Math.pow(sp.fo.m*SPARSE,.7));
+  const mt=(kk,wt,ab)=>{   // M de la maille kk corrigé de la température du bloc (altitude ab)
+    if(!Wc[kk])return 0;
+    const t=(Math.max(-6,Math.min(6,-.0065*(ab-Ac[kk])))+6)/3,ti=Math.min(3,t|0),fr=t-ti;
+    return wt*(Mtab[kk*5+ti]*(1-fr)+Mtab[kk*5+ti+1]*fr);
+  };
   const pad=2,w=FW+2*pad,h=FH+2*pad,A=new Float32Array(w*h),G=new Float32Array(w*h);
   for(let y=0;y<FH;y++){
-    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0,sy=useSol?Math.floor(y*SOL.K/K):0,ci=Math.floor(y/K);
+    const gy=(y+.5)/K-.5,i0=Math.floor(gy),fy=gy-i0,ci=Math.floor(y/K),sy=useSol?Math.floor(y*SOL.K/K):0,ry=useRel?Math.floor(y*RLF.K/K):0;
     for(let x=0;x<FW;x++){
-      const gx=(x+.5)/K-.5,j0=Math.floor(gx),fx=gx-j0,k=(i0+1)*cw+(j0+1);
-      const M=Mc[k]*(1-fy)*(1-fx)+Mc[k+1]*(1-fy)*fx+Mc[k+cw]*fy*(1-fx)+Mc[k+cw+1]*fy*fx;   // météo lissée entre mailles
-      // habitat (sol, altitude) lissé entre mailles, en ne comptant que les mailles existantes (pas d'effet de bord sur les côtes)
-      const w00=(1-fy)*(1-fx)*Wc[k],w01=(1-fy)*fx*Wc[k+1],w10=fy*(1-fx)*Wc[k+cw],w11=fy*fx*Wc[k+cw+1],wd=w00+w01+w10+w11;
-      let H=wd>0?(Hc[k]*w00+Hc[k+1]*w01+Hc[k+cw]*w10+Hc[k+cw+1]*w11)/wd:0;
-      if(useSol){let q=SF7[sy*SOL.w+Math.floor(x*SOL.K/K)];if(q<0)q=Sc7[ci*nj+Math.floor(x/K)];H*=q}   // pH, texture, humus du bloc
-      const v=100*H*FP[cls[y*FW+x]]*M;
+      const gx=(x+.5)/K-.5,j0=Math.floor(gx),fx=gx-j0,k=(i0+1)*cw+(j0+1),cj=Math.floor(x/K);
+      const w00=(1-fy)*(1-fx),w01=(1-fy)*fx,w10=fy*(1-fx),w11=fy*fx;
+      const a=w00*Wc[k],b=w01*Wc[k+1],c=w10*Wc[k+cw],d=w11*Wc[k+cw+1],wdn=a+b+c+d;
+      let ab=-1,rb=0;
+      if(useRel){rb=ry*RLF.w+Math.floor(x*RLF.K/K);const e=RLF.elev[rb];if(e!=255)ab=e*20}
+      // météo lissée entre mailles, corrigée de la température de l'altitude du bloc
+      const M=ab>=0?mt(k,w00,ab)+mt(k+1,w01,ab)+mt(k+cw,w10,ab)+mt(k+cw+1,w11,ab):Mc[k]*w00+Mc[k+1]*w01+Mc[k+cw]*w10+Mc[k+cw+1]*w11;
+      // sol : du bloc (pH, texture, humus) sinon de la maille ; altitude et pente : du bloc sinon de la maille
+      let qS,qA,fm=1;
+      if(useSol){qS=SF7[sy*SOL.w+Math.floor(x*SOL.K/K)];if(qS<0)qS=Sc7[ci*nj+cj]}
+      else qS=wdn>0?(HcS[k]*a+HcS[k+1]*b+HcS[k+cw]*c+HcS[k+cw+1]*d)/wdn:0;
+      if(ab>=0){qA=T7[rb];if(qA<0)qA=Al7c[ci*nj+cj];fm=1+.25*RLF.MI[rb]*(wdn>0?(Dc[k]*a+Dc[k+1]*b+Dc[k+cw]*c+Dc[k+cw+1]*d)/wdn:0)}
+      else qA=wdn>0?(HcA[k]*a+HcA[k+1]*b+HcA[k+cw]*c+HcA[k+cw+1]*d)/wdn:0;
+      const v=100*qS*qA*FP[cls[y*FW+x]]*M*fm;
       A[(y+pad)*w+x+pad]=v>100?100:v;
     }
   }
@@ -726,7 +809,7 @@ const PHOTOS={};
 function renderSpecies(){
   const sp=SP[st.sp];
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";
-  $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+  $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
   const img=$("spimg"),cap=$("spcap"),k=st.sp,P=PHOTOS[k];
   const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";return}img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
   if(P!==undefined){show(P);return}
@@ -791,6 +874,7 @@ function makeZone(lat,lon){
       if(FINE.urb[fy*FW+fx]){z.anth="ville";z.src.f="agglomération (CORINE 2018)"}}
   }
   if(SOL){const bs=blockSoil(lat,lon);if(bs){z.sol=bs;z.src.s="SoilGrids (bloc de 2,8 km)"}}
+  if(RLF){const br=blockRelief(lat,lon);if(br){const aw=z.alt;z.rel=br;z.alt=Math.round(br.elev);z.dT=-.0065*(br.elev-aw);z.src.a="bloc de 2,8 km (relief)";z.src.r="bloc de 2,8 km"}}
   if(!z.anth&&nearRoad(lat,lon,140)){z.anth="route";z.src.f="axe routier principal (BD TOPO)"}
   return z;
 }
@@ -800,12 +884,20 @@ async function refinePoint(z){
   const J=async(url,ms)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(t)}};
   const f=a=>(a||[]).map(v=>typeof v=="number"?v:0);
   const tasks=[
+    (async()=>{try{   // pente et exposition exactes : altitude aux quatre points cardinaux à environ 100 m
+      const d=.0009,la=z.lat,lo=z.lon,kx=Math.cos(la*Math.PI/180)*111320,ky=110540;
+      const o=await J("https://api.open-meteo.com/v1/elevation?latitude="+[la,la,la+d,la-d].join(",")+"&longitude="+[lo+d,lo-d,lo,lo].join(","),12000);
+      if(!ok()||!o.elevation||o.elevation.length<4)return;
+      const[e,wv,n,sv]=o.elevation,gx=(e-wv)/(2*d*kx),gn=(n-sv)/(2*d*ky),mag=Math.hypot(gx,gn),slope=Math.atan(mag)*180/Math.PI;
+      z.rel=Object.assign(z.rel||{tpi:0},{slope,north:mag>1e-6?(-gn/mag)*Math.min(slope,30)/30:0});
+      z.src.r="pente et exposition exactes au point (modèle d'altitude 90 m)";renderDetail();
+    }catch(e){}})(),
     (async()=>{try{
       const o=await J("https://api.open-meteo.com/v1/forecast?latitude="+z.lat+"&longitude="+z.lon+"&daily=precipitation_sum,temperature_2m_mean,temperature_2m_min,soil_moisture_0_to_10cm_mean,et0_fao_evapotranspiration&past_days="+st.past+"&forecast_days=8&timezone=Europe%2FParis",15000);
       if(!ok())return;const d=o.daily;
       z.L={p:f(d.precipitation_sum),t:f(d.temperature_2m_mean),tn:f(d.temperature_2m_min),sm:f(d.soil_moisture_0_to_10cm_mean),et:f(d.et0_fao_evapotranspiration),off:st.past};
       if(typeof o.elevation=="number")z.alt=Math.round(o.elevation);
-      z.src.w="exacte au point (Open-Meteo)";z.src.a="exacte au point";renderDetail();
+      z.dT=0;z.src.w="exacte au point (Open-Meteo)";z.src.a="exacte au point";renderDetail();
     }catch(e){}})(),
     (async()=>{try{
       const dd=.0008,o=await J("https://data.geopf.fr/wms-v/ows?"+new URLSearchParams({SERVICE:"WMS",VERSION:"1.3.0",REQUEST:"GetFeatureInfo",LAYERS:"LANDCOVER.FORESTINVENTORY.V2",QUERY_LAYERS:"LANDCOVER.FORESTINVENTORY.V2",CRS:"EPSG:4326",BBOX:[z.lat-dd,z.lon-dd,z.lat+dd,z.lon+dd].join(","),WIDTH:10,HEIGHT:10,I:5,J:5,INFO_FORMAT:"application/json"}),15000);
@@ -847,6 +939,13 @@ function verdictHtml(sp,z,r,rv,arr,d){
   <p>${pct!=null?`Mieux que ${pct} % des zones de France sur cette vue. `:""}Lieu <b>${lieu}</b> (sol, forêt, altitude : ${hab}/100) ; conditions du moment <b>${cnd}</b> (${cond}/100).${fac[1]<.6?` Principal frein : ${fac[0]} (${Math.round(fac[1]*100)} %).`:""}${nf}</p>
   <p>Tendance sur 8 jours : <b>${tr}</b>${arr[best]>arr[d]+4?` ; meilleur jour : ${bd} (${arr[best]}).`:"."}</p></div>`;
 }
+function reliefLine(z,sp,r){
+  const rl=z.rel;if(!rl)return "";
+  const t=r.tfx,expo=rl.north>.25?"versant nord":rl.north<-.25?"versant sud":"exposition neutre",pos=rl.tpi<-15?"fond de vallon ou dépression":rl.tpi>15?"crête ou sommet":"position intermédiaire";
+  const eff=t?`humidité ${t.fm>=1?"+":"−"}${Math.abs(Math.round((t.fm-1)*100))} % en période sèche · pente ${Math.round((t.fs-1)*100)} %`:"";
+  const dt=z.dT?` · température corrigée de ${z.dT>0?"+":"−"}${fr1(Math.abs(z.dT))} °C par rapport à la maille`:"";
+  return `<p class="prov"><b>Relief</b> (${(z.src&&z.src.r)||"bloc de 2,8 km"}) — altitude ${z.alt} m · pente ${Math.round(rl.slope)}° · ${expo} · ${pos}${dt}.<br>Effet pour ${sp.det} : ${eff}.</p>`;
+}
 function soilLine(z,sp,r){
   const s=z.sol;
   if(!s)return `<p class="prov"><b>Sol</b> — catégorie ${SOIL[z.so]} (pas de mesure fine disponible).</p>`;
@@ -869,6 +968,7 @@ function renderDetail(){
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
   ${soilLine(zsel,sp,r)}
+  ${reliefLine(zsel,sp,r)}
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p>`;
 }
@@ -902,10 +1002,11 @@ async function loadLive(){
     st.pt=null;st.ptZ=null;
     buildHeat();indexCells();
     render();
-    await Promise.all([loadForets(),loadMasks(),loadSol()]);
+    await Promise.all([loadForets(),loadMasks(),loadSol(),loadRelief()]);
     applySol();
+    applyRelief();
     buildFineGrid();
-    if(FINE||SOL)render();
+    if(FINE||SOL||RLF)render();
     applyHash();
   }catch(e){}
 }
