@@ -139,6 +139,14 @@ catégories (acide, neutre, calcaire) par un pH continu, ajoute une pénalité d
 et, pour la morille et la coulemelle, un bonus d'humus. Détail et niveaux de preuve : `research/sources-recoupees-oct2026.md`.
 Lancement : Actions > « Sol SoilGrids » > Run workflow. Sans `sol.json`, la carte garde les trois catégories.
 
+## Relief et microclimat (oct. 2026)
+
+`build_relief.py` assemble des tuiles d'altitude (AWS Terrain Tiles) et calcule, par blocs de 2,8 km, l'altitude, la pente, l'exposition et la
+position topographique, dans `relief.json` (prérequis : `pip install numpy pillow` ; 1 à 3 minutes depuis GitHub Actions).
+Le modèle corrige la température selon l'altitude du bloc, favorise versants nord et dépressions quand l'humidité manque, et pénalise les fortes pentes.
+Détail et niveaux de preuve : `research/sources-recoupees-oct2026.md`. Lancement : Actions > « Relief » > Run workflow.
+Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point précis, la page recalcule pente et exposition sur place.
+
 ## Limites connues
 
 - Sans `terrain.json`, sol et forêt sont hérités du massif de référence le

@@ -89,3 +89,29 @@ Sources :
 
 Limites : ces études sont ponctuelles, souvent hors de France, et ne donnent pas de courbes de réponse. Les pondérations (plancher de
 pH de 0,1 à 0,5 ; pénalité d'argile jusqu'à 30 % ; pénalité de sable jusqu'à 35 %) sont des choix de modélisation, pas des résultats publiés.
+
+## Relief et microclimat : ce qui est modélisé (oct. 2026)
+Données : tuiles d'altitude AWS « Terrain Tiles » (niveau 10, environ 106 m par pixel à 46° N), agrégées par blocs de 2,8 km par
+`build_relief.py` : altitude moyenne, pente moyenne, exposition nord (moyenne de cos(azimut du versant) x min(pente, 30°) / 30) et position
+topographique (altitude du pixel moins la moyenne dans environ 500 m : négatif en fond de vallon, positif sur les crêtes).
+
+Trois effets, tous modestes et bornés :
+1. **Température corrigée de l'altitude du bloc** : -6,5 °C par km par rapport au point de la série météo de la maille (gradient standard de
+   l'atmosphère). Appliquée aux mailles dont l'amplitude d'altitude dépasse 100 m (45 % des mailles). Le gel (température minimale) est décalé de la même valeur.
+2. **Exposition et dépressions** : indice d'humidité 0,7 x exposition nord + 0,3 x dépression ; bonus ou malus de 25 % au plus, **proportionnel
+   au déficit d'humidité du moment** (nul quand le sol est déjà humide).
+3. **Pente** : pénalité linéaire de 0 % à 15° jusqu'à 30 % à 40° (sol mince, ruissellement).
+
+Sources :
+- Espagne (pinèdes de Catalogne) : la production augmente avec l'altitude et l'exposition nord, diminue avec la pente ; sur versants sud, la
+  pente réduit nettement le rendement ; le lactaire est plus abondant dans les dépressions (De Miguel et al. 2014, Bonet et al.).
+  https://cris.ctfc.cat/docs/upload/27_431_De-Miguel%20et%20al-%202014.pdf ;
+  https://www.researchgate.net/figure/Mushroom-production-as-a-function-of-a-slope-b-elevation-and-c-aspect-and_fig3_233652856
+- Turquie (forêts mixtes de la mer Noire, climat humide) : effet inverse ou nul de l'exposition nord sur la productivité du cèpe.
+  https://dergipark.org.tr/en/pub/artvinofd/article/449736
+  -> raison pour laquelle l'effet d'exposition ne joue que lorsque l'humidité est limitante.
+
+Limites : niveau de preuve « partiel » (études ponctuelles, en climat méditerranéen) ; les pondérations (25 % et 30 %, indice 0,7/0,3, seuil de pente 15°)
+sont des choix de modélisation. Un bloc de 2,8 km moyenne des versants opposés (l'exposition se compense dans les vallées étroites). Le microclimat
+des lisières, clairières et fonds de combe de quelques dizaines de mètres n'est pas visible à cette échelle. Pour un point précis, la pente et l'exposition
+sont recalculées sur place à partir de quatre altitudes à environ 100 m.
