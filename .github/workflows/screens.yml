@@ -1,0 +1,21 @@
+name: Captures d'écran (manuel)
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --break-system-packages playwright && python3 -m playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8000 >/dev/null 2>&1 &
+          sleep 2
+          python3 tests/screens.py /tmp/screens || true
+      - run: |
+          cd /tmp/screens
+          git init -q -b screenshots
+          git config user.name "bot"; git config user.email "bot@users.noreply.github.com"
+          git add -A; git commit -q -m "captures $(date -u +%F-%H%M)"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" screenshots
