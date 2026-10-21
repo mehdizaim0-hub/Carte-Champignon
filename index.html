@@ -25,9 +25,9 @@ html,body{height:100%;overflow-x:clip}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 'Bricolage Grotesque',system-ui,sans-serif}
 #app{display:grid;grid-template-columns:440px minmax(0,1fr);height:100dvh}
 @media(max-width:860px){
-  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:52dvh 1fr}
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:46dvh 1fr}
   aside{order:2;border-right:0;border-top:1px solid var(--line)}
-  #map{order:1}
+  #mapwrap{order:1}
 }
 aside{overflow-y:auto;min-width:0;border-right:1px solid var(--line);background:var(--paper);padding:18px 18px 30px;display:grid;gap:16px;align-content:start}
 h1{margin:0;font-family:Fraunces,serif;font-weight:700;font-size:clamp(23px,6vw,30px);line-height:1.1;letter-spacing:-.01em;overflow-wrap:anywhere;min-width:0}
@@ -100,10 +100,61 @@ li.z b{font-variant-numeric:tabular-nums}
 .leaflet-container{font:inherit}
 /* marqueur sélection : pulsation */
 .selpin{position:relative}
-.selpin .dot{position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;background:var(--acc);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
-.selpin .ring{position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;border:2px solid var(--acc);animation:pulse 1.6s var(--ease-out) infinite}
+.selpin .dot{position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;background:#4a148c;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.55)}
+.selpin .ring{position:absolute;inset:0;margin:auto;width:18px;height:18px;border-radius:50%;border:2px solid #4a148c;animation:pulse 1.6s var(--ease-out) infinite}
 @keyframes pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}
 .homepin{width:16px;height:16px;border-radius:50%;background:var(--blue);border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+/* ---- interface v2 : commandes compactes, résultat en tête, légende sur la carte ---- */
+#mapwrap{position:relative;min-height:0}
+#mapwrap #map{position:absolute;inset:0}
+.hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.icbtn{flex:none;width:32px;height:32px;margin-top:2px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 16px/1 Fraunces,serif;cursor:pointer;transition:border-color var(--dur-micro) var(--ease-in-out)}
+.icbtn:hover{border-color:var(--ink)}
+.ctl .chips{gap:6px}
+.ctlrow{display:flex;gap:10px;align-items:center;margin-top:12px}
+.ctlrow .lab{flex:none;width:34px;font-size:11.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.ctlrow .chips{min-width:0}
+.chips.seg button{padding:5px 11px;font-size:13.5px}
+@media(max-width:860px){
+  #chips,#days{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  #chips button,#days button{flex:none}
+  .ctlrow .chips.seg{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}
+  .ctlrow .chips.seg button{flex:none}
+  aside{padding:14px 14px 26px;gap:12px}
+}
+details.opts{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
+details.opts summary,.why summary{cursor:pointer;font-size:13px;color:var(--mute)}
+details.opts summary:hover,.why summary:hover{color:var(--ink)}
+.lab2{font-size:13.5px;color:var(--mute)}
+.spcdet{padding:0}
+.spcdet>summary{display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;list-style:none}
+.spcdet>summary::-webkit-details-marker{display:none}
+.spcdet>summary img{flex:none;width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--line)}
+.spcdet .sn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.spcdet .sn b{font-family:Fraunces,serif;font-size:15.5px}
+.spcdet .sn i{font-size:12.5px;color:var(--mute)}
+.spcdet .chev{flex:none;font-size:12.5px;color:var(--mute)}
+.spcdet[open] .chev{color:var(--ink)}
+.spcdet .spc{border:0;border-top:1px solid var(--line);border-radius:0;margin:0;background:transparent}
+.why{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.why[open] summary{margin-bottom:4px;color:var(--ink)}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hint{font-size:12.5px;color:var(--mute);margin:10px 0 0}
+#maplegend{position:absolute;left:10px;bottom:26px;z-index:500;max-width:min(270px,calc(100% - 20px));background:color-mix(in srgb,var(--panel) 93%,transparent);border:1px solid var(--line);border-radius:10px;padding:6px 10px 8px;font-size:11.5px;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);backdrop-filter:blur(3px)}
+#maplegend .legbtn{all:unset;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);display:block;width:100%}
+#maplegend .legbtn::after{content:" ▾";float:right}
+#maplegend.min .legbtn::after{content:" ▸"}
+#maplegend.min #legbody{display:none}
+#maplegend .legend{margin:6px 0 4px;gap:6px}
+#maplegend .bar{min-width:64px}
+.legline{display:flex;align-items:center;gap:7px;margin-top:3px;line-height:1.3}
+.lgdots{flex:none;width:18px;height:10px;background:radial-gradient(circle,hsl(24,100%,46%) 1.6px,transparent 2px) 0 0/6px 6px}
+.lgviol{flex:none;width:18px;height:8px;border:2px solid #4a148c;border-radius:2px;box-shadow:0 0 0 1px #fff}
+.lgpin{flex:none;width:18px;height:10px;border:1px dashed var(--mute);border-radius:2px}
+#tip{position:absolute;z-index:600;pointer-events:none;display:none;background:var(--ink);color:var(--paper);font-size:12px;padding:3px 9px;border-radius:6px;white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3)}
+.recbtn{width:30px;height:30px;line-height:28px;text-align:center;background:#fff;color:#222;border:0;font-size:17px;cursor:pointer;border-radius:2px}
+.recbtn:hover{background:#f4f4f4}
+@media(max-width:860px){#maplegend{bottom:22px;font-size:10.5px}}
 /* orchestration d'entrée : une seule séquence */
 aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(--ease-out) forwards;animation-delay:calc(var(--i,0)*60ms)}
 @keyframes enter{to{opacity:1;transform:none}}
@@ -116,50 +167,44 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 </head>
 <body>
 <div id="app">
-<aside>
+<aside id="side">
 <header style="--i:0">
-<h1>Où poussent les <em>champignons</em> ?</h1>
-<p class="lede">Zones favorables par espèce selon la météo réelle des 40 derniers jours, le sol, la forêt et l'altitude. Prévision jusqu'à J+7. Seules les zones réellement favorables se colorent en orange : plus c'est vif et foncé, plus les conditions sont réunies. Un contour violet cerne les meilleures zones de la date ou de la vue affichée.</p>
+<div class="hd"><h1>Où poussent les <em>champignons</em> ?</h1><button class="icbtn" id="helpbtn" type="button" aria-label="Comment lire la carte" title="Comment lire la carte">?</button></div>
+<p class="lede">Où chercher aujourd'hui : météo réelle, sol, forêt et relief. Choisissez une espèce, puis touchez la carte pour juger un endroit.</p>
 </header>
-<section class="card" style="--i:1" aria-label="Espèce et jour">
+<section class="card ctl" style="--i:1" aria-label="Espèce, vue et jour">
 <div class="chips" id="chips" role="group" aria-label="Espèce"></div>
+<div class="ctlrow"><span class="lab">Vue</span><div class="chips seg" id="views" role="group" aria-label="Vue"></div></div>
+<div class="note" id="viewnote"></div>
+<div class="ctlrow"><span class="lab">Jour</span><div class="chips seg" id="days" role="group" aria-label="Jour"></div></div>
+<div id="manual">
+<div class="row"><label for="rain">Pluie 14 derniers jours</label><input type="range" id="rain" min="0" max="250" step="5" value="100"><span class="v" id="rainv"></span></div>
+<div class="row"><label for="dt">Écart de température</label><input type="range" id="dt" min="-6" max="6" step="0.5" value="0"><span class="v" id="dtv"></span></div>
+</div>
+<div class="row" style="margin-top:10px"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
+<details class="opts"><summary>Options d'affichage</summary>
+<label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
+<label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (plus lisible sous la couleur)</label>
+</details>
+</section>
+<section class="card" id="detail" style="--i:2" aria-live="polite"></section>
+<section class="card" style="--i:3" aria-label="Où chercher">
+<h2>Où chercher ?</h2>
+<div class="row" style="margin-top:0"><input class="inp" id="gps" type="text" inputmode="decimal" placeholder="Coordonnées : 43.6612, 1.1305" aria-label="Coordonnées GPS : latitude, longitude"><button class="btn" id="gpsgo">Voir</button><button class="btn" id="gpsme">Ma position</button></div>
+<div class="note" id="gpsmsg" style="margin-top:6px">Saisissez des coordonnées ou touchez la carte.</div>
+<div class="row" style="margin-top:12px"><span class="lab2">Autour de</span><select id="city" aria-label="Ville"></select><button class="btn" id="geo">Me localiser</button></div>
+<div class="row"><label for="rad">Rayon</label><input type="range" id="rad" min="10" max="100" step="5" value="60"><span class="v" id="radv"></span></div>
+<ol id="near" style="margin-top:6px"></ol>
+</section>
+<details class="card spcdet" id="spdet" style="--i:4">
+<summary><img id="spthumb" alt="" width="44" height="44"><span class="sn"><b id="spsumn"></b><i id="spsuml"></i></span><span class="chev" aria-hidden="true">Fiche ▾</span></summary>
 <article class="spc" id="spcard" aria-live="polite">
   <figure class="ph"><img id="spimg" alt="" width="500" height="375" decoding="async"><figcaption id="spcap"></figcaption></figure>
   <div class="spi"><h3 id="spname"></h3><div class="lat" id="splat"></div><dl id="spdl"></dl>
   <p class="warn">Ne consommez rien sans identification certaine : faites valider vos cueillettes par un pharmacien ou une société mycologique.</p></div>
 </article>
-<div class="row"><label>Vue</label></div>
-<div class="chips" id="views" role="group" aria-label="Vue"></div>
-<div class="note" id="viewnote" style="margin-top:6px"></div>
-<div class="row"><label>Jour</label></div>
-<div class="chips" id="days" role="group" aria-label="Jour" style="margin-top:4px"></div>
-<div id="manual">
-<div class="row"><label for="rain">Pluie 14 derniers jours</label><input type="range" id="rain" min="0" max="250" step="5" value="100"><span class="v" id="rainv"></span></div>
-<div class="row"><label for="dt">Écart de température</label><input type="range" id="dt" min="-6" max="6" step="0.5" value="0"><span class="v" id="dtv"></span></div>
-</div>
-<div class="row"><span class="badge" id="status"></span><span class="badge" id="fetched" style="display:none"></span></div>
-<div class="note" style="margin:8px 0 0"><span style="display:inline-block;width:22px;height:10px;border:2.5px solid #4a148c;box-shadow:0 0 0 1.5px #fff;border-radius:2px;vertical-align:-2px;margin-right:6px"></span>Contour violet : les meilleures zones pour la vue et le jour choisis (il change avec la date). Une espèce hors saison reste incolore.</div>
-<label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
-<div class="note" style="margin:4px 0 0">Nuage de points : plus les points sont serrés et gros, plus le score est élevé.</div>
-<label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (noms et routes plus lisibles sous la couleur)</label>
-<div class="legend" style="margin-top:10px"><span>incolore : peu favorable</span><div class="bar"></div><span>orange vif à rouille : très favorable</span></div>
-</section>
-<section class="card" style="--i:2" aria-label="Point GPS">
-<h2>Un point précis</h2>
-<div class="row" style="margin-top:0"><input class="inp" id="gps" type="text" inputmode="decimal" placeholder="43.6612, 1.1305" aria-label="Coordonnées GPS : latitude, longitude"><button class="btn" id="gpsgo">Voir</button><button class="btn" id="gpsme">Ma position</button></div>
-<div class="note" id="gpsmsg" style="margin-top:6px">Touchez la carte ou saisissez des coordonnées : la météo, la forêt, le sol et l'altitude sont interrogés exactement à cet endroit.</div>
-</section>
-<section class="card" style="--i:2">
-<h2>Autour de chez moi</h2>
-<div class="row" style="margin-top:0">
-<select id="city" aria-label="Ville"></select>
-<button class="btn" id="geo">Me localiser</button>
-</div>
-<div class="row"><label for="rad">Rayon</label><input type="range" id="rad" min="10" max="100" step="5" value="60"><span class="v" id="radv"></span></div>
-<ol id="near" style="margin-top:6px"></ol>
-</section>
-<section class="card" id="detail" style="--i:3" aria-live="polite"></section>
-<details class="card" style="--i:4">
+</details>
+<details class="card" id="howto" style="--i:5">
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>
 <div class="sub" style="margin-top:8px;line-height:1.6">
 <p style="margin:0 0 8px"><b>Chaque jour, on interroge la météo.</b> La France est découpée en 2 400 petites zones d'environ 17 km. Pour chacune, on récupère la pluie, la température, le gel et l'humidité du sol des 40 derniers jours, plus 8 jours de prévision. Ces chiffres viennent d'Open-Meteo, un service météo public et gratuit.</p>
@@ -172,7 +217,18 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 </details>
 <p class="note" style="--i:5">Les scores sont un modèle écologique : ils disent où chercher, pas où trouver. Fond de carte © OpenStreetMap / OpenTopoMap.</p>
 </aside>
+<div id="mapwrap">
 <div id="map" role="application" aria-label="Carte de France des zones favorables"></div>
+<div id="maplegend" role="group" aria-label="Légende de la carte">
+<button type="button" id="legtoggle" class="legbtn" aria-expanded="true">Légende</button>
+<div id="legbody">
+<div class="legend"><span>peu</span><div class="bar"></div><span>très favorable</span></div>
+<div class="legline"><span class="lgdots"></span>points plus serrés et plus gros = meilleur score</div>
+<div class="legline"><span class="lgviol"></span>contour violet = meilleures zones du moment</div>
+<div class="legline"><span class="lgpin"></span>incolore = peu ou pas favorable (villes, routes, cultures)</div>
+</div></div>
+<div id="tip" role="status"></div>
+</div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -383,6 +439,27 @@ function viewM(sp,z,dT){
 }
 // ---------- Carte Leaflet ----------
 let map,selMarker=null,homeMarker=null,radCircle=null,topLayer=null;
+// Contour des meilleures zones : plus fin et plus sélectif à l'échelle nationale, plus net en gros plan.
+function drawOutline(){
+  if(topLayer){topLayer.remove();topLayer=null}
+  const F=st.F;if(!F||!map)return;
+  const z=map.getZoom(),minC=z<7?60:z<9?12:F.minComp,segs=outlineSegs(F,minC);
+  if(!segs.length)return;
+  const w=z<7?1.3:z<9?1.9:2.6,hw=w+(z<7?1.6:3);
+  topLayer=L.layerGroup([
+    L.polyline(segs,{color:"#fff",weight:hw,opacity:.9,lineJoin:"round",lineCap:"round",interactive:false}),
+    L.polyline(segs,{color:"#4a148c",weight:w,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
+  ]).addTo(map);
+}
+// Étiquette de score au survol (souris uniquement)
+function tipLabel(v){return v>=70?"Très propice":v>=55?"Propice":v>=35?"Moyennement propice":v>=20?"Peu propice":"Peu ou pas favorable"}
+function showTip(e){
+  const t=$("tip");if(!t)return;
+  if(!st.F||matchMedia("(pointer:coarse)").matches){t.style.display="none";return}
+  const v=Math.min(100,fieldAt(st.F,e.latlng.lat,e.latlng.lng)*st.F.gain);
+  t.textContent=v<12?"Peu ou pas favorable":tipLabel(v)+" · "+Math.round(v);
+  t.style.display="block";t.style.left=Math.min(e.containerPoint.x+14,$("map").clientWidth-190)+"px";t.style.top=(e.containerPoint.y+16)+"px";
+}
 function initMap(){
   map=L.map("map",{preferCanvas:true,zoomControl:true,minZoom:5,maxZoom:14,zoomSnap:.5,wheelPxPerZoomLevel:90,
     maxBounds:[[40.5,-6.5],[52.2,11.5]],maxBoundsViscosity:.8});
@@ -393,6 +470,12 @@ function initMap(){
   L.control.layers({"Plan":osm,"Relief et forêts":topo},null,{position:"topright"}).addTo(map);
   initDots();
   map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
+  map.on("zoomend",drawOutline);
+  map.on("mousemove",showTip);map.on("mouseout",()=>{$("tip").style.display="none"});map.on("movestart",()=>{$("tip").style.display="none"});
+  const Rec=L.Control.extend({options:{position:"topleft"},onAdd(){
+    const b=L.DomUtil.create("button","leaflet-bar recbtn");b.type="button";b.title="Voir toute la France";b.setAttribute("aria-label","Voir toute la France");b.textContent="⌂";
+    L.DomEvent.disableClickPropagation(b);b.onclick=()=>map.flyTo([46.6,2.6],6,{duration:.7});return b}});
+  map.addControl(new Rec());
 }
 // ---------- Couche de chaleur : un seul canvas lissé (pas de cercles superposés) ----------
 let heatOverlay=null,heatBounds=null,heatGeom=null;
@@ -612,9 +695,9 @@ function buildFineField(sc,sp){
   return{kind:"fine",G,w,h,mx,gain:85/Math.max(60,mx),Alat:la0-dLat/2+(-pad+.5)*bl,Blat:bl,Alon:lo0-dLon/2+(-pad+.5)*bo,Blon:bo,R:1,minComp:3};
 }
 // Contours lissés (marching squares) : le haut du panier de la vue affichée (>= 78 % du meilleur niveau, jamais sous 35).
-function outlineSegs(F){
+function outlineSegs(F,mc){
   if(!F||F.mx<35)return[];
-  const{G,w,h,R,minComp}=F;
+  const{G,w,h,R}=F,minComp=mc!=null?mc:F.minComp;
   let thr=Math.max(35,.78*F.mx);
   const P=(h-1)*R+1,Q=(w-1)*R+1;
   for(let essai=0;essai<3;essai++){
@@ -738,6 +821,30 @@ function drawDots(){
   }
 }
 // ---------- UI ----------
+// ---------- Mémoire des choix et lien partageable ----------
+const PREF_KEY="cm:v1",INIT_HASH=location.hash||"";   // le lien d'origine est lu une fois : render() réécrit le hash
+function loadPrefs(){
+  let p={};try{p=JSON.parse(localStorage.getItem(PREF_KEY)||"{}")}catch(e){}
+  const h=new URLSearchParams(INIT_HASH.replace(/^#/,""));
+  const sp=h.has("e")?+h.get("e"):p.sp;if(Number.isInteger(sp)&&sp>=0&&sp<SP.length)st.sp=sp;
+  const v=h.get("v")||p.view;if(VIEWS.some(x=>x.k==v))st.view=v;
+  if(p.mode==="flat"||p.mode==="dots")st.mode=p.mode;
+  if(typeof p.gray==="boolean")$("gray").checked=p.gray;
+  if(p.rad>=10&&p.rad<=100)$("rad").value=p.rad;
+  if(p.city&&CITIES[p.city]){st.home=CITIES[p.city];st.cityName=p.city}
+  $("mode").value=st.mode;
+  if(CITIES[st.cityName])$("city").value=st.cityName;
+  $("map").classList.toggle("gray",$("gray").checked);
+}
+function savePrefs(){
+  try{localStorage.setItem(PREF_KEY,JSON.stringify({sp:st.sp,view:st.view,mode:st.mode,gray:$("gray").checked,rad:+$("rad").value,city:CITIES[st.cityName]?st.cityName:undefined}))}catch(e){}
+  try{const h=["e="+st.sp,"v="+st.view];if(st.pt)h.push("p="+st.pt.lat.toFixed(5)+","+st.pt.lon.toFixed(5));history.replaceState(null,"","#"+h.join("&"))}catch(e){}
+}
+function scrollToDetail(){
+  const a=$("side"),d=$("detail");if(!a||!d)return;
+  const top=d.getBoundingClientRect().top-a.getBoundingClientRect().top+a.scrollTop-10;
+  try{a.scrollTo({top,behavior:"smooth"})}catch(e){a.scrollTop=top}
+}
 function build(){
   Z.forEach((z,i)=>z.i=i);
   $("chips").innerHTML=SP.map((s,i)=>`<button aria-pressed="${i==st.sp}" data-i="${i}">${s.n}</button>`).join("");
@@ -748,7 +855,10 @@ function build(){
   $("gpsme").onclick=()=>{if(!navigator.geolocation){$("gpsmsg").textContent="Géolocalisation indisponible sur cet appareil.";return}
     navigator.geolocation.getCurrentPosition(p=>setPoint(p.coords.latitude,p.coords.longitude,true),()=>{$("gpsmsg").textContent="Position refusée : saisissez des coordonnées ou touchez la carte."})};
   $("detail").onclick=e=>{const li=e.target.closest(".spots li");if(li&&st.spots&&map){const c=st.spots[+li.dataset.i];if(c)map.flyTo([c.la,c.lo],17,{duration:.7})}};
-  $("gray").onchange=e=>$("map").classList.toggle("gray",e.target.checked);
+  $("gray").onchange=e=>{$("map").classList.toggle("gray",e.target.checked);savePrefs()};
+  $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
+  $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
+  if(innerWidth<=860)$("maplegend").classList.add("min");
   $("map").classList.toggle("gray",$("gray").checked);
   $("views").innerHTML=VIEWS.map(v=>`<button data-v="${v.k}" aria-pressed="${v.k==st.view}">${v.t}</button>`).join("");
   $("views").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.view=b.dataset.v;render()};
@@ -789,14 +899,7 @@ function render(){
   const dots=st.mode=="dots"&&!!st.F;
   if(dots){if(heatOverlay)heatOverlay.setOpacity(0)}else{if(heatOverlay)heatOverlay.setOpacity(1);paintHeat(sc)}
   drawDots();
-  if(topLayer){topLayer.remove();topLayer=null}
-  const segs=outlineSegs(st.F);
-  if(segs.length){
-    topLayer=L.layerGroup([
-      L.polyline(segs,{color:"#fff",weight:5.5,opacity:.95,lineJoin:"round",lineCap:"round",interactive:false}),
-      L.polyline(segs,{color:"#4a148c",weight:2.4,opacity:1,lineJoin:"round",lineCap:"round",interactive:false})
-    ]).addTo(map);
-  }
+  drawOutline();
   renderSpecies();
   renderPointMarker();
   // chez moi + rayon
@@ -813,16 +916,18 @@ function render(){
   let msg="";
   if(!l.length){l=n.slice(0,3);msg=`<div class="note">Aucune zone suivie dans ${R} km autour de ${st.cityName}. Les 3 plus proches :</div>`}
   $("near").innerHTML=(msg?`<li style="cursor:default;border:0">${msg}</li>`:"")+l.map(o=>`<li class="z" data-i="${o.z.i}"><span>${o.z.n}<br><span class="sub">${Math.round(o.k)} km · ${o.z.alt} m</span></span><b style="color:${col(o.r.sc)}">${o.r.sc}</b></li>`).join("");
+  st.nearTop=l[0]?l[0].z:null;
   if(st.spotData&&st.spotData.state=="ok")renderSpots();else renderDetail();
+  savePrefs();
 }
 // ---------- Fiche espèce : photo Wikipédia/Wikimedia Commons (licence libre, auteur crédité) ----------
 const PHOTOS={};
 function renderSpecies(){
   const sp=SP[st.sp];
-  $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";
+  $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";$("spsumn").textContent=sp.n;$("spsuml").textContent=sp.lat||"";
   $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
   const img=$("spimg"),cap=$("spcap"),k=st.sp,P=PHOTOS[k];
-  const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";return}img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
+  const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";$("spthumb").removeAttribute("src");return}$("spthumb").src=p.src;img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
   if(P!==undefined){show(P);return}
   img.style.visibility="hidden";cap.textContent="Chargement de la photo…";
   loadPhoto(sp).then(p=>{PHOTOS[k]=p;show(p)});
@@ -980,7 +1085,7 @@ function setPoint(lat,lon,fly){
   $("gpsmsg").textContent="Point choisi. Les données exactes arrivent en quelques secondes.";
   if(fly&&map)map.flyTo([lat,lon],Math.max(map.getZoom(),9),{duration:.8});
   if(spotLayer){spotLayer.remove();spotLayer=null}
-  renderPointMarker();renderDetail();refinePoint(st.ptZ);loadSpotData(st.ptZ);
+  renderPointMarker();renderDetail();scrollToDetail();savePrefs();refinePoint(st.ptZ);loadSpotData(st.ptZ);
 }
 // Zone « virtuelle » au point : météo interpolée entre les 4 mailles voisines, terrain de la maille ou du bloc forestier.
 function makeZone(lat,lon){
@@ -1085,21 +1190,26 @@ function soilLine(z,sp,r){
 }
 function renderDetail(){
   const sp=SP[st.sp],d=st.day,zsel=st.ptZ;
-  if(!zsel){$("detail").innerHTML=`<h2>${sp.n}</h2><div class="sub">${sp.txt}</div><p class="note">Touchez la carte ou saisissez des coordonnées GPS : on calcule les conditions exactement à cet endroit (météo, forêt, sol, altitude).</p>`;return}
+  if(!zsel){
+    $("detail").innerHTML=`<h2>Un endroit à juger ?</h2><p class="sub" style="margin:0">Touchez la carte pour savoir si l'endroit est propice à ${sp.det} : météo, forêt, sol et relief y sont interrogés exactement.</p><div class="cta"><button class="btn" id="ctabest" type="button">Meilleure zone près de chez moi</button><button class="btn" id="ctame" type="button">Ma position</button></div><p class="hint">Astuce : survolez la carte pour voir le niveau de propice, déplacez-vous au zoom 10 ou plus pour voir les petits massifs.</p>`;
+    $("ctabest").onclick=()=>{if(st.nearTop)setPoint(st.nearTop.lat,st.nearTop.lon,true)};
+    $("ctame").onclick=()=>$("gpsme").click();
+    return;
+  }
   const r=score(sp,zsel,d),rv=viewScore(sp,zsel);
   const arr=[...Array(8)].map((_,k)=>score(sp,zsel,k).sc);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
   const top=SP.map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
   const src=zsel.src||{};
-  $("detail").innerHTML=`<h2>${zsel.n}</h2>${zsel.near?`<div class="sub">près de ${zsel.near}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${spotsHtml()}<div class="sub" style="margin:4px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  const sparkHtml=`<div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>`;
+  const topHtml=`<p class="note" style="margin-top:6px"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
+  $("detail").innerHTML=`<h2>${zsel.n}</h2>${zsel.near?`<div class="sub">près de ${zsel.near}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
-  <div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
-  <p class="note"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>
   ${soilLine(zsel,sp,r)}
   ${reliefLine(zsel,sp,r)}
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
-  <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p>`;
+  <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
 }
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------
 async function loadLive(){
@@ -1112,7 +1222,7 @@ async function loadLive(){
     const phToSoil=ph=>ph==null?null:ph<5.5?"a":ph>6.8?"c":"n";
     const t0=new Date(j.start+"T12:00:00"),t1=new Date();t1.setHours(12,0,0,0);
     st.off=Math.round((t1-t0)/864e5);
-    st.dataDate=t0.toLocaleDateString("fr-FR",{day:"numeric",month:"long"});
+    {const dd=new Date(t0);dd.setDate(dd.getDate()+(j.cells[0][3].length-8));st.dataDate=dd.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}   // jour de la collecte (la série commence 40 jours avant)
     const REFZ=REF;
     Z=j.cells.map((c,i)=>{
       let best=null,bd=1e9;REFZ.forEach(q=>{const k=km(c[0],c[1],q.lat,q.lon);if(k<bd){bd=k;best=q}});
@@ -1181,14 +1291,14 @@ async function loadForets(){
   }catch(e){}
 }
 function applyHash(){
-  const m=/#p=(-?[\d.]+),(-?[\d.]+)/.exec(location.hash||"");
+  const m=/[#&]p=(-?[\d.]+),(-?[\d.]+)/.exec(INIT_HASH);
   if(m)setPoint(parseFloat(m[1]),parseFloat(m[2]),true);
 }
 if(typeof L=="undefined"){
   $("map").innerHTML='<p style="padding:20px;color:var(--mute)">La bibliothèque de carte (Leaflet) n\'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.</p>';
   build();render=()=>{};
 }else{
-  initMap();build();buildHeat();render();loadLive();
+  initMap();build();loadPrefs();buildHeat();render();loadLive();
 }
 </script>
 </body>

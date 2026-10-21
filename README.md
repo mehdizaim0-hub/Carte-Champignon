@@ -2,6 +2,8 @@
 
 Site : https://mehdizaim0-hub.github.io/Carte-Champignon/
 
+Guide technique et pièges connus : [CLAUDE.md](CLAUDE.md) · Sources scientifiques : [research/](research/) · Tests : `npm install && npm test`
+
 Carte des zones favorables (cèpes, girolles, morilles…) sur une grille de
 ~2 400 mailles, croisant météo réelle, humidité du sol, gel, sol, forêt,
 altitude et calendriers d'observations réelles.

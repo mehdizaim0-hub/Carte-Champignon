@@ -1,0 +1,14 @@
+{
+  "name": "carte-champignons",
+  "private": true,
+  "description": "Carte des zones favorables aux champignons en France : tests automatiques",
+  "scripts": {
+    "test": "node tests/page.test.js && python3 tests/validate_data.py",
+    "test:data": "python3 tests/validate_data.py",
+    "test:page": "node tests/page.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "24.1.3",
+    "leaflet": "1.9.4"
+  }
+}
