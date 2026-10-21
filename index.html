@@ -111,14 +111,16 @@ li.z b{font-variant-numeric:tabular-nums}
 .icbtn{flex:none;width:32px;height:32px;margin-top:2px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 16px/1 Fraunces,serif;cursor:pointer;transition:border-color var(--dur-micro) var(--ease-in-out)}
 .icbtn:hover{border-color:var(--ink)}
 .ctl .chips{gap:6px}
-.ctlrow{display:flex;gap:10px;align-items:center;margin-top:12px}
-.ctlrow .lab{flex:none;width:34px;font-size:11.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.ctlrow{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ctlrow .lab{font-size:11.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+#chips button{padding:6px 12px;font-size:13.5px}
 .ctlrow .chips{min-width:0}
 .chips.seg button{padding:5px 11px;font-size:13.5px}
 @media(max-width:860px){
   #chips,#days{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
   #chips button,#days button{flex:none}
   .ctlrow .chips.seg{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}
+  .ctlrow .chips.seg button{white-space:nowrap}
   .ctlrow .chips.seg button{flex:none}
   aside{padding:14px 14px 26px;gap:12px}
 }
@@ -882,7 +884,7 @@ function render(){
   document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
   document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
   $("viewnote").textContent=VIEWS.find(v=>v.k==st.view).note;
-  $("days").classList.toggle("dim",st.view=="dur"||st.view=="best");
+  $("days").closest(".ctlrow").style.display=(st.view=="dur"||st.view=="best")?"none":"";
   $("rainv").textContent=st.rain+" % de la normale";
   $("dtv").textContent=(st.dt>0?"+":"")+st.dt+" °C";
   $("radv").textContent=$("rad").value+" km";
