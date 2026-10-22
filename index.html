@@ -54,11 +54,20 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .dim{opacity:.4;pointer-events:none}
 .mush{position:relative;width:30px;height:30px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .mush b{position:absolute;right:-4px;top:-6px;min-width:15px;height:15px;border-radius:8px;background:#3d230f;color:#fff;font:700 10px/14px system-ui,sans-serif;text-align:center;border:1px solid #fff}
-.spotsbox{border:1px solid var(--line);border-left:6px solid #7b4a22;border-radius:10px;padding:9px 12px;margin:0 0 10px}
+.spotsbox{border:1px solid var(--line);border-left:6px solid #4a148c;border-radius:10px;padding:9px 12px;margin:0 0 10px}
 .spots{list-style:none;margin:6px 0 0;padding:0;font-size:13px}
-.spots li{display:flex;gap:9px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);cursor:pointer}
+.spots li{display:flex;gap:11px;align-items:center;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
 .spots li:first-child{border-top:0}
-.spots b.n{flex:none;width:19px;height:19px;border-radius:50%;background:#7b4a22;color:#fff;font-size:11px;text-align:center;line-height:19px}
+.spots li:hover .tx b{text-decoration:underline}
+.spots .tx{line-height:1.4;min-width:0}
+.spots .lv{color:var(--mute);font-size:12px}
+.note.small{font-size:11.5px;margin:6px 0 0}
+.spthumb{position:relative;width:46px;height:46px}
+.spthumb img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 1px 7px rgba(0,0,0,.5);background:var(--line)}
+.spthumb.sm{flex:none;width:44px;height:44px}
+.spthumb.sm img{box-shadow:none;border-width:3px;border-style:solid}
+.spthumb .rk{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;padding:0 3px;box-sizing:border-box;border-radius:10px;background:#4a148c;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff}
+.spthumb.l4 img{border-color:hsl(14,95%,38%)}.spthumb.l3 img{border-color:hsl(27,100%,46%)}.spthumb.l2 img{border-color:hsl(42,100%,50%)}.spthumb.l1 img{border-color:#b9b9b0}.spthumb.l0 img{border-color:#e3e3dc}
 .spc{container-type:inline-size;margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .spc .ph{margin:0;position:relative}
 .spc img{display:block;width:100%;height:auto;aspect-ratio:16/10;max-height:240px;object-fit:cover;background:var(--line)}
@@ -137,6 +146,7 @@ details.opts summary:hover,.why summary:hover{color:var(--ink)}
 .spcdet .sn i{font-size:12.5px;color:var(--mute)}
 .spcdet .chev{flex:none;font-size:12.5px;color:var(--mute)}
 .spcdet[open] .chev{color:var(--ink)}
+.spcdet .spi h3,.spcdet .spi .lat{display:none}
 .spcdet .spc{border:0;border-top:1px solid var(--line);border-radius:0;margin:0;background:transparent}
 .why{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
 .why[open] summary{margin-bottom:4px;color:var(--ink)}
@@ -473,6 +483,7 @@ function initMap(){
   initDots();
   map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
   map.on("zoomend",drawOutline);
+  map.on("zoomend resize",()=>{clearTimeout(st.spT);st.spT=setTimeout(()=>updateSpots(false),220)});
   map.on("mousemove",showTip);map.on("mouseout",()=>{$("tip").style.display="none"});map.on("movestart",()=>{$("tip").style.display="none"});
   const Rec=L.Control.extend({options:{position:"topleft"},onAdd(){
     const b=L.DomUtil.create("button","leaflet-bar recbtn");b.type="button";b.title="Voir toute la France";b.setAttribute("aria-label","Voir toute la France");b.textContent="⌂";
@@ -856,7 +867,7 @@ function build(){
   $("gps").onkeydown=e=>{if(e.key=="Enter")gpsFromInput()};
   $("gpsme").onclick=()=>{if(!navigator.geolocation){$("gpsmsg").textContent="Géolocalisation indisponible sur cet appareil.";return}
     navigator.geolocation.getCurrentPosition(p=>setPoint(p.coords.latitude,p.coords.longitude,true),()=>{$("gpsmsg").textContent="Position refusée : saisissez des coordonnées ou touchez la carte."})};
-  $("detail").onclick=e=>{const li=e.target.closest(".spots li");if(li&&st.spots&&map){const c=st.spots[+li.dataset.i];if(c)map.flyTo([c.la,c.lo],17,{duration:.7})}};
+  $("detail").onclick=e=>{const li=e.target.closest(".spots li");if(li&&st.spots){const c=st.spots[+li.dataset.i];if(c)goSpot(c)}};
   $("gray").onchange=e=>{$("map").classList.toggle("gray",e.target.checked);savePrefs()};
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
@@ -932,7 +943,7 @@ function renderSpecies(){
   const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";$("spthumb").removeAttribute("src");return}$("spthumb").src=p.src;img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
   if(P!==undefined){show(P);return}
   img.style.visibility="hidden";cap.textContent="Chargement de la photo…";
-  loadPhoto(sp).then(p=>{PHOTOS[k]=p;show(p)});
+  loadPhoto(sp).then(p=>{PHOTOS[k]=p;show(p);if(st.ptZ&&st.spots&&st.sp===k)renderSpots(true)});
 }
 async function loadPhoto(sp){
   const J=async(u)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(u,{signal:c.signal});if(!r.ok)throw 0;return await r.json()}finally{clearTimeout(t)}};
@@ -947,14 +958,24 @@ async function loadPhoto(sp){
       const ii=Object.values(m.query.pages)[0].imageinfo[0].extmetadata,art=(ii.Artist&&ii.Artist.value||"").replace(/<[^>]+>/g,"").trim(),lic=ii.LicenseShortName&&ii.LicenseShortName.value;
       cap=`Photo : ${art||"auteur indiqué sur la source"}${lic?" · "+lic:""} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(fn)}" target="_blank" rel="noopener">Wikimedia Commons</a>`;
     }catch(e){}
-    return{src,cap};
+    return{src,cap,thumb:src.replace(/\/\d+px-/,"/120px-")};
   }catch(e){return null}
 }
-// ---------- Meilleurs spots à moins de 1 km du point ----------
-// La forêt est lue à environ 10 m (couche IGN, image de 200 x 200 px sur 2 km) et l'altitude à 200 m (grille de 11 x 11 points) ;
-// chaque case de 50 m reçoit le score du modèle avec sa propre forêt, son altitude, sa pente et son exposition. Météo et sol : ceux du point.
-const SPOT_R=1000;
+// ---------- Meilleurs coins autour du point : cercle de taille fixe à l'écran ----------
+// Le rayon suit l'échelle de la carte : rayon en pixels x mètres par pixel (borné de 150 m à 100 km), donc le cercle garde la même
+// taille à l'écran quand on zoome. Petit rayon (<= 2,5 km) : forêt lue à ~10 m (IGN) et altitude à 90-500 m (Open-Meteo), chaque case
+// reçoit le score du modèle avec sa propre forêt, altitude, pente et exposition. Grand rayon : valeurs du champ de la carte (blocs de
+// forêt de 1,4 km, sol et relief de 2,8 km), donc exactement les couleurs vues à l'écran.
+const SPOT_RPX_DESK=120,SPOT_RPX_MOB=80,SPOT_FINE_MAX=2500,SPOT_MIN=150,SPOT_MAX=100000;
 let spotLayer=null;
+const mPerPx=(lat,z)=>156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,z);
+function spotRadius(lat){
+  const sz=map.getSize(),rpx=Math.round(Math.max(60,Math.min(sz.x<600?SPOT_RPX_MOB:SPOT_RPX_DESK,Math.min(sz.x,sz.y)*.3)));
+  st.spRpx=rpx;
+  return Math.max(SPOT_MIN,Math.min(SPOT_MAX,rpx*mPerPx(lat,map.getZoom())));
+}
+const fmtDist=m=>m<950?(Math.round(m/10)*10)+" m":(m<10000?String(Math.round(m/100)/10).replace(".",","):String(Math.round(m/1000)))+" km";
+const spLevel=v=>v>=70?4:v>=55?3:v>=35?2:v>=20?1:0;
 function forestPx(r,g,b,a){   // même règle que build_forets.py : 0 aucune, 1 feuillus, 2 résineux, 3 mélange
   if(a<128)return 0;
   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),v=mx/255,sat=mx?(mx-mn)/mx:0;
@@ -968,9 +989,9 @@ function forestPx(r,g,b,a){   // même règle que build_forets.py : 0 aucune, 1 
   return 3;
 }
 async function jget(url,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(t)}}
-async function fetchForestGrid(lat,lon){
-  if(window.__testForest)return window.__testForest(lat,lon);
-  const N=200,dla=SPOT_R/110540*1.05,dlo=SPOT_R/(111320*Math.cos(lat*Math.PI/180))*1.05,bb=[lat-dla,lon-dlo,lat+dla,lon+dlo];
+async function fetchForestGrid(lat,lon,R){
+  if(window.__testForest)return window.__testForest(lat,lon,R);
+  const N=200,dla=R/110540*1.05,dlo=R/(111320*Math.cos(lat*Math.PI/180))*1.05,bb=[lat-dla,lon-dlo,lat+dla,lon+dlo];
   const url="https://data.geopf.fr/wms-v/ows?"+new URLSearchParams({SERVICE:"WMS",VERSION:"1.3.0",REQUEST:"GetMap",LAYERS:"LANDCOVER.FORESTINVENTORY.V2",STYLES:"",CRS:"EPSG:4326",BBOX:bb.join(","),WIDTH:N,HEIGHT:N,FORMAT:"image/png",TRANSPARENT:"TRUE"});
   const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);
   try{
@@ -982,9 +1003,9 @@ async function fetchForestGrid(lat,lon){
     return{cls,N,bb};
   }finally{clearTimeout(t)}
 }
-async function fetchElevGrid(lat,lon){
-  if(window.__testElev)return window.__testElev(lat,lon);
-  const n=11,step=200,kx=111320*Math.cos(lat*Math.PI/180),ky=110540,pts=[];
+async function fetchElevGrid(lat,lon,R){
+  if(window.__testElev)return window.__testElev(lat,lon,R);
+  const n=11,step=Math.max(90,R/5),kx=111320*Math.cos(lat*Math.PI/180),ky=110540,pts=[];
   for(let i=0;i<n;i++)for(let j=0;j<n;j++)pts.push([lat+(i-5)*step/ky,lon+(j-5)*step/kx]);
   const e=[];
   for(let c=0;c<pts.length;c+=61){
@@ -994,22 +1015,64 @@ async function fetchElevGrid(lat,lon){
   }
   return{n,step,e,lat0:pts[0][0],lon0:pts[0][1]};
 }
-function loadSpotData(z){
+function loadSpotData(z,R){
   const tok=++st.spTok;
-  st.spotData={state:"load"};st.spots=null;
-  Promise.allSettled([fetchForestGrid(z.lat,z.lon),fetchElevGrid(z.lat,z.lon)]).then(([f,e])=>{
+  st.spotData={state:"load",mode:"fine",R,z};st.spots=null;
+  Promise.allSettled([fetchForestGrid(z.lat,z.lon,R),fetchElevGrid(z.lat,z.lon,R)]).then(([f,e])=>{
     if(tok!==st.spTok||st.ptZ!==z)return;
-    st.spotData={state:"ok",forest:f.status=="fulfilled"?f.value:null,elev:e.status=="fulfilled"?e.value:null,err:[f.status=="rejected"?"de la forêt":null,e.status=="rejected"?"de l'altitude":null].filter(Boolean)};
-    renderSpots();
+    st.spotData={state:"ok",mode:"fine",R,z,forest:f.status=="fulfilled"?f.value:null,elev:e.status=="fulfilled"?e.value:null,err:[f.status=="rejected"?"de la forêt":null,e.status=="rejected"?"de l'altitude":null].filter(Boolean)};
+    renderSpots(true);
   });
 }
+// Recalcule les coins pour le zoom courant : petit rayon = lecture fine (données récupérées si besoin), grand rayon = champ de la carte.
+function updateSpots(force){
+  const z=st.ptZ;if(!z||!map)return;
+  const R=spotRadius(z.lat);st.spR=R;
+  if(R<=SPOT_FINE_MAX){
+    const D=st.spotData;
+    if(force||!D||D.mode!=="fine"||D.z!==z||R>D.R*1.02||R<D.R*.5){loadSpotData(z,R);renderSpots(true);return}
+  }else{st.spTok++;st.spotData={state:"ok",mode:"reg",R,z}}
+  renderSpots(true);
+}
 const MUSH=n=>L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,26],html:`<div class="mush"><svg viewBox="0 0 30 30" width="30" height="30" aria-hidden="true"><path d="M3 15C3 8 8.5 3 15 3s12 5 12 12c0 1.2-.8 2-2 2H5c-1.2 0-2-.8-2-2z" fill="#7b4a22" stroke="#fff" stroke-width="1.5"/><circle cx="9" cy="10" r="1.7" fill="#e3c9a3"/><circle cx="16" cy="7.5" r="1.7" fill="#e3c9a3"/><circle cx="21.5" cy="12" r="1.5" fill="#e3c9a3"/><path d="M11.5 17h7l-1 9.5c-.1.8-.7 1.3-1.5 1.3h-2c-.8 0-1.4-.5-1.5-1.3z" fill="#c9a074" stroke="#fff" stroke-width="1.2"/></svg><b>${n}</b></div>`});
-function renderSpots(){
-  if(spotLayer){spotLayer.remove();spotLayer=null}
-  st.spots=null;
-  const z=st.ptZ,D=st.spotData;
-  if(!z||!D||D.state!="ok"||!map){renderDetail();return}
-  const sp=SP[st.sp],E=D.elev,F=D.forest,ky=110540,kx=111320*Math.cos(z.lat*Math.PI/180);
+function thumbIcon(i,c){
+  const P=PHOTOS[st.sp],src=P&&P.thumb;
+  if(!src)return MUSH(i+1);
+  return L.divIcon({className:"",iconSize:[46,46],iconAnchor:[23,23],html:`<div class="spthumb l${spLevel(c.sc)}"><img src="${src}" alt="" draggable="false"><span class="rk">${i+1}</span></div>`});
+}
+const SPDIRS=["nord","nord-est","est","sud-est","sud","sud-ouest","ouest","nord-ouest"];
+function describeSpot(c){
+  c.dist=c.d;c.dir=c.d<30?"(sur place)":SPDIRS[Math.round(((Math.atan2(c.dx,c.dy)*180/Math.PI+360)%360)/45)%8];
+  const typ=c.nf?(c.open=="clair"?"clairière ou lisière":c.open=="prairie"?"prairie ou milieu ouvert":"terrain ouvert"):(c.sparse?"lisière ou bois épars":"forêt")+(c.nf?"":c.fo=="f"?" de feuillus":c.fo=="r"?" de résineux":" mixte");
+  c.desc=typ+(c.north>.25?" · versant nord":c.north<-.25?" · versant sud":"")+" · "+Math.round(c.e)+" m · pente "+Math.round(c.slope)+"°";
+}
+function pickTop(cand,minSep){
+  cand.sort((a,b)=>b.sc-a.sc);
+  const top=[];
+  for(const c of cand){if(c.sc<5||top.length>=5)break;if(top.every(t=>Math.hypot(t.dx-c.dx,t.dy-c.dy)>=minSep))top.push(c)}
+  return top;
+}
+// Grand rayon : on lit directement le champ de la carte (même valeur que les couleurs), sans appel réseau.
+function regionalSpots(z,R){
+  const F=st.F;if(!F||!heatGeom)return[];
+  const ky=110540,kx=111320*Math.cos(z.lat*Math.PI/180),step=Math.max(R/22,700),hg=heatGeom,cand=[];
+  for(let dy=-R;dy<=R;dy+=step)for(let dx=-R;dx<=R;dx+=step){
+    const d=Math.hypot(dx,dy);if(d>R)continue;
+    const la=z.lat+dy/ky,lo=z.lon+dx/kx;
+    let cls=0,urb=false;
+    if(FINE){const fy=Math.floor((la-(hg.la0-hg.dLat/2))/(hg.dLat/FINE.K)),fx=Math.floor((lo-(hg.lo0-hg.dLon/2))/(hg.dLon/FINE.K));
+      if(fy>=0&&fx>=0&&fy<FINE.FH&&fx<FINE.FW){cls=FINE.cls[fy*FINE.FW+fx];urb=!!(FINE.urb&&FINE.urb[fy*FINE.FW+fx])}}
+    if(urb||nearRoad(la,lo,140))continue;
+    const v=fieldAt(F,la,lo);if(v<5)continue;
+    const t=cls>3?cls-3:cls,br=blockRelief(la,lo);
+    cand.push({la,lo,dx,dy,d,sc:Math.round(v),nf:cls==0,open:cls==0?"autre":null,sparse:cls>3,fo:t==1?"f":t==2?"r":"m",
+      e:br?br.elev:(z.alt||0),slope:br?br.slope:0,north:br?br.north:0});
+  }
+  const top=pickTop(cand,Math.max(R/5,1400));top.forEach(describeSpot);return top;
+}
+// Petit rayon : forêt à ~10 m et relief local, score recalculé case par case avec la météo et le sol du point.
+function fineSpots(z,R,sp,D){
+  const E=D.elev,F=D.forest,ky=110540,kx=111320*Math.cos(z.lat*Math.PI/180),off=E?Math.max(45,E.step/2):100;
   const elevAt=(la,lo)=>{
     if(!E)return z.alt;
     const fi=Math.max(0,Math.min(E.n-1.001,(la-E.lat0)*ky/E.step)),fj=Math.max(0,Math.min(E.n-1.001,(lo-E.lon0)*kx/E.step)),i=Math.floor(fi),j=Math.floor(fj),a=fi-i,b=fj-j,n=E.n,e=E.e;
@@ -1021,56 +1084,74 @@ function renderSpots(){
     if(!n)return{frac:0,cls:0};
     const f=(cnt[1]+cnt[2]+cnt[3])/n;return{frac:f,cls:cnt[1]>=cnt[2]&&cnt[1]>=cnt[3]?1:cnt[2]>=cnt[3]?2:3};
   };
-  const hg=heatGeom,altS=z.altS!=null?z.altS:z.alt,cand=[];
-  for(let dy=-SPOT_R;dy<=SPOT_R;dy+=50)for(let dx=-SPOT_R;dx<=SPOT_R;dx+=50){
-    const d=Math.hypot(dx,dy);if(d>SPOT_R)continue;
+  const hg=heatGeom,altS=z.altS!=null?z.altS:z.alt,cand=[],step=Math.max(40,R/20),r1=Math.max(1,Math.round(R/100/ (R/100)*2)),rOpen=Math.max(3,Math.round(7));
+  for(let dy=-R;dy<=R;dy+=step)for(let dx=-R;dx<=R;dx+=step){
+    const d=Math.hypot(dx,dy);if(d>R)continue;
     const la=z.lat+dy/ky,lo=z.lon+dx/kx;
     if(FINE&&FINE.urb&&hg){const fy=Math.floor((la-(hg.la0-hg.dLat/2))/(hg.dLat/FINE.K)),fx=Math.floor((lo-(hg.lo0-hg.dLon/2))/(hg.dLon/FINE.K));if(fy>=0&&fx>=0&&fy<FINE.FH&&fx<FINE.FW&&FINE.urb[fy*FINE.FW+fx])continue}
-    if(nearRoad(la,lo,90))continue;
+    if(nearRoad(la,lo,Math.min(90,Math.max(40,R/10))))continue;
     const e=E?elevAt(la,lo):z.alt;
     let slope=z.rel?z.rel.slope:0,north=z.rel?z.rel.north:0,tpi=z.rel?z.rel.tpi||0:0;
     if(E){
-      const gx=(elevAt(la,lo+100/kx)-elevAt(la,lo-100/kx))/200,gn=(elevAt(la+100/ky,lo)-elevAt(la-100/ky,lo))/200,mag=Math.hypot(gx,gn);
+      const gx=(elevAt(la,lo+off/kx)-elevAt(la,lo-off/kx))/(2*off),gn=(elevAt(la+off/ky,lo)-elevAt(la-off/ky,lo))/(2*off),mag=Math.hypot(gx,gn);
       slope=Math.atan(mag)*180/Math.PI;north=mag>1e-6?(-gn/mag)*Math.min(slope,30)/30:0;
-      let sm=0;for(let a=0;a<8;a++){const an=a*Math.PI/4;sm+=elevAt(la+300*Math.sin(an)/ky,lo+300*Math.cos(an)/kx)}tpi=e-sm/8;
+      let sm=0;for(let a=0;a<8;a++){const an=a*Math.PI/4;sm+=elevAt(la+off*3*Math.sin(an)/ky,lo+off*3*Math.cos(an)/kx)}tpi=e-sm/8;
     }
-    let nf=z.nf,open=z.open,sparse=z.sparse,fo=z.fo||"m",kind="";
+    let nf=z.nf,open=z.open,sparse=z.sparse,fo=z.fo||"m";
     if(F){
       const w=forestAt(la,lo,2);
-      if(w.frac>=.25){nf=false;open=null;fo=w.cls==1?"f":w.cls==2?"r":"m";sparse=w.frac<.6;kind=sparse?"epars":"dense"}
-      else{nf=true;sparse=false;const w2=forestAt(la,lo,7);open=w2.frac>=.2?"clair":(z.blk==7?"prairie":"autre");kind=open}
+      if(w.frac>=.25){nf=false;open=null;fo=w.cls==1?"f":w.cls==2?"r":"m";sparse=w.frac<.6}
+      else{nf=true;sparse=false;const w2=forestAt(la,lo,7);open=w2.frac>=.2?"clair":(z.blk==7?"prairie":"autre")}
     }
     const zc={i:-1,lat:la,lon:lo,alt:e,so:z.so,fo,nf,open,sparse,urb:false,sol:z.sol,rel:{slope,north,tpi},L:z.L,dT:-.0065*(e-altS),mi:z.mi,n:"",src:{}};
-    cand.push({la,lo,dx,dy,d,sc:viewScore(sp,zc).sc,e,slope,north,fo,nf,open,sparse,kind});
+    cand.push({la,lo,dx,dy,d,sc:viewScore(sp,zc).sc,e,slope,north,fo,nf,open,sparse});
   }
-  cand.sort((a,b)=>b.sc-a.sc);
-  const top=[];
-  for(const c of cand){if(c.sc<5||top.length>=5)break;if(top.every(t=>Math.hypot(t.dx-c.dx,t.dy-c.dy)>=250))top.push(c)}
-  const dirs=["nord","nord-est","est","sud-est","sud","sud-ouest","ouest","nord-ouest"];
-  top.forEach(c=>{
-    c.dist=Math.round(c.d/10)*10;c.dir=c.d<30?"(sur place)":dirs[Math.round(((Math.atan2(c.dx,c.dy)*180/Math.PI+360)%360)/45)%8];
-    const typ=c.nf?(c.open=="clair"?"clairière ou lisière":c.open=="prairie"?"prairie ou milieu ouvert":"terrain ouvert"):(c.sparse?"lisière ou bois épars":"forêt")+(c.nf?"":c.fo=="f"?" de feuillus":c.fo=="r"?" de résineux":" mixte");
-    c.desc=typ+(c.north>.25?" · versant nord":c.north<-.25?" · versant sud":"")+" · "+Math.round(c.e)+" m · pente "+Math.round(c.slope)+"°";
-  });
-  st.spots=top;
-  const layers=[L.circle([z.lat,z.lon],{radius:SPOT_R,color:"#7b4a22",weight:1.5,dashArray:"5 5",fill:false,interactive:false})];
-  top.forEach((c,i)=>layers.push(L.marker([c.la,c.lo],{icon:MUSH(i+1),title:"Spot "+(i+1)+" : "+c.sc+"/100",riseOnHover:true}).bindTooltip("Spot "+(i+1)+" · "+c.sc+"/100 · "+c.dist+" m "+c.dir+"<br>"+c.desc)));
+  const top=pickTop(cand,Math.max(250,R/4));top.forEach(describeSpot);return top;
+}
+function refreshSpotsBox(){
+  const el=$("detail").querySelector(".spotsbox");
+  if(el)el.outerHTML=spotsHtml();else renderDetail();
+}
+function renderSpots(soft){
+  if(spotLayer){spotLayer.remove();spotLayer=null}
+  st.spots=null;
+  const z=st.ptZ,D=st.spotData;
+  if(!z||!D||!map){soft?refreshSpotsBox():renderDetail();return}
+  const R=D.R||st.spR||SPOT_MIN,sp=SP[st.sp];
+  const layers=[L.circle([z.lat,z.lon],{radius:R,color:"#4a148c",weight:1.6,dashArray:"6 6",fillColor:"#4a148c",fillOpacity:.035,interactive:false})];
+  if(D.state!=="ok"){spotLayer=L.layerGroup(layers).addTo(map);soft?refreshSpotsBox():renderDetail();return}
+  const useFine=D.mode==="fine"&&D.forest;
+  const top=useFine?fineSpots(z,R,sp,D):regionalSpots(z,R);
+  st.spotMode=useFine?"fine":"reg";st.spots=top;
+  top.forEach((c,i)=>layers.push(L.marker([c.la,c.lo],{icon:thumbIcon(i,c),title:"Coin "+(i+1)+" : "+c.sc+"/100",riseOnHover:true})
+    .bindTooltip("Coin "+(i+1)+" · "+c.sc+"/100 · "+fmtDist(c.dist)+" "+c.dir+"<br>"+c.desc)
+    .on("click",()=>goSpot(c))));
   spotLayer=L.layerGroup(layers).addTo(map);
-  renderDetail();
+  soft?refreshSpotsBox():renderDetail();
+}
+function goSpot(c){   // juger ce coin : on y centre un nouveau point, en zoomant un peu
+  if(!map)return;
+  map.flyTo([c.la,c.lo],Math.min(17,Math.max(map.getZoom()+2,12)),{duration:.7});
+  setPoint(c.la,c.lo,false);
 }
 function spotsHtml(){
   if(!st.ptZ)return "";
-  const D=st.spotData,t="<b>Meilleurs spots à moins de 1 km</b>";
-  if(!D||D.state=="load")return `<div class="spotsbox">${t}<p class="note" style="margin:4px 0 0">Recherche en cours…</p></div>`;
-  const errs=D.err&&D.err.length?` Lecture ${D.err.join(" et ")} indisponible : estimation moins précise.`:"";
+  const D=st.spotData,sp=SP[st.sp],R=(D&&D.R)||st.spR||0;
+  const head=`<b>Meilleurs coins autour de ce point</b> <span class="sub">cercle de ${fmtDist(R)} de rayon${R>=SPOT_MAX?" (plafonné)":""}</span>`;
+  const circ=`Le cercle garde la même taille à l'écran : son rayon grandit quand vous dézoomez.`;
+  if(!D||D.state==="load")return `<div class="spotsbox">${head}<p class="note" style="margin:6px 0 0">Recherche en cours…</p></div>`;
   const Ls=st.spots||[];
-  if(!Ls.length)return `<div class="spotsbox">${t}<p class="note" style="margin:4px 0 0">Aucun endroit propice dans ce rayon (habitat ou conditions défavorables).${errs}</p></div>`;
-  return `<div class="spotsbox">${t} <span class="sub">(champignons marron sur la carte)</span><ol class="spots">${Ls.map((c,i)=>`<li data-i="${i}"><b class="n">${i+1}</b><span><b>${c.sc}/100</b> · ${c.dist} m ${c.dir}<br><span class="sub">${c.desc}</span></span></li>`).join("")}</ol><p class="note" style="margin:6px 0 0">Forêt lue à environ 10 m (IGN) et altitude à 200 m. Météo et sol : ceux du point, identiques sur tout le rayon.${errs}</p></div>`;
+  const errs=D.err&&D.err.length?` Lecture ${D.err.join(" et ")} indisponible : estimation moins précise.`:"";
+  const meth=st.spotMode==="fine"?`Forêt lue à environ ${Math.max(5,Math.round(R/100))} m (IGN), altitude et relief à ${Math.round(D.elev?D.elev.step:90)} m. Météo et sol : ceux du point.${errs}`
+    :`Vue régionale : valeurs de la carte (forêt par blocs de 1,4 km, sol et relief par blocs de 2,8 km). Zoomez au-delà du zoom 12 pour une lecture à 10 m.`;
+  if(!Ls.length)return `<div class="spotsbox">${head}<p class="note" style="margin:6px 0 0">Aucun coin propice dans ce cercle pour ${sp.det} (habitat ou conditions défavorables). Dézoomez pour élargir la recherche.</p><p class="note small">${meth}</p></div>`;
+  const P=PHOTOS[st.sp],src=P&&P.thumb;
+  return `<div class="spotsbox">${head}<ol class="spots">${Ls.map((c,i)=>`<li data-i="${i}"><span class="spthumb sm l${spLevel(c.sc)}">${src?`<img src="${src}" alt="" draggable="false">`:""}<span class="rk">${i+1}</span></span><span class="tx"><b>${c.sc}/100</b> <span class="lv">${tipLabel(c.sc)}</span><br>${fmtDist(c.dist)} ${c.dir}<br><span class="sub">${c.desc}</span></span></li>`).join("")}</ol><p class="note small">Touchez un coin, sur la carte ou dans la liste, pour le juger. ${circ}</p><p class="note small">${meth}</p></div>`;
 }
 // ---------- Point GPS précis ----------
 function renderPointMarker(){
   if(selMarker){selMarker.remove();selMarker=null}
-  if(st.pt)selMarker=L.marker([st.pt.lat,st.pt.lon],{interactive:false,icon:L.divIcon({className:"",html:`<div class="selpin" style="width:38px;height:38px"><div class="ring"></div><div class="dot"></div></div>`,iconSize:[38,38],iconAnchor:[19,19]})}).addTo(map);
+  if(st.pt)selMarker=L.marker([st.pt.lat,st.pt.lon],{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:`<div class="selpin" style="width:38px;height:38px"><div class="ring"></div><div class="dot"></div></div>`,iconSize:[38,38],iconAnchor:[19,19]})}).addTo(map);
 }
 function gpsFromInput(){
   const nums=($("gps").value||"").match(/-?\d+(?:[.,]\d+)?/g);
@@ -1087,7 +1168,7 @@ function setPoint(lat,lon,fly){
   $("gpsmsg").textContent="Point choisi. Les données exactes arrivent en quelques secondes.";
   if(fly&&map)map.flyTo([lat,lon],Math.max(map.getZoom(),9),{duration:.8});
   if(spotLayer){spotLayer.remove();spotLayer=null}
-  renderPointMarker();renderDetail();scrollToDetail();savePrefs();refinePoint(st.ptZ);loadSpotData(st.ptZ);
+  renderPointMarker();renderDetail();scrollToDetail();savePrefs();refinePoint(st.ptZ);updateSpots(true);
 }
 // Zone « virtuelle » au point : météo interpolée entre les 4 mailles voisines, terrain de la maille ou du bloc forestier.
 function makeZone(lat,lon){
@@ -1234,7 +1315,9 @@ async function loadLive(){
       const fo=tr.fo||best.fo;
       const noForest=("fo" in tr)&&!tr.fo; // IGN consulté : pas de forêt ici
       // nom honnête : le massif seulement s'il est vraiment proche
-      const nom=bd<=25?"Secteur "+best.n:"Zone "+c[0].toFixed(2)+"°N, "+c[1].toFixed(2)+"°E";
+      let nc=null,bc=1e9;for(const cn in CITIES){const k=km(c[0],c[1],CITIES[cn][0],CITIES[cn][1]);if(k<bc){bc=k;nc=cn}}
+      const r5=v=>Math.max(5,Math.round(v/5)*5);
+      const nom=bd<=25?"Secteur "+best.n:bc<=25?"Autour de "+nc:bd<=bc?"À "+r5(bd)+" km du secteur "+best.n:"À "+r5(bc)+" km de "+nc;
       const urb=noForest&&("ph" in tr)&&tr.ph==null; // SoilGrids sans valeur et pas de forêt : urbain, eau ou très artificialisé
       return{i,n:nom,lat:c[0],lon:c[1],alt:c[2],so,fo,mi:best.mi,nf:noForest,urb,ph:tr.ph};
     });

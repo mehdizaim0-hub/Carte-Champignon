@@ -33,6 +33,15 @@ Un seul script, sections dans l'ordre :
 
 Conventions : français partout (texte, commentaires) ; les identifiants HTML sont stables (`chips`, `views`, `days`, `detail`, `near`, `gps`, `mode`…), les tests s'appuient dessus.
 
+## Interface (organisation du panneau, de haut en bas)
+
+1. Titre, bouton `?` (ouvre « Comment cette carte est fabriquée »), une phrase d'accroche.
+2. **Commandes** : espèce (`chips`), vue (`views`), jour (`days`, masqué en vues « durable » et « meilleur jour »), état des données, options repliées (rendu points/aplat, fond gris).
+3. **Résultat** (`detail`) : invitation à toucher la carte, puis avis sur le point (niveau, comparaison à la France, lieu vs conditions, tendance), meilleurs spots à 1 km, calcul détaillé repliable. `setPoint()` fait défiler le panneau jusqu'ici (`scrollToDetail`).
+4. **Où chercher** : coordonnées GPS, ville de référence, rayon (100 km max), meilleures zones proches.
+5. **Fiche espèce** repliable (photo Wikipédia, hôtes, sol, relief, saison, reconnaissance).
+Sur la carte : légende repliable (`maplegend`), bouton « France entière », info-bulle de score au survol, contours plus fins au petit zoom (`drawOutline`). Les choix sont mémorisés (`localStorage` `cm:v1`) et le lien partage espèce, vue et point : `#e=1&v=dur&p=lat,lon`.
+
 ## Travailler sur le projet
 
 ```
