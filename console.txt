@@ -1,0 +1,2 @@
+[mob requestfailed] https://api.open-meteo.com/v1/elevation?latitude=44.2,44.2,44.200900000000004,44.1991&longitude=-0.8991,-0.9009,-0.9,-0. net::ERR_ABORTED
+[mob requestfailed] https://api.open-meteo.com/v1/forecast?latitude=44.2&longitude=-0.9&daily=precipitation_sum,temperature_2m_mean,temperat net::ERR_ABORTED
