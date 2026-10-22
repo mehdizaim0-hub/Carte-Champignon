@@ -40,6 +40,7 @@ npm install            # une fois (jsdom, leaflet)
 npm test               # validation des données + test de la page entière (25 vérifications)
 ```
 Cycle recommandé : modifier → `npm test` → pousser → lancer **Actions > Captures d'écran** (branche `screenshots`, images bureau et mobile de la vraie page) → regarder les images.
+Les captures s'obtiennent par `git fetch <dépôt> +screenshots:refs/remotes/shots/screenshots` (le `+` est nécessaire : la branche est réécrite à chaque exécution), puis `git archive refs/remotes/shots/screenshots | tar -x -C /tmp/shots`. Le fichier `console.txt` liste les erreurs du navigateur.
 Les patchs se font par remplacement de texte exact : toujours contrôler `node --check` du script (`<script>` final) avant de pousser.
 
 ## Pièges connus (déjà rencontrés)

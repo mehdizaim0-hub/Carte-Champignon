@@ -1145,6 +1145,7 @@ async function refinePoint(z){
       z.src.f="IGN au point : "+(pr.tfv||pr.essence||"forêt");renderDetail();
     }catch(e){}})(),
     (async()=>{try{
+      if(SOL)return;   // sol déjà connu par bloc de 2,8 km ; le service REST de SoilGrids met 20 à 30 s à répondre
       const o=await J("https://rest.isric.org/soilgrids/v2.0/properties/query?lon="+z.lon+"&lat="+z.lat+"&property=phh2o&depth=0-5cm&value=mean",9000);
       if(!ok())return;
       const v=o.properties.layers[0].depths[0].values.mean;
