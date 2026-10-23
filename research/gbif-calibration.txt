@@ -1,0 +1,20 @@
+base : 44234 blocs ; 14038 boisés
+Cèpe de Bordeaux               n=  439 | alt p50 220 | pH p50 5.8 | forêt {'mixed': 0.134, 'none': 0.123, 'conifer': 0.222, 'broadleaf': 0.521} | prairie 0.088
+Girolle                        n=  243 | alt p50 360 | pH p50 5.8 | forêt {'broadleaf': 0.491, 'conifer': 0.165, 'mixed': 0.275, 'none': 0.069} | prairie 0.078
+Morille                        n=  152 | alt p50 280 | pH p50 6.3 | forêt {'none': 0.238, 'mixed': 0.182, 'broadleaf': 0.427, 'conifer': 0.154} | prairie 0.091
+Trompette de la mort           n=  166 | alt p50 200 | pH p50 6.0 | forêt {'broadleaf': 0.777, 'mixed': 0.153, 'none': 0.025, 'conifer': 0.045} | prairie 0.032
+Pied-de-mouton                 n=  186 | alt p50 200 | pH p50 5.8 | forêt {'broadleaf': 0.526, 'mixed': 0.206, 'conifer': 0.206, 'none': 0.063} | prairie 0.08
+Lactaire délicieux             n=  137 | alt p50 140 | pH p50 6.2 | forêt {'conifer': 0.323, 'none': 0.177, 'broadleaf': 0.363, 'mixed': 0.137} | prairie 0.016
+Bolet bai                      n=  303 | alt p50 140 | pH p50 5.8 | forêt {'broadleaf': 0.498, 'conifer': 0.26, 'mixed': 0.138, 'none': 0.104} | prairie 0.073
+Chanterelle en tube            n=  200 | alt p50 200 | pH p50 5.7 | forêt {'broadleaf': 0.547, 'conifer': 0.25, 'mixed': 0.182, 'none': 0.021} | prairie 0.057
+Coulemelle                     n=  757 | alt p50 240 | pH p50 6.0 | forêt {'none': 0.209, 'conifer': 0.163, 'broadleaf': 0.529, 'mixed': 0.099} | prairie 0.148
+Rosé des prés                  n=  139 | alt p50 180 | pH p50 6.1 | forêt {'broadleaf': 0.434, 'mixed': 0.098, 'none': 0.418, 'conifer': 0.049} | prairie 0.23
+Mousseron de la Saint-Georges  n=   58 | alt p50 200 | pH p50 6.2 | forêt {'broadleaf': 0.38, 'none': 0.38, 'mixed': 0.18, 'conifer': 0.06} | prairie 0.28
+Marasme des oréades            n=  222 | alt p50 200 | pH p50 6.2 | forêt {'broadleaf': 0.385, 'none': 0.41, 'conifer': 0.103, 'mixed': 0.103} | prairie 0.179
+Pleurote en huître             n=  152 | alt p50 140 | pH p50 6.1 | forêt {'none': 0.342, 'broadleaf': 0.486, 'mixed': 0.103, 'conifer': 0.068} | prairie 0.116
+Armillaire couleur de miel     n=  364 | alt p50 100 | pH p50 6.0 | forêt {'broadleaf': 0.551, 'mixed': 0.058, 'none': 0.304, 'conifer': 0.087} | prairie 0.077
+Bolet jaune                    n=   87 | alt p50 300 | pH p50 6.1 | forêt {'conifer': 0.304, 'broadleaf': 0.329, 'none': 0.177, 'mixed': 0.19} | prairie 0.101
+Russule charbonnière           n=  170 | alt p50 200 | pH p50 5.9 | forêt {'broadleaf': 0.525, 'mixed': 0.277, 'conifer': 0.064, 'none': 0.135} | prairie 0.078
+Cèpe d'été                     n=  142 | alt p50 220 | pH p50 6.0 | forêt {'none': 0.158, 'broadleaf': 0.571, 'mixed': 0.158, 'conifer': 0.113} | prairie 0.083
+Coprin chevelu                 n=  995 | alt p50 160 | pH p50 6.3 | forêt {'none': 0.437, 'broadleaf': 0.373, 'conifer': 0.104, 'mixed': 0.085} | prairie 0.095
+OK : research/gbif-calibration.json
