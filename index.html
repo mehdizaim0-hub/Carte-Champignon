@@ -971,7 +971,7 @@ async function loadPhoto(sp){
     let cap=`Photo : Wikimedia Commons · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(fn)}" target="_blank" rel="noopener">source et licence</a>`;
     try{
       const m=await J("https://commons.wikimedia.org/w/api.php?"+new URLSearchParams({action:"query",titles:"File:"+fn,prop:"imageinfo",iiprop:"extmetadata",format:"json",origin:"*"}));
-      const ii=Object.values(m.query.pages)[0].imageinfo[0].extmetadata,art=(ii.Artist&&ii.Artist.value||"").replace(/<[^>]+>/g,"").trim(),lic=ii.LicenseShortName&&ii.LicenseShortName.value;
+      const ii=Object.values(m.query.pages)[0].imageinfo[0].extmetadata,art0=(ii.Artist&&ii.Artist.value||"").replace(/<[^>]+>/g,"").trim(),art=/voir ci-dessous|see below|created by us|\.(jpe?g|png)\b/i.test(art0)||art0.length<3?"":art0,lic=ii.LicenseShortName&&ii.LicenseShortName.value;
       cap=`Photo : ${art||"auteur indiqué sur la source"}${lic?" · "+lic:""} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(fn)}" target="_blank" rel="noopener">Wikimedia Commons</a>`;
     }catch(e){}
     return{src,cap,thumb:src.replace(/\/\d+px-/,"/120px-")};

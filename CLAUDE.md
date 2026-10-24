@@ -17,6 +17,7 @@ Pas de serveur : la page lit des fichiers JSON du dépôt et interroge quelques 
 | `relief.json` | altitude, pente, exposition, position topographique, blocs de 2,8 km | `build_relief.py` | rare (`relief.yml`) |
 | `terrain.json` | pH et forêt par maille (ancien, sert de repli) | `build_terrain.py` | rare |
 | `research/` | sources scientifiques et justification des paramètres | à la main | — |
+| `tools/gbif_calib.py` | calibrage saisons, altitude, pH, habitat sur observations GBIF (workflow « Calibrage GBIF ») | à la main | à la demande |
 | `tests/` | `validate_data.py` (intégrité des données), `page.test.js` (page entière), `screens.py` (captures) | — | à chaque push (`ci.yml`) |
 
 Les scripts `build_*.py` n'ont **aucune dépendance** sauf `build_sol.py` et `build_relief.py` (numpy, rasterio, pillow : installés par leur workflow).
@@ -25,7 +26,7 @@ Les collectes lourdes se lancent depuis GitHub (Actions > workflow > Run workflo
 ## Architecture de `index.html`
 
 Un seul script, sections dans l'ordre :
-1. **Données et paramètres** : `SP` (9 espèces : saison `gb`, température `t`, pluie `ro`, sol `ph/pf/wc/ws`, altitude `al`, forêt `fo`, fiche), `REF` (massifs de référence, repli).
+1. **Données et paramètres** : `SP` (17 espèces, champs `grp` (forêt, prairie, bois), `open`/`sparse` (milieux ouverts), `winter` (janvier réel) ; saison `gb`, température `t`, pluie `ro`, sol `ph/pf/wc/ws`, altitude `al`, forêt `fo`, fiche), `REF` (massifs de référence, repli).
 2. **Modèle** : `weather()` (fenêtres de pluie et de température, gel, humidité du sol, correction d'altitude), `score()` = `100 × sol × altitude × forêt^0,7 × M` où `M` = météo × saison × gel × amplitude × relief ; `viewScore()` (vues jour, durable, meilleur jour, habitat), `soilFactor()`, `terrainFactors()`.
 3. **Champ de score** : `buildField()` (grossier, mailles) ou `buildFineField()` (blocs de forêt de 1,4 km, sol et relief par blocs), `fieldAt()`, `outlineSegs()` (contours par marching squares), `drawDots()` (nuage de points), `paintHeat()` (aplat).
 4. **Interface** : `build()` (câblage), `render()` (tout redessiner), `renderDetail()` (carte du point), `renderSpecies()` (fiche + photo Wikipédia), `setPoint()`/`makeZone()`/`refinePoint()` (point GPS, avec appels directs Open-Meteo, IGN, SoilGrids), préférences (`loadPrefs`/`savePrefs`, `localStorage` + hash `#e=espèce&v=vue&p=lat,lon`).

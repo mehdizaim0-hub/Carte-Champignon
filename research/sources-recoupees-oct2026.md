@@ -128,3 +128,51 @@ sont recalculées sur place à partir de quatre altitudes à environ 100 m.
   grille de 11 x 11 points (200 m) ; chaque case de 50 m dans un rayon de 1 km reçoit le score du modèle avec sa forêt (fenêtre de 50 m), son altitude
   corrigée de la température, sa pente, son exposition et sa position. Les cases d'agglomération (CORINE) ou à moins de 90 m d'un grand axe sont exclues.
   Les cinq meilleurs spots, espacés d'au moins 250 m, sont affichés. La météo et le sol sont ceux du point : ils ne varient pas dans le rayon.
+
+## Calibrage sur observations réelles (GBIF France × nos cartes), oct. 2026
+
+Méthode (`tools/gbif_calib.py`, workflow « Calibrage GBIF ») : observations humaines françaises de GBIF depuis 2005, localisées à moins
+de 1 km (jusqu'à 4 000 par espèce), projetées sur les blocs de `sol.json`, `relief.json`, `forets.json` et `urbain.json`. On obtient pour
+chaque espèce la répartition par mois, l'altitude, le pH du sol et la part d'observations en forêt, comparées à l'ensemble de la France.
+
+| Espèce | Observations utilisées | Altitude m (p10 / médiane / p90) | pH (p10 / médiane / p90) | Mois de pic | Blocs boisés |
+|---|---|---|---|---|---|
+| Ensemble de la France (blocs) | 44234 | 60 / 260 / 1040 | 5.6 / 6.3 / 7.2 | – | 50 % |
+| Ensemble des blocs boisés | 14038 | 80 / 280 / 940 | 5.6 / 6.1 / 6.9 | – | 100 % |
+| Cèpe de Bordeaux | 439 | 40 / 220 / 1240 | 5.3 / 5.8 / 6.3 | 9, 10, 11 | 88 % |
+| Girolle | 243 | 60 / 360 / 1040 | 5.3 / 5.8 / 6.6 | 7, 8, 10 | 93 % |
+| Morille | 152 | 40 / 280 / 1220 | 5.7 / 6.3 / 7.1 | 3, 4, 5 | 76 % |
+| Trompette de la mort | 166 | 80 / 200 / 940 | 5.5 / 6.0 / 6.6 | 8, 10, 11 | 98 % |
+| Pied-de-mouton | 186 | 60 / 200 / 860 | 5.5 / 5.8 / 6.8 | 8, 10, 11 | 94 % |
+| Lactaire délicieux | 137 | 20 / 140 / 1240 | 5.5 / 6.2 / 7.1 | 9, 10, 11 | 82 % |
+| Bolet bai | 303 | 40 / 140 / 840 | 5.4 / 5.8 / 6.5 | 9, 10, 11 | 90 % |
+| Chanterelle en tube | 200 | 80 / 200 / 920 | 5.3 / 5.7 / 6.4 | 10, 11, 12 | 98 % |
+| Coulemelle | 757 | 40 / 240 / 1200 | 5.5 / 6.0 / 6.7 | 9, 10, 11 | 79 % |
+| Rosé des prés | 139 | 40 / 180 / 940 | 5.7 / 6.1 / 6.9 | 8, 9, 10 | 58 % |
+| Mousseron de la Saint-Georges | 58 | 40 / 200 / 1240 | 5.7 / 6.2 / 6.6 | 4, 5, 6 | 62 % |
+| Marasme des oréades | 222 | 20 / 200 / 960 | 5.7 / 6.2 / 6.8 | 9, 10, 11 | 59 % |
+| Pleurote en huître | 152 | 20 / 140 / 720 | 5.5 / 6.1 / 6.8 | 1, 11, 12 | 66 % |
+| Armillaire couleur de miel | 364 | 40 / 100 / 480 | 5.6 / 6.0 / 7.0 | 1, 10, 11 | 70 % |
+| Bolet jaune | 87 | 80 / 300 / 1400 | 5.7 / 6.1 / 6.6 | 6, 10, 11 | 82 % |
+| Russule charbonnière | 170 | 40 / 200 / 1240 | 5.5 / 5.9 / 6.5 | 6, 8, 10 | 86 % |
+| Cèpe d'été | 142 | 40 / 220 / 1240 | 5.6 / 6.0 / 6.7 | 6, 8, 10 | 84 % |
+| Coprin chevelu | 995 | 20 / 160 / 1020 | 5.7 / 6.3 / 7.1 | 9, 10, 11 | 56 % |
+
+**Ce que ces données permettent**
+- **Saisons** : fiables (par exemple mousseron d'avril à juin, cèpe d'été de juin à août, armillaire en octobre). Elles alimentent les poids mensuels `gb`.
+  Attention : le 1er janvier est la date par défaut de nombreuses observations sans jour connu ; la page ramène donc janvier au niveau de février, sauf pour le pleurote et la chanterelle en tube.
+- **Altitude** : biaisée vers la plaine (les observateurs vivent en plaine) ; elle sert de borne basse de plausibilité, pas d'optimum.
+- **pH** : discrimine peu (médianes de 5,7 à 6,3 pour toutes les espèces, contre 6,1 en forêt), mais les signes sont cohérents : cèpe, girolle, chanterelle en tube,
+  bolet bai et russule charbonnière sont décalés vers l'acide, la morille et les espèces de prairie vers le neutre. Écart notable avec la littérature espagnole :
+  le lactaire délicieux est observé en France à pH 6,2 en médiane (jusqu'à 7,1), donc moins acide qu'attendu.
+- **Habitat ouvert** : à l'échelle de 1,4 km, les espèces de prairie se trouvent aussi souvent dans des blocs boisés que la moyenne (le rosé des prés est dans 58 % de
+  blocs boisés, contre 49 % pour l'ensemble) : les observateurs notent en lisière et près des bois. Les poids « milieu ouvert » de ces espèces sont donc estimés et modérés.
+
+**Biais** : effort d'observation concentré près des villes et des routes, identifications de science participative non toutes vérifiées, effectifs faibles pour le mousseron (58) et le bolet jaune (87).
+
+### Espèces ajoutées (huit comestibles communes)
+Cèpe d'été, russule charbonnière, bolet jaune (en forêt) ; armillaire couleur de miel, pleurote en huître (sur bois) ; rosé des prés, mousseron de la Saint-Georges,
+marasme des oréades (prairies et lisières). Pour chacune : **saison et pH calibrés sur GBIF (partiel)** ; **température, pluie, délai de sortie, altitude maximale, texture : estimés**
+(niveau de preuve 0 dans la page). Les fiches signalent les sosies dangereux (amanites blanches, agaric jaunissant, entolome livide, inocybe de Patouillard, galère marginée,
+clitocybes blancs, bolets à pores rouges). Ne retenues volontairement pas : coprin chevelu (distribution indiscernable du fond), tricholome équestre (retiré de la vente pour toxicité),
+amanite des Césars (sosies mortels dans la même aire).
