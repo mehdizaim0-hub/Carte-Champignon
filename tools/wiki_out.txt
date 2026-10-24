@@ -1,0 +1,8 @@
+Boletus_reticulatus    || fr: Boletus reticulatus | czech_mushrooms | CC0 || en: Boletus reticulatus | Rude | CC BY-SA 3.0
+Russula_cyanoxantha    || fr: Russule charbonnière | Lucian Clanet | CC BY 4.0 || en: Russula cyanoxantha |  | CC BY-SA 3.0
+Suillus_luteus         || fr: Suillus luteus | mswiseman | CC BY 4.0 || en: Suillus luteus | walt sturgeon (Mycowalt) | CC BY-SA 3.0
+Armillaria_mellea      || fr: Armillaria mellea | Stu's Images | CC BY-SA 3.0 || en: Armillaria mellea | Stu's Images | CC BY-SA 3.0
+Pleurotus_ostreatus    || fr: Pleurotus ostreatus | voir ci-dessous / see below | CC BY 3.0 || en: Pleurotus ostreatus | voir ci-dessous / see below | CC BY 3.0
+Agaricus_campestris    || fr: Agaricus campestris | Andreas Kunze | CC BY-SA 3.0 || en: Agaricus campestris |  | CC BY-SA 3.0
+Calocybe_gambosa       || fr: Tricholome de la Saint-Georges | Calocybe_gambosa_080420wa.jp | CC BY-SA 3.0 || en: Calocybe gambosa | User:Strobilomyces | CC BY-SA 4.0
+Marasmius_oreades      || fr: Marasme des Oréades | This image was created by us | CC BY-SA 3.0 || en: Marasmius oreades | Alan Rockefeller | CC BY 4.0
