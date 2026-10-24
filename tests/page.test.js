@@ -42,7 +42,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>FINE;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -52,7 +52,7 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('données quotidiennes chargées (2400+ mailles)', st.live && st.live.length > 2400, String(st.live && st.live.length));
   check('forêt fine chargée', !!w.__fine());
   check('bandeau de fraîcheur affiché', /Météo réelle|anciennes/.test(txt('status')), txt('status'));
-  check('9 espèces proposées', doc.querySelectorAll('#chips button').length === 9);
+  check('17 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 17 && doc.querySelectorAll('#chips .glab').length === 3);
   check('4 vues proposées', doc.querySelectorAll('#views button').length === 4);
   check('8 jours proposés', doc.querySelectorAll('#days button').length === 8);
   check('rayon limité à 100 km', $('rad').max === '100');
@@ -61,6 +61,19 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('fiche espèce : nom, latin, rubriques', txt('spsumn').length > 3 && txt('splat').length > 3 && $('spdl').querySelectorAll('dt').length >= 7);
   check('fiche espèce : photo et crédit', /Auteur Test/.test(txt('spcap')) && /500px/.test($('spimg').src));
   check('légende sur la carte', !!$('maplegend') && !!$('legbody'));
+
+  console.log('Espèces');
+  const SPs = w.__sp, mono = a => a.every((v, i) => i === 0 || v >= a[i - 1]);
+  const need = ['n', 'grp', 'lat', 'wiki', 'det', 'du', 'hote', 'sol', 'saison', 'alt', 'id', 'txt', 'so', 'fo', 'al', 't', 'ro', 'lag', 'hu', 'gb', 'ph', 'pf', 'wc', 'ws'];
+  const bad = SPs.filter(sp => need.some(k => sp[k] === undefined) || sp.gb.length !== 12 || Math.max(...sp.gb) !== 1 || sp.gb.some(v => v < 0 || v > 1) || !mono(sp.t) || !mono(sp.al) || !mono(sp.ph) || sp.id.length < 60 || !['foret', 'prairie', 'bois'].includes(sp.grp)).map(sp => sp.n);
+  check('17 espèces complètes et cohérentes (saison, température, altitude, pH, fiche)', SPs.length === 17 && bad.length === 0, bad.join(', '));
+  const dup = SPs.map(x => x.n).filter((n, i, a) => a.indexOf(n) !== i);
+  check('noms d\'espèces uniques', dup.length === 0, dup.join(', '));
+  const z = st.live && w.__fine() ? null : null;
+  let nonfin = 0; for (const sp of SPs) { const r = w.__score(sp, { i: 100, lat: 44, lon: 2, alt: 400, so: 'n', fo: 'f', mi: 0, nf: false }, 0); if (!Number.isFinite(r.sc)) nonfin++ }
+  check('score fini pour chaque espèce', nonfin === 0, String(nonfin));
+  const risky = SPs.filter(sp => /Confusion|Écarter|Toxique|toxique|mortel/.test(sp.id)).length;
+  check('mises en garde dans les fiches des espèces à sosies dangereux', risky >= 10, String(risky));
 
   console.log('Point GPS');
   w.setPoint(44.2, -0.9, false); await sleep(1200);
