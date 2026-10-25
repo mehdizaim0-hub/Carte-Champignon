@@ -12,7 +12,7 @@ jobs:
       - run: |
           python3 -m http.server 8000 >/dev/null 2>&1 &
           sleep 2
-          python3 tests/screens.py /tmp/screens || true
+          mkdir -p /tmp/screens; python3 tests/screens.py /tmp/screens || true; ls -la /tmp/screens
       - run: |
           cd /tmp/screens
           git init -q -b screenshots
