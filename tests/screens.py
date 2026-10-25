@@ -40,7 +40,7 @@ try:
             shot("1_accueil")
             step("point", lambda: page.evaluate("setPoint(44.2,-0.9,true)"), 9000)
             shot("2_point_landes")
-            step("espece", lambda: page.evaluate("document.querySelector('#chips button[data-i="12"]').click()"), 2500)
+            step("espece", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'12\\']').click()"), 2500)
             step("zoom", lambda: page.evaluate("map.setView([44.2,-0.9],10)"), 4000)
             shot("3_armillaire_zoom10")
             step("vue jour", lambda: page.evaluate("document.querySelectorAll('#views button')[0].click()"), 2500)
