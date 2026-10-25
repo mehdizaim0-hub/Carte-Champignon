@@ -1,0 +1,1 @@
+[desk requestfailed] https://api.open-meteo.com/v1/forecast?latitude=44.2&longitude=-0.9&daily=precipitation_sum,temperature_2m_mean,temperat net::ERR_ABORTED
