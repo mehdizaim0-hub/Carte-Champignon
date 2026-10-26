@@ -1,0 +1,6 @@
+base : 44234 blocs ; 14038 boisés
+Bolet de Satan                 n=   44 | alt p50 240 | pH p50 6.4 | forêt {'broadleaf': 0.674, 'mixed': 0.186, 'none': 0.093, 'conifer': 0.047} | prairie 0.047
+Langue de bœuf                 n=  625 | alt p50 140 | pH p50 6.0 | forêt {'broadleaf': 0.725, 'mixed': 0.05, 'none': 0.157, 'conifer': 0.068} | prairie 0.127
+Vesse de loup perlée           n=  621 | alt p50 200 | pH p50 6.0 | forêt {'conifer': 0.193, 'broadleaf': 0.583, 'mixed': 0.101, 'none': 0.124} | prairie 0.087
+Vesse de loup géante           n=   73 | alt p50 180 | pH p50 6.3 | forêt {'conifer': 0.087, 'none': 0.493, 'broadleaf': 0.377, 'mixed': 0.043} | prairie 0.232
+OK : research/gbif-calibration-b.json
