@@ -1,0 +1,17 @@
+name: Calibrage GBIF 2 (manuel)
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  gbif:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/gbif_calib_b.py 2>&1 | tee research/gbif-calibration-b.txt
+      - run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add research/gbif-calibration-b.json research/gbif-calibration-b.txt
+          git commit -m "calibrage GBIF : saison, altitude, pH, habitat par espèce" || echo "rien"
+          for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done
