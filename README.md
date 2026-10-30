@@ -107,7 +107,7 @@ observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (sa
 
 - **Nuage de points** (rendu par défaut) : la densité et la taille des points suivent le score ; case « Aplat de
   couleur » pour l'ancien rendu. Le contour violet cerne toujours le haut du panier de la vue affichée.
-- **Point GPS précis** : toucher la carte, ou saisir « 43.6612, 1.1305 ». La page interroge directement, depuis le
+- **Point précis** : toucher la carte (ou « Ma position » dans le panneau). La page interroge directement, depuis le
   navigateur, Open-Meteo (météo et altitude exactes), l'IGN (forêt au point) et SoilGrids (pH du sol). Ces trois
   services acceptent les appels depuis une page web (CORS vérifié le 13/10/2026). L'adresse du point est
   partageable (`#p=lat,lon`). Si un service ne répond pas, on garde la valeur de la maille et la page le dit.
@@ -131,7 +131,7 @@ observations réelles : `python calibrate_gbif.py` écrit `calibration.json` (sa
   de moins de 25 ha) écrit `urbain.json` ; `build_routes.py` (BD TOPO, importance 1 : autoroutes et grands axes)
   écrit `routes.json`, avec une zone tampon d'environ 140 m visible à partir du zoom 10.
   Lancement : Actions > « Masques agglomérations et routes » > Run workflow (15 à 30 min).
-- **Rayon de recherche** : 100 km maximum.
+- La section « Où chercher » (coordonnées, ville de référence, rayon, liste de zones) a été retirée : on choisit un point en touchant la carte.
 
 ## Sol fin (oct. 2026)
 

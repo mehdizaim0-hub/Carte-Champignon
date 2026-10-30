@@ -176,3 +176,24 @@ marasme des oréades (prairies et lisières). Pour chacune : **saison et pH cali
 (niveau de preuve 0 dans la page). Les fiches signalent les sosies dangereux (amanites blanches, agaric jaunissant, entolome livide, inocybe de Patouillard, galère marginée,
 clitocybes blancs, bolets à pores rouges). Ne retenues volontairement pas : coprin chevelu (distribution indiscernable du fond), tricholome équestre (retiré de la vente pour toxicité),
 amanite des Césars (sosies mortels dans la même aire).
+
+## Espèces ajoutées le 26/10/2026 : bolet de Satan, langue de bœuf, vesses-de-loup
+
+Calibrage sur observations françaises de GBIF (observations humaines depuis 2005, localisées à moins de 1 km) croisées avec nos cartes
+de sol, de relief et de forêt (`tools/gbif_calib_b.py`, résultats dans `research/gbif-calibration-b.json`).
+
+| Espèce | Observations utilisées | Saison observée (mois de pic) | Altitude (10 %-90 %) | pH (10 %-90 %) |
+|---|---|---|---|---|
+| Bolet de Satan | 44 | sept. et oct. | 80 à 900 m | 5,9 à 7,0 |
+| Langue de bœuf | 625 | sept. et oct. | 40 à 460 m | 5,5 à 6,6 |
+| Vesse de loup perlée | 621 | oct. et nov. | 40 à 1220 m | 5,5 à 6,6 |
+| Vesse de loup géante | 73 | sept. et oct. | 20 à 1260 m | 5,8 à 6,9 |
+
+- **Bolet de Satan** : espèce **toxique** (troubles digestifs graves), ajoutée pour le repérage et l'identification. Elle est signalée dans la page
+  (puce, fiche, résultat) et n'est jamais proposée parmi les « meilleures espèces ». Peu d'observations (44) : saison et pH à prendre avec prudence.
+  Thermophile, sur sol calcaire (littérature générale) ; les observations françaises donnent un pH un peu plus élevé que la moyenne forestière.
+- **Langue de bœuf** : sur le chêne vivant ; altitude surtout de plaine. Le pH observé ne diffère pas de la moyenne forestière (espèce liée à l'arbre, pas au sol).
+- **Vesse de loup perlée** : saprophyte de l'humus des bois, pic d'octobre. **Vesse de loup géante** : prairies et vergers, août à octobre ; les observations ne se
+  concentrent pas dans les blocs sans forêt, donc le poids « milieu ouvert » reste modéré.
+- Températures, pluies, délais de sortie et texture du sol : **estimés** (aucune source directe) ; la fiche l'indique.
+- Biais connus : observations concentrées près des villes et routes, effort d'observation variable selon les mois ; le 1er janvier est une date par défaut.

@@ -52,12 +52,15 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('données quotidiennes chargées (2400+ mailles)', st.live && st.live.length > 2400, String(st.live && st.live.length));
   check('forêt fine chargée', !!w.__fine());
   check('bandeau de fraîcheur affiché', /Météo réelle|anciennes/.test(txt('status')), txt('status'));
-  check('17 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 17 && doc.querySelectorAll('#chips .glab').length === 3);
+  check('21 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 21 && doc.querySelectorAll('#chips .glab').length === 3);
   check('4 vues proposées', doc.querySelectorAll('#views button').length === 4);
   check('8 jours proposés', doc.querySelectorAll('#days button').length === 8);
-  check('rayon limité à 100 km', $('rad').max === '100');
-  check('nuage de points tracé', (w.__arcs || 0) > 100, String(w.__arcs));
-  check('état vide : invitation à toucher la carte', /Touchez la carte/.test(txt('detail')) && !!$('ctabest'));
+  check('section « Où chercher » supprimée', !$('rad') && !$('gps') && !$('near') && !/Où chercher \?/.test(txt('side')));
+  // vue Habitat : indépendante de la météo du jour, donc stable d'une saison à l'autre
+  doc.querySelectorAll('#views button')[3].click(); await sleep(500);
+  check('nuage de points tracé (vue Habitat)', (w.__arcs || 0) > 100, String(w.__arcs));
+  doc.querySelectorAll('#views button')[1].click(); await sleep(200);
+  check('état vide : invitation à toucher la carte', /Touchez la carte/.test(txt('detail')) && !!$('ctame') && !$('ctabest'));
   check('fiche espèce : nom, latin, rubriques', txt('spsumn').length > 3 && txt('splat').length > 3 && $('spdl').querySelectorAll('dt').length >= 7);
   check('fiche espèce : photo et crédit', /Auteur Test/.test(txt('spcap')) && /500px/.test($('spimg').src));
   check('légende sur la carte', !!$('maplegend') && !!$('legbody'));
@@ -66,7 +69,7 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   const SPs = w.__sp, mono = a => a.every((v, i) => i === 0 || v >= a[i - 1]);
   const need = ['n', 'grp', 'lat', 'wiki', 'det', 'du', 'hote', 'sol', 'saison', 'alt', 'id', 'txt', 'so', 'fo', 'al', 't', 'ro', 'lag', 'hu', 'gb', 'ph', 'pf', 'wc', 'ws'];
   const bad = SPs.filter(sp => need.some(k => sp[k] === undefined) || sp.gb.length !== 12 || Math.max(...sp.gb) !== 1 || sp.gb.some(v => v < 0 || v > 1) || !mono(sp.t) || !mono(sp.al) || !mono(sp.ph) || sp.id.length < 60 || !['foret', 'prairie', 'bois'].includes(sp.grp)).map(sp => sp.n);
-  check('17 espèces complètes et cohérentes (saison, température, altitude, pH, fiche)', SPs.length === 17 && bad.length === 0, bad.join(', '));
+  check('21 espèces complètes et cohérentes (saison, température, altitude, pH, fiche)', SPs.length === 21 && bad.length === 0, bad.join(', '));
   const dup = SPs.map(x => x.n).filter((n, i, a) => a.indexOf(n) !== i);
   check('noms d\'espèces uniques', dup.length === 0, dup.join(', '));
   const z = st.live && w.__fine() ? null : null;
@@ -74,6 +77,16 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('score fini pour chaque espèce', nonfin === 0, String(nonfin));
   const risky = SPs.filter(sp => /Confusion|Écarter|Toxique|toxique|mortel/.test(sp.id)).length;
   check('mises en garde dans les fiches des espèces à sosies dangereux', risky >= 10, String(risky));
+
+  // espèce toxique : signalée partout, jamais recommandée
+  const tox = SPs.filter(sp => sp.toxic), ti = SPs.findIndex(sp => sp.toxic);
+  check('au moins une espèce toxique (bolet de Satan) avec avertissement dans la fiche', tox.length >= 1 && tox.every(sp => /TOXIQUE/.test(sp.id)), tox.map(sp => sp.n).join(','));
+  doc.querySelector('#chips button[data-i="' + ti + '"]').click(); await sleep(200);
+  check('espèce toxique : puce marquée, bandeau et mention dans la fiche', doc.querySelector('#chips button[data-i="' + ti + '"]').classList.contains('tox') && !$('toxban').hidden && /TOXIQUE/.test(txt('spsuml')) && $('spwarn').hidden);
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  check('espèce toxique : avertissement dans le résultat et absente des meilleures espèces', /Espèce toxique/.test(txt('detail')) && !/Meilleures espèces[^.]*Bolet de Satan/.test(txt('detail')), txt('detail').slice(0, 200));
+  doc.querySelector('#chips button[data-i="0"]').click(); await sleep(150);
+  check('espèce comestible : bandeau toxique masqué', $('toxban').hidden && !$('spwarn').hidden);
 
   console.log('Point GPS');
   w.setPoint(44.2, -0.9, false); await sleep(1200);
@@ -84,16 +97,23 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('lien partageable (hash e, v, p)', /e=\d/.test(w.location.hash) && /p=44\.2/.test(w.location.hash), w.location.hash);
   w.setPoint(43.6, 1.44, false); await sleep(500);
   check('agglomération : non propice', /Non propice/.test(txt('detail')), txt('detail').slice(0, 120));
-  $('gps').value = '10, 10'; w.gpsFromInput();
-  check('coordonnées hors de France refusées', /hors de la France/.test(txt('gpsmsg')));
-  $('gps').value = '48.85, 2.35'; w.gpsFromInput(); await sleep(300);
-  check('saisie de coordonnées acceptée', st.pt && Math.abs(st.pt.lat - 48.85) < 1e-6);
+  w.setPoint(10, 10, false);
+  check('point hors de France métropolitaine ignoré', !st.pt || st.pt.lat !== 10);
 
   console.log('Interactions');
   const sel = $('mode'); sel.value = 'flat'; sel.dispatchEvent(new w.Event('change')); sel.value = 'dots'; sel.dispatchEvent(new w.Event('change'));
   doc.querySelectorAll('#views button').forEach((b, i) => { if (i === 3) b.click() });
   check('changement de vue pris en compte', st.view === 'hab');
-  doc.querySelectorAll('#chips button')[1].click(); await sleep(300);
+  // surbrillance de l'espèce choisie : une seule puce allumée, et c'est la bonne (les puces sont groupées par habitat)
+  let hl = true, detail = '';
+  const idxs = [...doc.querySelectorAll('#chips button')].map(b => +b.dataset.i);
+  for (const i of idxs) {
+    doc.querySelector('#chips button[data-i="' + i + '"]').click(); await sleep(60);
+    const on = [...doc.querySelectorAll('#chips button[aria-pressed="true"]')].map(b => +b.dataset.i);
+    if (on.length !== 1 || on[0] !== i || st.sp !== i) { hl = false; detail += ' [clic ' + i + ' -> ' + on.join(',') + ']'; }
+  }
+  check('surbrillance : exactement la puce choisie, pour chaque espèce', hl, detail);
+  doc.querySelector('#chips button[data-i="1"]').click(); await sleep(300);
   check('changement d\'espèce pris en compte', st.sp === 1 && /Girolle/.test(txt('spsumn')));
   doc.querySelectorAll('#days button')[3].click();
   check('changement de jour pris en compte', st.day === 3);

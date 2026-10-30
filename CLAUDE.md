@@ -26,7 +26,7 @@ Les collectes lourdes se lancent depuis GitHub (Actions > workflow > Run workflo
 ## Architecture de `index.html`
 
 Un seul script, sections dans l'ordre :
-1. **Données et paramètres** : `SP` (17 espèces, champs `grp` (forêt, prairie, bois), `open`/`sparse` (milieux ouverts), `winter` (janvier réel) ; saison `gb`, température `t`, pluie `ro`, sol `ph/pf/wc/ws`, altitude `al`, forêt `fo`, fiche), `REF` (massifs de référence, repli).
+1. **Données et paramètres** : `SP` (21 espèces, champs `grp` (forêt, prairie, bois), `toxic` (espèce toxique : puce et fiche signalées, jamais proposée parmi les « meilleures espèces »), `open`/`sparse` (milieux ouverts), `winter` (janvier réel) ; saison `gb`, température `t`, pluie `ro`, sol `ph/pf/wc/ws`, altitude `al`, forêt `fo`, fiche), `REF` (massifs de référence, repli).
 2. **Modèle** : `weather()` (fenêtres de pluie et de température, gel, humidité du sol, correction d'altitude), `score()` = `100 × sol × altitude × forêt^0,7 × M` où `M` = météo × saison × gel × amplitude × relief ; `viewScore()` (vues jour, durable, meilleur jour, habitat), `soilFactor()`, `terrainFactors()`.
 3. **Champ de score** : `buildField()` (grossier, mailles) ou `buildFineField()` (blocs de forêt de 1,4 km, sol et relief par blocs), `fieldAt()`, `outlineSegs()` (contours par marching squares), `drawDots()` (nuage de points), `paintHeat()` (aplat).
 4. **Interface** : `build()` (câblage), `render()` (tout redessiner), `renderDetail()` (carte du point), `renderSpecies()` (fiche + photo Wikipédia), `setPoint()`/`makeZone()`/`refinePoint()` (point GPS, avec appels directs Open-Meteo, IGN, SoilGrids), préférences (`loadPrefs`/`savePrefs`, `localStorage` + hash `#e=espèce&v=vue&p=lat,lon`).
@@ -39,8 +39,7 @@ Conventions : français partout (texte, commentaires) ; les identifiants HTML so
 1. Titre, bouton `?` (ouvre « Comment cette carte est fabriquée »), une phrase d'accroche.
 2. **Commandes** : espèce (`chips`), vue (`views`), jour (`days`, masqué en vues « durable » et « meilleur jour »), état des données, options repliées (rendu points/aplat, fond gris).
 3. **Résultat** (`detail`) : invitation à toucher la carte, puis avis sur le point (niveau, comparaison à la France, lieu vs conditions, tendance), meilleurs spots à 1 km, calcul détaillé repliable. `setPoint()` fait défiler le panneau jusqu'ici (`scrollToDetail`).
-4. **Où chercher** : coordonnées GPS, ville de référence, rayon (100 km max), meilleures zones proches.
-5. **Fiche espèce** repliable (photo Wikipédia, hôtes, sol, relief, saison, reconnaissance).
+4. **Fiche espèce** repliable (photo Wikipédia, hôtes, sol, relief, saison, reconnaissance).
 Sur la carte : légende repliable (`maplegend`), bouton « France entière », info-bulle de score au survol, contours plus fins au petit zoom (`drawOutline`). Les choix sont mémorisés (`localStorage` `cm:v1`) et le lien partage espèce, vue et point : `#e=1&v=dur&p=lat,lon`.
 
 ## Travailler sur le projet
