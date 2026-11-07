@@ -50,7 +50,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .badge{display:inline-block;font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
 .badge.live{color:#2f7a2f;border-color:#2f7a2f}
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
-.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,hsla(40,100%,55%,.45) 28%,hsl(27,100%,50%) 62%,hsl(14,95%,38%) 100%)}
+.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,rgba(255,214,64,.45) 22%,#ffc233 40%,#ff8c1a 55%,#ee4b1c 70%,#c2171f 85%,#7a1048 100%)}
 .dim{opacity:.4;pointer-events:none}
 .mush{position:relative;width:30px;height:30px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .mush b{position:absolute;right:-4px;top:-6px;min-width:15px;height:15px;border-radius:8px;background:#3d230f;color:#fff;font:700 10px/14px system-ui,sans-serif;text-align:center;border:1px solid #fff}
@@ -67,7 +67,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .spthumb.sm{flex:none;width:44px;height:44px}
 .spthumb.sm img{box-shadow:none;border-width:3px;border-style:solid}
 .spthumb .rk{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;padding:0 3px;box-sizing:border-box;border-radius:10px;background:#4a148c;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff}
-.spthumb.l4 img{border-color:hsl(14,95%,38%)}.spthumb.l3 img{border-color:hsl(27,100%,46%)}.spthumb.l2 img{border-color:hsl(42,100%,50%)}.spthumb.l1 img{border-color:#b9b9b0}.spthumb.l0 img{border-color:#e3e3dc}
+.spthumb.l4 img{border-color:#c2171f}.spthumb.l3 img{border-color:#ff8c1a}.spthumb.l2 img{border-color:#ffc233}.spthumb.l1 img{border-color:#b9b9b0}.spthumb.l0 img{border-color:#e3e3dc}
 .spc{container-type:inline-size;margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .spc .ph{margin:0;position:relative}
 .spc img{display:block;width:100%;height:auto;aspect-ratio:16/10;max-height:240px;object-fit:cover;background:var(--line)}
@@ -83,7 +83,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 @container (max-width:400px){.spc dl{grid-template-columns:1fr}.spc dt{padding:8px 0 0;border-top:1px solid var(--line);border-bottom:0}.spc dd{padding:1px 0 7px;border-top:0}.spc dt:first-of-type{border-top:0}}
 .verdict{border-radius:10px;padding:10px 12px;margin:2px 0 10px;border:1px solid var(--line);border-left-width:6px}
 .verdict b.lab{font-size:15px}.verdict p{margin:4px 0 0;font-size:12.5px;line-height:1.45}
-.verdict.v4{border-left-color:hsl(14,95%,38%)}.verdict.v3{border-left-color:hsl(27,100%,46%)}.verdict.v2{border-left-color:hsl(40,100%,50%)}.verdict.v1{border-left-color:var(--mute)}.verdict.v0{border-left-color:var(--line);opacity:.95}
+.verdict.v4{border-left-color:#c2171f}.verdict.v3{border-left-color:#ff8c1a}.verdict.v2{border-left-color:#ffc233}.verdict.v1{border-left-color:var(--mute)}.verdict.v0{border-left-color:var(--line);opacity:.95}
 .inp{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);flex:1;min-width:150px}
 .opt select{font-size:13px;padding:4px 8px}
 .prov{font-size:12px;color:var(--mute);margin:6px 0 0;line-height:1.5}
@@ -424,14 +424,14 @@ function score(sp,z,d,dT){
   const sc=z.anth?0:Math.min(100,100*Ha*Math.pow(fo,.7)*M);   // agglomération ou axe routier : aucune présence possible
   return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha,sfx,tfx};
 }
-// Incolore (peu favorable) -> orange vif -> rouille (très favorable). Sous 22 : transparent.
-// Contraste : dès 25 la zone est nettement visible (alpha .35), saturation maximale vers 70.
-const gA=s=>s<22?0:Math.min(.8,.28+.52*Math.pow(Math.min(1,(s-22)/50),.85));
-const gH=s=>42-s*.28,gL=s=>60-s*.22;
-const gC=s=>`hsl(${Math.round(gH(s))},100%,${Math.round(gL(s))}%)`;
-function hsl2rgb(h,sa,l){h/=360;const q=l<.5?l*(1+sa):l+sa-l*sa,p=2*l-q,f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<1/2?q:t<2/3?p+(q-p)*(2/3-t)*6:p};return[f(h+1/3),f(h),f(h-1/3)].map(x=>Math.round(x*255))}
+// Dégradé séquentiel : jaune pâle (peu favorable) -> ambre -> orange -> rouge -> bordeaux (très favorable).
+// Chaque palier est nettement distinct en teinte ET en luminosité (lisible aussi en daltonisme). Sous 22 : transparent.
+const STOPS=[[22,255,214,64],[40,255,194,51],[55,255,140,26],[70,238,75,28],[85,194,23,31],[100,122,16,72]];
+const rgbAt=s=>{s=Math.max(22,Math.min(100,s));let i=1;while(i<STOPS.length-1&&s>STOPS[i][0])i++;const a=STOPS[i-1],b=STOPS[i],t=(s-a[0])/(b[0]-a[0]);return[0,1,2].map(k=>Math.round(a[k+1]+(b[k+1]-a[k+1])*t))};
+const gA=s=>s<22?0:Math.min(.9,.42+.48*Math.pow((s-22)/78,.8));
+const gC=s=>`rgb(${rgbAt(s).join(",")})`;
 let _lut=null;
-function lut(){if(_lut)return _lut;_lut=new Uint8ClampedArray(101*4);for(let v=0;v<=100;v++){const c=hsl2rgb(gH(v),1,gL(v)/100);_lut.set([c[0],c[1],c[2],Math.round(gA(v)*255)],v*4)}return _lut}
+function lut(){if(_lut)return _lut;_lut=new Uint8ClampedArray(101*4);for(let v=0;v<=100;v++){const c=rgbAt(v);_lut.set([c[0],c[1],c[2],Math.round(gA(v)*255)],v*4)}return _lut}
 const DARK=matchMedia("(prefers-color-scheme:dark)").matches;
 const col=s=>s<25?"var(--mute)":`hsl(${Math.round(30-s*.14)},95%,${DARK?Math.round(64-s*.08):Math.round(40-s*.1)}%)`;
 // ---------- Vues : jour / durable (8 jours) / meilleur jour / habitat ----------

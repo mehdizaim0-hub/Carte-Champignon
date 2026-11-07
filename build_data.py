@@ -115,6 +115,17 @@ def clean_series(values, n, nd=1):
 
 
 # ---------------------------------------------------------------- main
+def _ints(o):
+    """x.0 -> x : même donnée, fichier plus léger."""
+    if isinstance(o, float) and o == int(o):
+        return int(o)
+    if isinstance(o, list):
+        return [_ints(x) for x in o]
+    if isinstance(o, dict):
+        return {k: _ints(v) for k, v in o.items()}
+    return o
+
+
 def main():
     pts = grid()
     total = len(pts)
@@ -160,7 +171,7 @@ def main():
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(OUT), suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(data, f, separators=(",", ":"))
+            json.dump(_ints(data), f, separators=(",", ":"))
         os.replace(tmp, OUT)
     except BaseException:
         if os.path.exists(tmp):
