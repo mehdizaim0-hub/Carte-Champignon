@@ -123,6 +123,19 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
 
+  console.log('Ce qui sort ici');
+  await sleep(500);
+  const nowItems = () => [...doc.querySelectorAll('#nowl li')];
+  check('« Ce qui sort ici » : 1 à 5 espèces classées, ou message explicatif', (nowItems().length >= 1 && nowItems().length <= 5) || !$('nowmsg').hidden, String(nowItems().length));
+  check('chaque entrée affiche un score sur 100', nowItems().length === 0 || nowItems().every(li => /\d+\/100/.test(li.textContent)));
+  if (nowItems().length) {
+    const first = nowItems()[0].querySelector('span').textContent, last = nowItems()[nowItems().length - 1], lastName = last.querySelector('span').textContent;
+    const order = nowItems().map(li => +li.textContent.match(/(\d+)\/100/)[1]);
+    check('classement décroissant sur le score du jour : ' + order.join(' > '), order.every((v, i) => i === 0 || order[i - 1] >= v));
+    last.querySelector('button').click(); await sleep(200);
+    check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
+  }
+
   console.log('Mes spots');
   w.prompt = () => 'Coin du chêne';
   w.localStorage.removeItem('cm:spots:v1');

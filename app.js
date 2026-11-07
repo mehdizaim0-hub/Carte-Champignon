@@ -224,6 +224,7 @@ function initMap(){
   initDots();
   map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
   map.on("zoomend",drawOutline);
+  map.on("moveend",scheduleNow);
   map.on("zoomend resize",()=>{clearTimeout(st.spT);st.spT=setTimeout(()=>updateSpots(false),220)});
   map.on("mousemove",showTip);map.on("mouseout",()=>{$("tip").style.display="none"});map.on("movestart",()=>{$("tip").style.display="none"});
   const Rec=L.Control.extend({options:{position:"topleft"},onAdd(){
@@ -624,7 +625,7 @@ function build(){
 }
 function render(){
   const sp=SP[st.sp],d=st.day;
-  if(st.live)renderMySpots();
+  if(st.live){renderMySpots();scheduleNow()}
   document.querySelectorAll("#chips button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===st.sp));
   document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
   document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
@@ -1032,6 +1033,33 @@ function cmpHook(){
   box.innerHTML=html;$("detail").appendChild(box);
   $("cmpsel").onchange=e=>{st.cmp=+e.target.value;renderDetail()};
 }
+// ---------- Ce qui sort ici : les espèces les plus favorables autour du centre de la carte ----------
+function renderNow(){
+  const box=$("nowg"),ul=$("nowl"),msg=$("nowmsg");if(!box||!ul)return;
+  ul.textContent="";msg.hidden=true;$("nowwhere").textContent="";
+  if(!st.live||!map||!box.open)return;
+  const c=map.getCenter(),say0=t=>{msg.textContent=t;msg.hidden=false};
+  if(!(c.lat>=41&&c.lat<=51.5&&c.lng>=-5.5&&c.lng<=10))return say0("Centrez la carte sur la France pour voir les espèces du moment.");
+  const z=makeZone(c.lat,c.lng);
+  if(z.anth)return say0("Zone urbanisée ou routière : déplacez la carte vers la forêt.");
+  $("nowwhere").textContent="· près de "+z.near;
+  const rows=SP.map((s,i)=>{
+    if(s.toxic)return null;
+    const a=[...Array(8)].map((_,d)=>score(s,z,d).sc),m=Math.max(...a);
+    return{i,n:s.n,t:a[0],m,k:a.indexOf(m)};
+  }).filter(r=>r&&spLevel(Math.max(r.t,r.m))>0).sort((x,y)=>y.t-x.t||y.m-x.m).slice(0,5);
+  if(!rows.length)return say0("Aucune espèce favorable ici dans les 8 prochains jours. Déplacez la carte.");
+  rows.forEach(r=>{
+    const li=document.createElement("li"),b=document.createElement("button");
+    li.className="l"+spLevel(r.t);b.type="button";b.className="btn";
+    const n=document.createElement("span"),sc=document.createElement("span");
+    n.textContent=r.n;sc.className="sc";sc.textContent=r.t+"/100"+(r.k>0&&r.m>r.t?" · pic J+"+r.k:"");
+    b.append(n,sc);
+    b.onclick=()=>{const t=document.querySelector('#chips button[data-i="'+r.i+'"]');if(t)t.click()};
+    li.appendChild(b);ul.appendChild(li);
+  });
+}
+function scheduleNow(){clearTimeout(st.nowT);st.nowT=setTimeout(renderNow,300)}
 // ---------- Mes spots : points enregistrés sur l'appareil (localStorage) ----------
 const SPOTS_KEY="cm:spots:v1";
 function spotsLoad(){try{const a=JSON.parse(localStorage.getItem(SPOTS_KEY)||"[]");return Array.isArray(a)?a.filter(s=>s&&isFinite(s.lat)&&isFinite(s.lon)):[]}catch(e){return[]}}
@@ -1123,6 +1151,7 @@ function renderMySpots(){
 }
 renderMySpots();
 $("myspots").addEventListener("toggle",renderMySpots);
+$("nowg").addEventListener("toggle",renderNow);
 $("spexp").onclick=spotsExport;$("spimp").onclick=()=>$("spfile").click();
 $("spfile").onchange=e=>{if(e.target.files[0])spotsImport(e.target.files[0]);e.target.value=""};
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------

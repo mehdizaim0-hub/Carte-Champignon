@@ -180,3 +180,5 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 .cmp{margin-top:12px}.cmp select{max-width:100%}.cmpt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 .cmpt th,.cmpt td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}.cmpt th:first-child{text-align:left;font-weight:600;color:var(--mute)}
 .cmpt thead th{color:var(--ink)}.cmpt .win{font-weight:800;color:var(--acc-ink)}
+.nowl{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.nowl .btn{width:100%;display:flex;justify-content:space-between;gap:8px;text-align:left;border-left:4px solid var(--line)}
+.nowl .l4 .btn{border-left-color:var(--c4,#c2171f)}.nowl .l3 .btn{border-left-color:var(--c3,#ff8c1a)}.nowl .l2 .btn{border-left-color:var(--c2,#ffc233)}.nowl .sc{color:var(--mute);white-space:nowrap}

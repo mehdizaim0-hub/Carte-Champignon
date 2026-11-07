@@ -186,3 +186,7 @@ Bouton « Enregistrer ce point » sous le résultat d'un point. La carte « Mes 
 ## Comparateur d espèces
 
 Sous le résultat d un point, « Comparer avec » met deux espèces côte à côte (score du jour, meilleur score sur 8 jours, sol, forêt, altitude, température, humidité, saison). La valeur la plus favorable est en gras.
+
+## Ce qui sort ici
+
+La carte « Ce qui sort ici » (haut de la colonne) classe les 5 espèces les plus favorables autour du centre de la carte (score du jour, pic des 8 prochains jours). Elle se met à jour quand on déplace la carte ; toucher une entrée sélectionne l espèce. Les espèces toxiques sont exclues du classement.
