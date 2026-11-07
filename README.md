@@ -56,7 +56,9 @@ manuelle ci-dessus ne sert qu'à rafraîchir en cours de journée.
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | l'application (la page du site) |
+| `index.html` | la page du site |
+| `style.css`, `app.js` | styles et logique de l'application |
+| `species.js` | catalogue des espèces (paramètres de chaque champignon) |
 | `data.json` | météo + altitude par maille, régénéré chaque jour |
 | `build_data.py` | fabrique `data.json` (Python, aucune dépendance) |
 | `terrain.json` | pH du sol + forêt par maille (optionnel, voir ci-dessous) |

@@ -3,10 +3,10 @@
    - Leaflet, polices : cache d'abord, rafraîchi en arrière-plan.
    - Tuiles de fond de carte : cache d'abord, plafonné.
    - API météo / GBIF / Wikipédia : jamais interceptées. */
-const V = "v1";
+const V = "v2";
 const SHELL = "shell-" + V, LIBS = "libs-" + V, TILES = "tiles-" + V;
 const TILE_MAX = 600;
-const PRECACHE = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const PRECACHE = ["./", "index.html", "style.css", "species.js", "app.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));

@@ -11,6 +11,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const html0 = read('index.html');
 let html = read('index.html')
+  .replace('<link rel="stylesheet" href="style.css">', () => '<style>' + read('style.css') + '</style>')
   .replace(/<script src="https:\/\/unpkg.com\/leaflet[^>]*><\/script>/, '')
   .replace(/<link[^>]*(unpkg|fonts)[^>]*>/g, '');
 const vc = new VirtualConsole();
@@ -41,9 +42,9 @@ w.fetch = async u => {
   return { ok: false, status: 404, json: async () => ({}) };
 };
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
-const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -160,6 +161,8 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('manifeste valide, avec nom, start_url et icônes existantes', !!man && !!man.name && !!man.start_url && man.icons.length >= 2 && man.icons.every(i => fs.existsSync(path.join(ROOT, i.src))), JSON.stringify(man));
   let swOk = true; try { new (require('vm').Script)(read('sw.js')) } catch (e) { swOk = false }
   check('service worker : syntaxe valide et enregistré par la page', swOk && /serviceWorker\.register\("sw\.js"\)/.test(html0));
+  const swSrc = read('sw.js');
+  check('service worker : précache de la page, du CSS et des scripts', ['index.html', 'style.css', 'species.js', 'app.js'].every(f => swSrc.includes('"' + f + '"') && fs.existsSync(path.join(ROOT, f))));
   check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
 
   console.log('Erreurs JavaScript');

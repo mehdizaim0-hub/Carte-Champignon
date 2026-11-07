@@ -8,7 +8,7 @@ Pas de serveur : la page lit des fichiers JSON du dépôt et interroge quelques 
 
 | Fichier | Rôle | Produit par | Fréquence |
 |---|---|---|---|
-| `index.html` | toute l'application (HTML, CSS, JS, ~1 300 lignes) | à la main | — |
+| `index.html`, `style.css`, `species.js`, `app.js` | l'application : page, styles, catalogue des espèces (`SP`), logique (scripts classiques, `species.js` chargé avant `app.js`) | à la main | — |
 | `data.json` | météo par maille de 17 km (2 419 mailles, 48 jours) | `build_data.py` (Open-Meteo) | **chaque jour 5 h UTC** (`daily.yml`) |
 | `forets.json` | forêt par blocs de 1,4 km (IGN BD Forêt, image 480 px) | `build_forets.py` | rare (`forets.yml`) |
 | `urbain.json` | blocs artificialisés et milieux ouverts (CORINE) | `build_urbain.py` | rare (`urbain.yml`) |
@@ -23,7 +23,7 @@ Pas de serveur : la page lit des fichiers JSON du dépôt et interroge quelques 
 Les scripts `build_*.py` n'ont **aucune dépendance** sauf `build_sol.py` et `build_relief.py` (numpy, rasterio, pillow : installés par leur workflow).
 Les collectes lourdes se lancent depuis GitHub (Actions > workflow > Run workflow), car la sandbox de travail ne joint ni l'IGN, ni SoilGrids, ni Open-Meteo.
 
-## Architecture de `index.html`
+## Architecture de `app.js` (et `species.js`)
 
 Un seul script, sections dans l'ordre :
 1. **Données et paramètres** : `SP` (20 espèces, champs `grp` (forêt, prairie, bois), `toxic` (espèce toxique : puce et fiche signalées, jamais proposée parmi les « meilleures espèces »), `open`/`sparse` (milieux ouverts), `winter` (janvier réel) ; saison `gb`, température `t`, pluie `ro`, sol `ph/pf/wc/ws`, altitude `al`, forêt `fo`, fiche), `REF` (massifs de référence, repli).
