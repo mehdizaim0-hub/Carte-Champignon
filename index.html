@@ -54,7 +54,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .badge{display:inline-block;font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
 .badge.live{color:#2f7a2f;border-color:#2f7a2f}
 .legend{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute)}
-.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,transparent 0%,rgba(255,214,64,.45) 22%,#ffc233 40%,#ff8c1a 55%,#ee4b1c 70%,#c2171f 85%,#7a1048 100%)}
+.bar{flex:1;height:10px;border-radius:5px;border:1px solid var(--line);background:var(--bargrad,linear-gradient(90deg,transparent 0%,rgba(255,214,64,.45) 22%,#ffc233 40%,#ff8c1a 55%,#ee4b1c 70%,#c2171f 85%,#7a1048 100%))}
 .dim{opacity:.4;pointer-events:none}
 .mush{position:relative;width:30px;height:30px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .mush b{position:absolute;right:-4px;top:-6px;min-width:15px;height:15px;border-radius:8px;background:#3d230f;color:#fff;font:700 10px/14px system-ui,sans-serif;text-align:center;border:1px solid #fff}
@@ -71,7 +71,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 .spthumb.sm{flex:none;width:44px;height:44px}
 .spthumb.sm img{box-shadow:none;border-width:3px;border-style:solid}
 .spthumb .rk{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;padding:0 3px;box-sizing:border-box;border-radius:10px;background:#4a148c;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff}
-.spthumb.l4 img{border-color:#c2171f}.spthumb.l3 img{border-color:#ff8c1a}.spthumb.l2 img{border-color:#ffc233}.spthumb.l1 img{border-color:#b9b9b0}.spthumb.l0 img{border-color:#e3e3dc}
+.spthumb.l4 img{border-color:var(--c4,#c2171f)}.spthumb.l3 img{border-color:var(--c3,#ff8c1a)}.spthumb.l2 img{border-color:var(--c2,#ffc233)}.spthumb.l1 img{border-color:#b9b9b0}.spthumb.l0 img{border-color:#e3e3dc}
 .spc{container-type:inline-size;margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .spc .ph{margin:0;position:relative}
 .spc img{display:block;width:100%;height:auto;aspect-ratio:16/10;max-height:240px;object-fit:cover;background:var(--line)}
@@ -87,7 +87,7 @@ select,.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;borde
 @container (max-width:400px){.spc dl{grid-template-columns:1fr}.spc dt{padding:8px 0 0;border-top:1px solid var(--line);border-bottom:0}.spc dd{padding:1px 0 7px;border-top:0}.spc dt:first-of-type{border-top:0}}
 .verdict{border-radius:10px;padding:10px 12px;margin:2px 0 10px;border:1px solid var(--line);border-left-width:6px}
 .verdict b.lab{font-size:15px}.verdict p{margin:4px 0 0;font-size:12.5px;line-height:1.45}
-.verdict.v4{border-left-color:#c2171f}.verdict.v3{border-left-color:#ff8c1a}.verdict.v2{border-left-color:#ffc233}.verdict.v1{border-left-color:var(--mute)}.verdict.v0{border-left-color:var(--line);opacity:.95}
+.verdict.v4{border-left-color:var(--c4,#c2171f)}.verdict.v3{border-left-color:var(--c3,#ff8c1a)}.verdict.v2{border-left-color:var(--c2,#ffc233)}.verdict.v1{border-left-color:var(--mute)}.verdict.v0{border-left-color:var(--line);opacity:.95}
 .inp{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);flex:1;min-width:150px}
 .opt select{font-size:13px;padding:4px 8px}
 .prov{font-size:12px;color:var(--mute);margin:6px 0 0;line-height:1.5}
@@ -213,6 +213,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 <details class="opts"><summary>Options d'affichage</summary>
 <label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
 <label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (plus lisible sous la couleur)</label>
+<label class="opt"><input type="checkbox" id="cvd"> Palette adaptée au daltonisme (jaune, vert, violet)</label>
 </details>
 </section>
 <details class="card spcdet" id="spdet" style="--i:2">
@@ -437,7 +438,12 @@ function score(sp,z,d,dT){
 }
 // Dégradé séquentiel : jaune pâle (peu favorable) -> ambre -> orange -> rouge -> bordeaux (très favorable).
 // Chaque palier est nettement distinct en teinte ET en luminosité (lisible aussi en daltonisme). Sous 22 : transparent.
-const STOPS=[[22,255,214,64],[40,255,194,51],[55,255,140,26],[70,238,75,28],[85,194,23,31],[100,122,16,72]];
+const PALS={
+  std:[[22,255,214,64],[40,255,194,51],[55,255,140,26],[70,238,75,28],[85,194,23,31],[100,122,16,72]],
+  // Daltonisme : jaune -> vert -> bleu -> violet (type viridis), luminosité strictement décroissante, sans rouge/vert confondus
+  cvd:[[22,253,231,37],[40,122,209,81],[55,34,168,132],[70,42,120,142],[85,65,68,135],[100,68,1,84]]
+};
+let STOPS=PALS.std;
 const rgbAt=s=>{s=Math.max(22,Math.min(100,s));let i=1;while(i<STOPS.length-1&&s>STOPS[i][0])i++;const a=STOPS[i-1],b=STOPS[i],t=(s-a[0])/(b[0]-a[0]);return[0,1,2].map(k=>Math.round(a[k+1]+(b[k+1]-a[k+1])*t))};
 const gA=s=>s<22?0:Math.min(.9,.42+.48*Math.pow((s-22)/78,.8));
 const gC=s=>`rgb(${rgbAt(s).join(",")})`;
@@ -826,6 +832,12 @@ function paintHeat(sc){
 // un point est tracé avec une probabilité qui croît avec le score. Recalculé à chaque déplacement/zoom.
 let dotsCanvas=null;
 const DOTC=[...Array(101)].map((_,v)=>gC(v));
+function setPalette(k){
+  STOPS=PALS[k]||PALS.std;_lut=null;for(let v=0;v<=100;v++)DOTC[v]=gC(v);
+  const r=document.documentElement.style,c=v=>"rgb("+rgbAt(v).join(",")+")";
+  r.setProperty("--c2",c(40));r.setProperty("--c3",c(55));r.setProperty("--c4",c(85));
+  r.setProperty("--bargrad","linear-gradient(90deg,transparent 0%,rgba("+rgbAt(22).join(",")+",.45) 22%,"+[40,55,70,85,100].map(v=>c(v)+" "+v+"%").join(",")+")");
+}
 function hash3(a,b,c){let h=Math.imul(a|0,374761393)+Math.imul(b|0,668265263)+Math.imul(c|0,2246822519)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
 function initDots(){
   map.createPane("dots");const pn=map.getPane("dots");pn.style.zIndex=395;pn.style.pointerEvents="none";
@@ -870,11 +882,12 @@ function loadPrefs(){
   const v=h.get("v")||p.view;if(VIEWS.some(x=>x.k==v))st.view=v;
   if(p.mode==="flat"||p.mode==="dots")st.mode=p.mode;
   if(typeof p.gray==="boolean")$("gray").checked=p.gray;
+  if(p.cvd===true){$("cvd").checked=true;setPalette("cvd")}
   $("mode").value=st.mode;
   $("map").classList.toggle("gray",$("gray").checked);
 }
 function savePrefs(){
-  try{localStorage.setItem(PREF_KEY,JSON.stringify({sp:st.sp,view:st.view,mode:st.mode,gray:$("gray").checked}))}catch(e){}
+  try{localStorage.setItem(PREF_KEY,JSON.stringify({sp:st.sp,view:st.view,mode:st.mode,gray:$("gray").checked,cvd:$("cvd").checked}))}catch(e){}
   try{const h=["e="+st.sp,"v="+st.view];if(st.pt)h.push("p="+st.pt.lat.toFixed(5)+","+st.pt.lon.toFixed(5));history.replaceState(null,"","#"+h.join("&"))}catch(e){}
 }
 function scrollToDetail(){
@@ -890,6 +903,7 @@ function build(){
   $("mode").onchange=e=>{st.mode=e.target.value;render()};
   $("detail").onclick=e=>{const li=e.target.closest(".spots li");if(li&&st.spots){const c=st.spots[+li.dataset.i];if(c)goSpot(c)}};
   $("gray").onchange=e=>{$("map").classList.toggle("gray",e.target.checked);savePrefs()};
+  $("cvd").onchange=e=>{setPalette(e.target.checked?"cvd":"std");savePrefs();render()};
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
   if(innerWidth<=860)$("maplegend").classList.add("min");

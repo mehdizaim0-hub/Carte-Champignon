@@ -136,6 +136,14 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   spBtn().click(); await sleep(150);
   check('spot retiré : stockage et liste vides', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && $('myspots').hidden);
 
+  console.log('Palette daltonisme');
+  const cvd = $('cvd'), rootStyle = () => doc.documentElement.style.getPropertyValue('--c4');
+  cvd.checked = true; cvd.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('palette daltonisme : couleurs de niveau et légende basculent', rootStyle() === 'rgb(65,68,135)' && /rgb\(34,168,132\)/.test(doc.documentElement.style.getPropertyValue('--bargrad')), rootStyle());
+  check('palette daltonisme mémorisée', JSON.parse(w.localStorage.getItem('cm:v1')).cvd === true);
+  cvd.checked = false; cvd.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('retour à la palette standard', rootStyle() === 'rgb(194,23,31)', rootStyle());
+
   console.log('PWA hors-ligne');
   let man = null; try { man = JSON.parse(read('manifest.webmanifest')) } catch (e) {}
   check('manifeste valide, avec nom, start_url et icônes existantes', !!man && !!man.name && !!man.start_url && man.icons.length >= 2 && man.icons.every(i => fs.existsSync(path.join(ROOT, i.src))), JSON.stringify(man));
