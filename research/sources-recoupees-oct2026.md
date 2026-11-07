@@ -197,3 +197,5 @@ de sol, de relief et de forêt (`tools/gbif_calib_b.py`, résultats dans `resear
   concentrent pas dans les blocs sans forêt, donc le poids « milieu ouvert » reste modéré.
 - Températures, pluies, délais de sortie et texture du sol : **estimés** (aucune source directe) ; la fiche l'indique.
 - Biais connus : observations concentrées près des villes et routes, effort d'observation variable selon les mois ; le 1er janvier est une date par défaut.
+
+> **Mise à jour 07/11/2026** : le bolet de Satan a été retiré du catalogue (20 espèces). Les données ci-dessus restent à titre de référence.

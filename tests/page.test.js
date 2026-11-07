@@ -52,7 +52,7 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('données quotidiennes chargées (2400+ mailles)', st.live && st.live.length > 2400, String(st.live && st.live.length));
   check('forêt fine chargée', !!w.__fine());
   check('bandeau de fraîcheur affiché', /Météo réelle|anciennes/.test(txt('status')), txt('status'));
-  check('21 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 21 && doc.querySelectorAll('#chips .glab').length === 3);
+  check('20 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 20 && doc.querySelectorAll('#chips .glab').length === 3);
   check('4 vues proposées', doc.querySelectorAll('#views button').length === 4);
   check('8 jours proposés', doc.querySelectorAll('#days button').length === 8);
   check('section « Où chercher » supprimée', !$('rad') && !$('gps') && !$('near') && !/Où chercher \?/.test(txt('side')));
@@ -69,7 +69,7 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   const SPs = w.__sp, mono = a => a.every((v, i) => i === 0 || v >= a[i - 1]);
   const need = ['n', 'grp', 'lat', 'wiki', 'det', 'du', 'hote', 'sol', 'saison', 'alt', 'id', 'txt', 'so', 'fo', 'al', 't', 'ro', 'lag', 'hu', 'gb', 'ph', 'pf', 'wc', 'ws'];
   const bad = SPs.filter(sp => need.some(k => sp[k] === undefined) || sp.gb.length !== 12 || Math.max(...sp.gb) !== 1 || sp.gb.some(v => v < 0 || v > 1) || !mono(sp.t) || !mono(sp.al) || !mono(sp.ph) || sp.id.length < 60 || !['foret', 'prairie', 'bois'].includes(sp.grp)).map(sp => sp.n);
-  check('21 espèces complètes et cohérentes (saison, température, altitude, pH, fiche)', SPs.length === 21 && bad.length === 0, bad.join(', '));
+  check('20 espèces complètes et cohérentes (saison, température, altitude, pH, fiche)', SPs.length === 20 && bad.length === 0, bad.join(', '));
   const dup = SPs.map(x => x.n).filter((n, i, a) => a.indexOf(n) !== i);
   check('noms d\'espèces uniques', dup.length === 0, dup.join(', '));
   const z = st.live && w.__fine() ? null : null;
@@ -80,13 +80,15 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
 
   // espèce toxique : signalée partout, jamais recommandée
   const tox = SPs.filter(sp => sp.toxic), ti = SPs.findIndex(sp => sp.toxic);
-  check('au moins une espèce toxique (bolet de Satan) avec avertissement dans la fiche', tox.length >= 1 && tox.every(sp => /TOXIQUE/.test(sp.id)), tox.map(sp => sp.n).join(','));
-  doc.querySelector('#chips button[data-i="' + ti + '"]').click(); await sleep(200);
-  check('espèce toxique : puce marquée, bandeau et mention dans la fiche', doc.querySelector('#chips button[data-i="' + ti + '"]').classList.contains('tox') && !$('toxban').hidden && /TOXIQUE/.test(txt('spsuml')) && $('spwarn').hidden);
-  w.setPoint(47.0, 4.0, false); await sleep(900);
-  check('espèce toxique : avertissement dans le résultat et absente des meilleures espèces', /Espèce toxique/.test(txt('detail')) && !/Meilleures espèces[^.]*Bolet de Satan/.test(txt('detail')), txt('detail').slice(0, 200));
-  doc.querySelector('#chips button[data-i="0"]').click(); await sleep(150);
-  check('espèce comestible : bandeau toxique masqué', $('toxban').hidden && !$('spwarn').hidden);
+  if (tox.length) {
+    check('au moins une espèce toxique (bolet de Satan) avec avertissement dans la fiche', tox.length >= 1 && tox.every(sp => /TOXIQUE/.test(sp.id)), tox.map(sp => sp.n).join(','));
+    doc.querySelector('#chips button[data-i="' + ti + '"]').click(); await sleep(200);
+    check('espèce toxique : puce marquée, bandeau et mention dans la fiche', doc.querySelector('#chips button[data-i="' + ti + '"]').classList.contains('tox') && !$('toxban').hidden && /TOXIQUE/.test(txt('spsuml')) && $('spwarn').hidden);
+    w.setPoint(47.0, 4.0, false); await sleep(900);
+    check('espèce toxique : avertissement dans le résultat et absente des meilleures espèces', /Espèce toxique/.test(txt('detail')) && !/Meilleures espèces[^.]*Bolet de Satan/.test(txt('detail')), txt('detail').slice(0, 200));
+    doc.querySelector('#chips button[data-i="0"]').click(); await sleep(150);
+    check('espèce comestible : bandeau toxique masqué', $('toxban').hidden && !$('spwarn').hidden);
+  } else check('aucune espèce toxique au catalogue : mécanisme d\'avertissement inactif', true);
 
   console.log('Point GPS');
   w.setPoint(44.2, -0.9, false); await sleep(1200);
