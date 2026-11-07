@@ -136,6 +136,17 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   spBtn().click(); await sleep(150);
   check('spot retiré : stockage et liste vides', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && $('myspots').hidden);
 
+  console.log('Comparateur d\'espèces');
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  const cs = () => $('cmpsel');
+  check('sélecteur de comparaison présent, sans tableau au départ', !!cs() && !doc.querySelector('#detail .cmpt'));
+  cs().value = '1'; cs().dispatchEvent(new w.Event('change')); await sleep(300);
+  const heads = [...doc.querySelectorAll('#detail .cmpt thead th')].map(t => t.textContent);
+  check('tableau comparatif : 2 espèces et 8 lignes', heads.length === 3 && doc.querySelectorAll('#detail .cmpt tbody tr').length === 8, heads.join('|'));
+  check('une valeur gagnante surlignée par ligne non égale', doc.querySelectorAll('#detail .cmpt td.win').length >= 1);
+  cs().value = '-1'; cs().dispatchEvent(new w.Event('change')); await sleep(300);
+  check('comparaison retirée', !doc.querySelector('#detail .cmpt'));
+
   console.log('Palette daltonisme');
   const cvd = $('cvd'), rootStyle = () => doc.documentElement.style.getPropertyValue('--c4');
   cvd.checked = true; cvd.dispatchEvent(new w.Event('change')); await sleep(300);

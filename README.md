@@ -174,3 +174,7 @@ Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point préci
 ## Mes spots
 
 Bouton « Enregistrer ce point » sous le résultat d un point ; la liste « Mes spots » (stockée dans le `localStorage` de l appareil, clé `cm:spots:v1`, 50 max) permet d y retourner en un toucher.
+
+## Comparateur d espèces
+
+Sous le résultat d un point, « Comparer avec » met deux espèces côte à côte (score du jour, meilleur score sur 8 jours, sol, forêt, altitude, température, humidité, saison). La valeur la plus favorable est en gras.

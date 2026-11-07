@@ -191,6 +191,9 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 }
 .mysp{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.mysp li{display:flex;gap:6px;align-items:center}
 .mysp .go{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mysp .del{padding:7px 10px;color:var(--mute)}
+.cmp{margin-top:12px}.cmp select{max-width:100%}.cmpt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.cmpt th,.cmpt td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}.cmpt th:first-child{text-align:left;font-weight:600;color:var(--mute)}
+.cmpt thead th{color:var(--ink)}.cmpt .win{font-weight:800;color:var(--acc-ink)}
 </style>
 </head>
 <body>
@@ -369,7 +372,7 @@ const clamp=x=>Math.max(0,Math.min(1,x));
 const km=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)*r/2);return 6371*Math.sqrt(x*x+y*y)};
 const $=id=>document.getElementById(id);
 const BASE=[5,6,9,12,15,19,21.5,21.5,18,14,9,6];
-let st={view:"dur",mode:"dots",past:14,pt:null,ptZ:null,ptTok:0,spTok:0,spots:null,spotData:null,forets:null,off:14,sp:0,day:0,rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
+let st={cmp:-1,view:"dur",mode:"dots",past:14,pt:null,ptZ:null,ptTok:0,spTok:0,spots:null,spotData:null,forets:null,off:14,sp:0,day:0,rain:100,dt:0,live:null,sel:null,fetchedAt:null,dataDate:null};
 const dateOf=d=>{const x=new Date();x.setDate(x.getDate()+d);return x};
 // ---------- Météo ----------
 // lag : la pluie qui compte est celle tombée lag à lag+14 jours avant la date visée.
@@ -1305,6 +1308,23 @@ function renderDetail(){
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
   mySpotsHook();
+  cmpHook();
+}
+// ---------- Comparateur : deux espèces côte à côte sur le point choisi ----------
+function cmpHook(){
+  const z=st.ptZ;if(!z)return;
+  const box=document.createElement("div");box.className="cmp";
+  let html=`<label class="opt">Comparer avec <select id="cmpsel" aria-label="Espèce à comparer"><option value="-1">—</option>${SP.map((s,i)=>i===st.sp?"":`<option value="${i}"${i===st.cmp?" selected":""}>${s.n}</option>`).join("")}</select></label>`;
+  if(st.cmp>=0&&st.cmp!==st.sp&&SP[st.cmp]){
+    const A=SP[st.sp],B=SP[st.cmp],d=st.day,ra=score(A,z,d),rb=score(B,z,d);
+    const best=s=>{const a=[...Array(8)].map((_,k)=>score(s,z,k).sc),m=Math.max(...a);return{m,k:a.indexOf(m)}};
+    const ba=best(A),bb=best(B),lb=k=>k==0?"auj.":"J+"+k;
+    const row=(l,a,b)=>`<tr><th>${l}</th><td class="${a>b?"win":""}">${a}</td><td class="${b>a?"win":""}">${b}</td></tr>`;
+    const fac=[["Sol","so"],["Forêt","fo"],["Altitude","al"],["Température","tf"],["Humidité","rf"],["Saison","sf"]].map(([l,k])=>row(l,Math.round(ra[k]*100),Math.round(rb[k]*100))).join("");
+    html+=`<table class="cmpt"><thead><tr><th></th><th>${A.n}</th><th>${B.n}</th></tr></thead><tbody>${row("Score ce jour",ra.sc,rb.sc)}${row("Meilleur score sur 8 j",ba.m,bb.m)}${fac}</tbody></table><p class="sub">Meilleur jour : ${A.n} ${lb(ba.k)} · ${B.n} ${lb(bb.k)}</p>${A.toxic||B.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}`;
+  }
+  box.innerHTML=html;$("detail").appendChild(box);
+  $("cmpsel").onchange=e=>{st.cmp=+e.target.value;renderDetail()};
 }
 // ---------- Mes spots : points enregistrés sur l'appareil (localStorage) ----------
 const SPOTS_KEY="cm:spots:v1";
