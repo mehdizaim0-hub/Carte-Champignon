@@ -123,6 +123,16 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
 
+  console.log('Courbes d\'optimum');
+  const cvSvgs = () => doc.querySelectorAll('#spcurves svg.cv');
+  check('fiche espèce : 3 graphiques (température, altitude, saison) avec description accessible', cvSvgs().length === 3 && [...cvSvgs()].every(s => (s.getAttribute('aria-label') || '').length > 10));
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  check('avec un point : repère « ici » sur température et altitude, mois courant en évidence', doc.querySelectorAll('#spcurves .cv-mk').length === 2 && doc.querySelectorAll('#spcurves .cv-b.now').length === 1, String(doc.querySelectorAll('#spcurves .cv-mk').length));
+  check('légendes chiffrées avec la valeur du point', /ici -?\d+ °C \(\d+ %\)/.test(doc.querySelector('#spcurves').textContent) && /ici \d+ m \(\d+ %\)/.test(doc.querySelector('#spcurves').textContent), doc.querySelector('#spcurves').textContent.slice(0, 220));
+  const curveSpecies = w.__sp.map(s => s.n);
+  const allOk = w.__sp.every(s => s.t.length === 4 && s.al.length === 4 && s.gb.length === 12 && s.t[0] < s.t[3] && s.al[0] < s.al[3]);
+  check('20 espèces : paramètres de courbes complets (t, al, gb)', allOk && curveSpecies.length === 20);
+
   console.log('Ce qui sort ici');
   await sleep(500);
   const nowItems = () => [...doc.querySelectorAll('#nowl li')];

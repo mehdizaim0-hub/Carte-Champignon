@@ -190,3 +190,7 @@ Sous le résultat d un point, « Comparer avec » met deux espèces côte à cô
 ## Ce qui sort ici
 
 La carte « Ce qui sort ici » (haut de la colonne) classe les 5 espèces les plus favorables autour du centre de la carte (score du jour, pic des 8 prochains jours). Elle se met à jour quand on déplace la carte ; toucher une entrée sélectionne l espèce. Les espèces toxiques sont exclues du classement.
+
+## Courbes d optimum
+
+Dans la fiche de l espèce, trois graphiques montrent ce qu elle aime : température moyenne et altitude (zone idéale et plage tolérée, tracées avec la même fonction `trap` que le score) et saison (poids mensuels). Quand un point est choisi, un repère « ici » indique la valeur du jour et le pourcentage correspondant.

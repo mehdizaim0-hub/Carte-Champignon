@@ -656,6 +656,7 @@ function render(){
 const PHOTOS={};
 function renderSpecies(){
   const sp=SP[st.sp];
+  renderCurves(sp,st.ptZ&&st.pt?st.ptZ:null,st.ptZ&&st.pt&&st.live?(()=>{try{return score(sp,st.ptZ,st.day).w.T}catch(e){return null}})():null,st.day);
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";$("spsumn").textContent=sp.n;$("spsuml").textContent=(sp.lat||"")+(sp.toxic?" · TOXIQUE":"");$("toxban").hidden=!sp.toxic;$("spwarn").hidden=!!sp.toxic;
   $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
   const img=$("spimg"),cap=$("spcap"),k=st.sp,P=PHOTOS[k];
@@ -680,6 +681,40 @@ async function loadPhoto(sp){
     }catch(e){}
     return{src,cap,thumb:src.replace(/\/\d+px-/,"/120px-")};
   }catch(e){return null}
+}
+// ---------- Courbes d'optimum : où se situent température, altitude et saison par rapport à ce qu'aime l'espèce ----------
+function curveSvg(o){
+  const W=300,H=66,pl=4,pr=4,pt=6,pb=16,iw=W-pl-pr,ih=H-pt-pb;
+  const X=x=>pl+(x-o.xmin)/(o.xmax-o.xmin)*iw,Y=v=>pt+(1-v)*ih,N=60;
+  const pts=[...Array(N+1)].map((_,i)=>{const x=o.xmin+(o.xmax-o.xmin)*i/N;return X(x).toFixed(1)+","+Y(o.f(x)).toFixed(1)});
+  let mk="";
+  if(o.val!=null&&isFinite(o.val)){
+    const v=Math.max(o.xmin,Math.min(o.xmax,o.val));
+    mk=`<line class="cv-mk" x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${pt}" y2="${Y(0)}"/><circle class="cv-dot" cx="${X(v).toFixed(1)}" cy="${Y(o.f(o.val)).toFixed(1)}" r="3.5"/>`;
+  }
+  return `<svg class="cv" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}"><path class="cv-a" d="M${pl},${Y(0)} L${pts.join(" L")} L${W-pr},${Y(0)}Z"/><polyline class="cv-l" points="${pts.join(" ")}"/>${mk}`+
+    `<text x="${pl}" y="${H-3}">${o.xmin} ${o.unit}</text><text x="${W-pr}" y="${H-3}" text-anchor="end">${o.xmax} ${o.unit}</text></svg>`;
+}
+function seasonSvg(gb,mo,aria){
+  const W=300,H=66,pt=6,pb=16,bw=W/12,mx=Math.max(...gb,.01);
+  const bars=gb.map((g,i)=>{const hh=Math.max(1,(g/mx)*(H-pt-pb));return `<rect class="cv-b${i===mo?" now":""}" x="${(i*bw+3).toFixed(1)}" y="${(H-pb-hh).toFixed(1)}" width="${(bw-6).toFixed(1)}" height="${hh.toFixed(1)}" rx="2"/><text x="${(i*bw+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle">${"JFMAMJJASOND"[i]}</text>`}).join("");
+  return `<svg class="cv" viewBox="0 0 ${W} ${H}" role="img" aria-label="${aria}">${bars}</svg>`;
+}
+// z, T : point choisi et température du jour (facultatifs) pour placer le repère « ici »
+function renderCurves(sp,z,T,d){
+  const box=$("spcurves");if(!box)return;
+  const al=sp.al.map((v,i)=>i==0&&v==0?-1:v),altF=x=>trap(x,...al),tF=x=>trap(x,...sp.t);
+  const altMax=Math.ceil(sp.al[3]*1.15/100)*100,mo=dateOf(d||0).getMonth(),here=z&&isFinite(z.alt);
+  const tv=z&&isFinite(T)?T:null;
+  const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  const best=sp.gb.indexOf(Math.max(...sp.gb));
+  box.innerHTML=
+    `<h4>Température moyenne</h4><p class="cap">Idéal ${sp.t[1]} à ${sp.t[2]} °C · toléré ${sp.t[0]} à ${sp.t[3]} °C${tv!=null?" · ici "+Math.round(tv)+" °C ("+Math.round(tF(tv)*100)+" %)":""}</p>`+
+    curveSvg({xmin:sp.t[0]-4,xmax:sp.t[3]+4,f:tF,val:tv,unit:"°C",aria:`Courbe de température : idéal ${sp.t[1]} à ${sp.t[2]} degrés, toléré ${sp.t[0]} à ${sp.t[3]}`})+
+    `<h4>Altitude</h4><p class="cap">Idéal ${sp.al[1]} à ${sp.al[2]} m · toléré ${Math.max(0,sp.al[0])} à ${sp.al[3]} m${here?" · ici "+Math.round(z.alt)+" m ("+Math.round(altF(z.alt)*100)+" %)":""}</p>`+
+    curveSvg({xmin:0,xmax:altMax,f:altF,val:here?z.alt:null,unit:"m",aria:`Courbe d'altitude : idéal ${sp.al[1]} à ${sp.al[2]} mètres, toléré jusqu'à ${sp.al[3]}`})+
+    `<h4>Saison</h4><p class="cap">Pic en ${MOIS[best]} · mois affiché en rouge : ${MOIS[mo]}</p>`+
+    seasonSvg(sp.gb,mo,`Saison de ${sp.n} : pic en ${MOIS[best]}`);
 }
 // ---------- Meilleurs coins autour du point : cercle de taille fixe à l'écran ----------
 // Le rayon suit l'échelle de la carte : rayon en pixels x mètres par pixel (borné de 150 m à 100 km), donc le cercle garde la même
@@ -1016,6 +1051,7 @@ function renderDetail(){
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
   mySpotsHook();
   cmpHook();
+  renderCurves(sp,zsel,r.w&&r.w.T,d);
 }
 // ---------- Comparateur : deux espèces côte à côte sur le point choisi ----------
 function cmpHook(){
