@@ -121,6 +121,20 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
 
+  console.log('Mes spots');
+  w.prompt = () => 'Coin du chêne';
+  w.localStorage.removeItem('cm:spots:v1');
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  const spBtn = () => [...doc.querySelectorAll('#detail .cta button')].find(b => /point|Spot enregistré/.test(b.textContent));
+  check('bouton « Enregistrer ce point » présent sur un point', !!spBtn() && /Enregistrer/.test(spBtn().textContent));
+  spBtn().click(); await sleep(150);
+  const saved = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
+  check('spot enregistré avec son nom', saved.length === 1 && saved[0].name === 'Coin du chêne' && saved[0].lat === 47, JSON.stringify(saved));
+  check('liste « Mes spots » visible avec 1 entrée', !$('myspots').hidden && doc.querySelectorAll('#myspl li').length === 1);
+  check('le bouton propose de retirer le spot', /retirer/.test(spBtn().textContent));
+  spBtn().click(); await sleep(150);
+  check('spot retiré : stockage et liste vides', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && $('myspots').hidden);
+
   console.log('Erreurs JavaScript');
   check('aucune erreur dans la console', errors.length === 0, errors.join(' || '));
   console.log(fails.length ? '\n' + fails.length + ' échec(s)' : '\nTout est vert.');

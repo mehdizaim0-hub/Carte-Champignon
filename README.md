@@ -170,3 +170,7 @@ Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point préci
 ## Hors-ligne (PWA)
 
 `sw.js` + `manifest.webmanifest` : la carte s installe sur l écran d accueil et reste utilisable sans réseau (dernières données du site, tuiles de fond de carte déjà vues). Les fichiers du site passent réseau d abord, donc les données du bot restent fraîches. Pour forcer un rafraîchissement du cache après un changement de `sw.js`, incrémenter `V`.
+
+## Mes spots
+
+Bouton « Enregistrer ce point » sous le résultat d un point ; la liste « Mes spots » (stockée dans le `localStorage` de l appareil, clé `cm:spots:v1`, 50 max) permet d y retourner en un toucher.

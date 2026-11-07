@@ -189,6 +189,8 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
   aside>*{opacity:1;transform:none}
   .selpin .ring{display:none}
 }
+.mysp{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.mysp li{display:flex;gap:6px;align-items:center}
+.mysp .go{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mysp .del{padding:7px 10px;color:var(--mute)}
 </style>
 </head>
 <body>
@@ -223,6 +225,11 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 </article>
 </details>
 <section class="card" id="detail" style="--i:3" aria-live="polite"></section>
+<details class="card" id="myspots" style="--i:3" hidden>
+<summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Mes spots <span id="myspn"></span></summary>
+<ul class="mysp" id="myspl"></ul>
+<p class="sub" style="margin:8px 0 0">Enregistrés sur cet appareil uniquement.</p>
+</details>
 <details class="card" id="howto" style="--i:5">
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>
 <div class="sub" style="margin-top:8px;line-height:1.6">
@@ -1283,7 +1290,42 @@ function renderDetail(){
   ${reliefLine(zsel,sp,r)}
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
+  mySpotsHook();
 }
+// ---------- Mes spots : points enregistrés sur l'appareil (localStorage) ----------
+const SPOTS_KEY="cm:spots:v1";
+function spotsLoad(){try{const a=JSON.parse(localStorage.getItem(SPOTS_KEY)||"[]");return Array.isArray(a)?a.filter(s=>s&&isFinite(s.lat)&&isFinite(s.lon)):[]}catch(e){return[]}}
+function spotsSave(a){try{localStorage.setItem(SPOTS_KEY,JSON.stringify(a.slice(0,50)))}catch(e){}}
+const spotNear=(a,lat,lon)=>a.findIndex(s=>Math.abs(s.lat-lat)<.001&&Math.abs(s.lon-lon)<.001);
+function mySpotsHook(){
+  const z=st.pt;if(!z)return;
+  const saved=spotNear(spotsLoad(),z.lat,z.lon)>=0,b=document.createElement("button");
+  b.type="button";b.className="btn";b.textContent=saved?"★ Spot enregistré · retirer":"☆ Enregistrer ce point";
+  b.onclick=()=>{
+    const a=spotsLoad(),i=spotNear(a,z.lat,z.lon);
+    if(i>=0)a.splice(i,1);
+    else{
+      const def=(st.ptZ&&st.ptZ.near)?"Près de "+st.ptZ.near:"Point "+z.lat.toFixed(3)+", "+z.lon.toFixed(3);
+      let n=def;try{const r=window.prompt("Nom du spot",def);if(r===null)return;n=r.trim().slice(0,60)||def}catch(e){}
+      a.unshift({lat:+z.lat.toFixed(5),lon:+z.lon.toFixed(5),name:n,ts:Date.now()});
+    }
+    spotsSave(a);renderMySpots();renderDetail();
+  };
+  const w=document.createElement("div");w.className="cta";w.appendChild(b);$("detail").appendChild(w);
+}
+function renderMySpots(){
+  const a=spotsLoad(),box=$("myspots"),ul=$("myspl");if(!box||!ul)return;
+  box.hidden=!a.length;$("myspn").textContent=a.length?"("+a.length+")":"";ul.textContent="";
+  a.forEach(s=>{
+    const li=document.createElement("li"),go=document.createElement("button"),del=document.createElement("button");
+    go.type=del.type="button";go.className="btn go";go.textContent=s.name;go.title=s.lat.toFixed(4)+"°N, "+s.lon.toFixed(4)+"°E";
+    go.onclick=()=>{setPoint(s.lat,s.lon,true)};
+    del.className="btn del";del.textContent="✕";del.setAttribute("aria-label","Retirer "+s.name);
+    del.onclick=()=>{const b=spotsLoad(),i=spotNear(b,s.lat,s.lon);if(i>=0){b.splice(i,1);spotsSave(b)}renderMySpots();if(st.pt)renderDetail()};
+    li.append(go,del);ul.appendChild(li);
+  });
+}
+renderMySpots();
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------
 async function loadLive(){
   try{
