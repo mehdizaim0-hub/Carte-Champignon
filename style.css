@@ -186,3 +186,5 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 .cv{width:100%;height:auto;display:block}.cv-a{fill:var(--c3,#ff8c1a);fill-opacity:.3}.cv-l{fill:none;stroke:var(--c4,#c2171f);stroke-width:2}
 .cv-mk{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 3}.cv-dot{fill:var(--ink)}.cv text{font-size:9.5px;fill:var(--mute)}
 .cv-b{fill:var(--c3,#ff8c1a);fill-opacity:.35}.cv-b.now{fill:var(--c4,#c2171f);fill-opacity:.9}
+.calleg{margin-top:6px;font-size:11.5px}.calleg .sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin:0 4px -1px 0}.calleg .it{display:inline-block;margin:0 8px 2px 0}
+.calleg .calbar{height:9px;border-radius:5px;margin:2px 0}.calleg .calrow{display:flex;justify-content:space-between;color:var(--mute)}

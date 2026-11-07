@@ -194,3 +194,7 @@ La carte « Ce qui sort ici » (haut de la colonne) classe les 5 espèces les pl
 ## Courbes d optimum
 
 Dans la fiche de l espèce, trois graphiques montrent ce qu elle aime : température moyenne et altitude (zone idéale et plage tolérée, tracées avec la même fonction `trap` que le score) et saison (poids mensuels). Quand un point est choisi, un repère « ici » indique la valeur du jour et le pourcentage correspondant.
+
+## Calques forêt et pH
+
+Options d affichage, « Calque » : **Type de forêt** (feuillus, résineux, mixte, bois épars, prairie ; blocs de ~1,4 km issus de `forets.json`) ou **pH du sol** (échelle orange acide, blanc neutre, violet calcaire ; blocs de ~2,8 km issus de `sol.json`). L image est tirée des grilles déjà chargées et replacée en projection Mercator ; la légende s affiche dans la légende de la carte. Le calque n est pas mémorisé entre deux visites.

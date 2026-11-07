@@ -123,6 +123,20 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
 
+  console.log('Calques forêt et pH');
+  check('pH : couleurs de la rampe (acide, neutre, calcaire)', JSON.stringify([w.phRGB(4), w.phRGB(6.5), w.phRGB(9)]) === JSON.stringify([[179, 88, 6], [247, 247, 247], [84, 39, 136]]), JSON.stringify([w.phRGB(4), w.phRGB(6.5), w.phRGB(9)]));
+  for (const k of ['foret', 'ph']) {
+    const im = w.calqueImage(k);
+    check('calque ' + k + ' : image générée, emprise sur la France, blocs peints', !!im && /^data:image/.test(im.url) && im.bounds[0][0] > 40 && im.bounds[1][0] < 53 && im.bounds[0][1] > -7 && im.bounds[1][1] < 12 && im.n > 20000, im && JSON.stringify(im.bounds) + ' n=' + im.n);
+  }
+  const cq = $('calque');
+  cq.value = 'foret'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('calque forêt : couche ajoutée à la carte et légende affichée', !!doc.querySelector('.leaflet-calque-pane img') && !$('calleg').hidden && /Feuillus/.test($('calleg').textContent));
+  cq.value = 'ph'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('calque pH : une seule couche, légende pH', doc.querySelectorAll('.leaflet-calque-pane img').length === 1 && /pH du sol/.test($('calleg').textContent));
+  cq.value = ''; cq.dispatchEvent(new w.Event('change')); await sleep(200);
+  check('calque retiré : couche et légende disparues', !doc.querySelector('.leaflet-calque-pane img') && $('calleg').hidden);
+
   console.log('Courbes d\'optimum');
   const cvSvgs = () => doc.querySelectorAll('#spcurves svg.cv');
   check('fiche espèce : 3 graphiques (température, altitude, saison) avec description accessible', cvSvgs().length === 3 && [...cvSvgs()].every(s => (s.getAttribute('aria-label') || '').length > 10));

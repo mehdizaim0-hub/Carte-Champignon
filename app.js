@@ -613,6 +613,7 @@ function build(){
   $("detail").onclick=e=>{const li=e.target.closest(".spots li");if(li&&st.spots){const c=st.spots[+li.dataset.i];if(c)goSpot(c)}};
   $("gray").onchange=e=>{$("map").classList.toggle("gray",e.target.checked);savePrefs()};
   $("cvd").onchange=e=>{setPalette(e.target.checked?"cvd":"std");savePrefs();render()};
+  $("calque").onchange=e=>setCalque(e.target.value);
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
   if(innerWidth<=860)$("maplegend").classList.add("min");
@@ -681,6 +682,55 @@ async function loadPhoto(sp){
     }catch(e){}
     return{src,cap,thumb:src.replace(/\/\d+px-/,"/120px-")};
   }catch(e){return null}
+}
+// ---------- Calques : type de forêt (blocs de ~1,4 km) et pH du sol (blocs de ~2,8 km), tirés des grilles déjà chargées ----------
+// Chaque ligne de la grille est replacée en projection Mercator (la grille est linéaire en latitude, la carte non) : sans cela, les blocs
+// dériveraient de plusieurs dizaines de km au centre de la France.
+let calqueLayer=null;
+const FCOL=[null,[46,125,50],[18,82,98],[150,150,40],[132,186,132],[110,160,175],[200,200,110],[224,232,180]];   // classes de FINE.cls : 1-3 dense, 4-6 épars, 7 prairie
+const PHSTOPS=[[4.5,179,88,6],[5.5,241,163,64],[6.5,247,247,247],[7.5,153,142,195],[8.3,84,39,136]];             // diverging orange - blanc - violet (sûr en daltonisme)
+function phRGB(p){
+  p=Math.max(PHSTOPS[0][0],Math.min(PHSTOPS[PHSTOPS.length-1][0],p));let i=1;
+  while(i<PHSTOPS.length-1&&p>PHSTOPS[i][0])i++;
+  const a=PHSTOPS[i-1],b=PHSTOPS[i],t=(p-a[0])/(b[0]-a[0]);return[1,2,3].map(k=>Math.round(a[k]+(b[k]-a[k])*t));
+}
+function calqueImage(key){
+  if(!heatGeom)return null;
+  const{la0,lo0,dLat,dLon}=heatGeom;let W,H,K,get;
+  if(key==="foret"){
+    if(!FINE)return null;W=FINE.FW;H=FINE.FH;K=FINE.K;
+    get=(y,x)=>{const i=y*W+x,c=FINE.cls[i];if(!c||FINE.urb[i])return null;const f=FCOL[c];return[f[0],f[1],f[2],c===7?110:c>=4?150:205]};
+  }else if(key==="ph"){
+    if(!SOL||!SOL.ph)return null;W=SOL.w;K=SOL.K;H=SOL.h||Math.round(SOL.ph.length/W);
+    get=(y,x)=>{const v=SOL.ph[y*W+x];if(v===255)return null;const c=phRGB(v/10);return[c[0],c[1],c[2],170]};
+  }else return null;
+  const latS=la0-dLat/2,bl=dLat/K,latN=latS+H*bl,lonW=lo0-dLon/2,lonE=lonW+W*(dLon/K);
+  const mer=la=>Math.log(Math.tan(Math.PI/4+la*Math.PI/360)),inv=y=>(2*Math.atan(Math.exp(y))-Math.PI/2)*180/Math.PI;
+  const yT=mer(latN),yB=mer(latS),cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const cx=cv.getContext("2d"),im=cx.createImageData(W,H),d=im.data;let n=0;
+  for(let oy=0;oy<H;oy++){
+    const lat=inv(yT+(yB-yT)*(oy+.5)/H),fy=Math.max(0,Math.min(H-1,Math.floor((lat-latS)/bl)));
+    for(let x=0;x<W;x++){const c=get(fy,x);if(!c)continue;const o=(oy*W+x)*4;d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=c[3];n++}
+  }
+  cx.putImageData(im,0,0);
+  return{url:cv.toDataURL("image/png"),bounds:[[latS,lonW],[latN,lonE]],n};
+}
+function calqueLegend(key){
+  const sw=(c,l)=>`<span class="it"><i class="sw" style="background:rgb(${c.join(",")})"></i>${l}</span>`;
+  if(key==="foret")return "<b>Type de forêt</b><br>"+sw(FCOL[1],"Feuillus")+sw(FCOL[2],"Résineux")+sw(FCOL[3],"Mixte")+sw(FCOL[4],"Bois épars (teinte claire)")+sw(FCOL[7],"Prairie, milieu ouvert");
+  const g=PHSTOPS.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${Math.round((s[0]-4.5)/3.8*100)}%`).join(",");
+  return `<b>pH du sol</b><div class="calbar" style="background:linear-gradient(90deg,${g})"></div><div class="calrow"><span>4,5 acide</span><span>6,5 neutre</span><span>8,3 calcaire</span></div>`;
+}
+function setCalque(key){
+  st.calque=key||"";
+  if(calqueLayer){map.removeLayer(calqueLayer);calqueLayer=null}
+  const lg=$("calleg");lg.hidden=true;lg.textContent="";
+  if(!st.calque)return;
+  const img=calqueImage(st.calque);
+  if(!img){spotSay("Calque indisponible : données pas encore chargées.");st.calque="";$("calque").value="";return}
+  if(!map.getPane("calque")){map.createPane("calque");const p=map.getPane("calque");p.style.zIndex=390;p.style.pointerEvents="none"}
+  calqueLayer=L.imageOverlay(img.url,img.bounds,{pane:"calque",opacity:1,interactive:false}).addTo(map);
+  lg.innerHTML=calqueLegend(st.calque);lg.hidden=false;
 }
 // ---------- Courbes d'optimum : où se situent température, altitude et saison par rapport à ce qu'aime l'espèce ----------
 function curveSvg(o){
