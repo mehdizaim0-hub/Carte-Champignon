@@ -614,6 +614,8 @@ function build(){
   $("gray").onchange=e=>{$("map").classList.toggle("gray",e.target.checked);savePrefs()};
   $("cvd").onchange=e=>{setPalette(e.target.checked?"cvd":"std");savePrefs();render()};
   $("calque").onchange=e=>setCalque(e.target.value);
+  $("cnv").onchange=e=>setContours(e.target.checked);
+  map.on("zoomend",cnvNote);
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
   if(innerWidth<=860)$("maplegend").classList.add("min");
@@ -732,6 +734,30 @@ function setCalque(key){
   calqueLayer=L.imageOverlay(img.url,img.bounds,{pane:"calque",opacity:1,interactive:false}).addTo(map);
   lg.innerHTML=calqueLegend(st.calque);lg.hidden=false;
 }
+// ---------- Courbes de niveau : tuiles IGN (RGE ALTI, équidistance 5 m), visibles à partir du zoom 11 ----------
+let cnvLayer=null,cnvFail=false;
+const CNV_MINZ=11;
+function cnvNote(){
+  const n=$("cnvnote");if(!n)return;
+  if(!cnvLayer){n.hidden=true;return}
+  if(cnvFail)n.textContent="Courbes de niveau indisponibles pour le moment (service IGN).";
+  else if(map.getZoom()<CNV_MINZ)n.textContent="Courbes de niveau : zoomez (niveau "+CNV_MINZ+" ou plus) pour les voir.";
+  else n.textContent="Courbes de niveau IGN, tous les 5 m.";
+  n.hidden=false;
+}
+function setContours(on){
+  if(cnvLayer){map.removeLayer(cnvLayer);cnvLayer=null}
+  cnvFail=false;
+  if(on){
+    if(!map.getPane("cnv")){map.createPane("cnv");const p=map.getPane("cnv");p.style.zIndex=450;p.style.pointerEvents="none"}
+    let ok=0,err=0;
+    cnvLayer=L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ELEVATION.CONTOUR.LINE&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
+      {pane:"cnv",minZoom:CNV_MINZ,maxNativeZoom:18,opacity:.85,attribution:"Courbes de niveau © IGN"}).addTo(map);
+    cnvLayer.on("tileload",()=>{ok++;if(cnvFail){cnvFail=false;cnvNote()}});
+    cnvLayer.on("tileerror",()=>{err++;if(!ok&&err>=3&&!cnvFail){cnvFail=true;cnvNote()}});
+  }
+  cnvNote();
+}
 // ---------- Courbes d'optimum : où se situent température, altitude et saison par rapport à ce qu'aime l'espèce ----------
 function curveSvg(o){
   const W=300,H=66,pl=4,pr=4,pt=6,pb=16,iw=W-pl-pr,ih=H-pt-pb;
@@ -781,6 +807,10 @@ function spotRadius(lat){
 }
 const fmtDist=m=>m<950?(Math.round(m/10)*10)+" m":(m<10000?String(Math.round(m/100)/10).replace(".",","):String(Math.round(m/1000)))+" km";
 const spLevel=v=>v>=70?4:v>=55?3:v>=35?2:v>=20?1:0;
+// Note sur 5 = les 5 niveaux du verdict (1 : très peu propice ... 5 : très propice), jamais pour une espèce toxique
+const starsOf=sc=>spLevel(sc)+1;
+const starsTxt=n=>"★".repeat(n)+"☆".repeat(5-n);
+const starsHtml=n=>`<span class="stars" role="img" aria-label="${n} sur 5">${starsTxt(n)}</span>`;
 function forestPx(r,g,b,a){   // même règle que build_forets.py : 0 aucune, 1 feuillus, 2 résineux, 3 mélange
   if(a<128)return 0;
   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),v=mx/255,sat=mx?(mx-mn)/mx:0;
@@ -1059,7 +1089,7 @@ function verdictHtml(sp,z,r,rv,arr,d){
   const lieu=hab>=70?"très adapté":hab>=45?"adapté":hab>=20?"peu adapté":"inadapté";
   const cnd=cond>=70?"très favorables":cond>=45?"correctes":cond>=20?"médiocres":"défavorables";
   const nf=z.nf?" Pas de forêt à cet endroit : cherchez le massif le plus proche.":"";
-  return `<div class="verdict v${lvl}"><b class="lab">${lab}</b> <span class="sub">à cet endroit pour ${sp.det} (${v}/100)</span>
+  return `<div class="verdict v${lvl}"><b class="lab">${lab}</b> ${sp.toxic?"":starsHtml(lvl+1)} <span class="sub">à cet endroit pour ${sp.det} (${v}/100)</span>
   <p>${pct!=null?`Mieux que ${pct} % des zones de France sur cette vue. `:""}Lieu <b>${lieu}</b> (sol, forêt, altitude : ${hab}/100) ; conditions du moment <b>${cnd}</b> (${cond}/100).${fac[1]<.6?` Principal frein : ${fac[0]} (${Math.round(fac[1]*100)} %).`:""}${nf}</p>
   <p>Tendance sur 8 jours : <b>${tr}</b>${arr[best]>arr[d]+4?` ; meilleur jour : ${bd} (${arr[best]}).`:"."}</p></div>`;
 }
@@ -1114,7 +1144,7 @@ function cmpHook(){
     const ba=best(A),bb=best(B),lb=k=>k==0?"auj.":"J+"+k;
     const row=(l,a,b)=>`<tr><th>${l}</th><td class="${a>b?"win":""}">${a}</td><td class="${b>a?"win":""}">${b}</td></tr>`;
     const fac=[["Sol","so"],["Forêt","fo"],["Altitude","al"],["Température","tf"],["Humidité","rf"],["Saison","sf"]].map(([l,k])=>row(l,Math.round(ra[k]*100),Math.round(rb[k]*100))).join("");
-    html+=`<table class="cmpt"><thead><tr><th></th><th>${A.n}</th><th>${B.n}</th></tr></thead><tbody>${row("Score ce jour",ra.sc,rb.sc)}${row("Meilleur score sur 8 j",ba.m,bb.m)}${fac}</tbody></table><p class="sub">Meilleur jour : ${A.n} ${lb(ba.k)} · ${B.n} ${lb(bb.k)}</p>${A.toxic||B.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}`;
+    html+=`<table class="cmpt"><thead><tr><th></th><th>${A.n}</th><th>${B.n}</th></tr></thead><tbody>${row("Note sur 5",starsOf(ra.sc),starsOf(rb.sc))}${row("Score ce jour",ra.sc,rb.sc)}${row("Meilleur score sur 8 j",ba.m,bb.m)}${fac}</tbody></table><p class="sub">Meilleur jour : ${A.n} ${lb(ba.k)} · ${B.n} ${lb(bb.k)}</p>${A.toxic||B.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}`;
   }
   box.innerHTML=html;$("detail").appendChild(box);
   $("cmpsel").onchange=e=>{st.cmp=+e.target.value;renderDetail()};
@@ -1139,7 +1169,7 @@ function renderNow(){
     const li=document.createElement("li"),b=document.createElement("button");
     li.className="l"+spLevel(r.t);b.type="button";b.className="btn";
     const n=document.createElement("span"),sc=document.createElement("span");
-    n.textContent=r.n;sc.className="sc";sc.textContent=r.t+"/100"+(r.k>0&&r.m>r.t?" · pic J+"+r.k:"");
+    n.textContent=r.n;sc.className="sc";sc.textContent=starsTxt(starsOf(r.t))+" "+r.t+"/100"+(r.k>0&&r.m>r.t?" · pic J+"+r.k:"");
     b.append(n,sc);
     b.onclick=()=>{const t=document.querySelector('#chips button[data-i="'+r.i+'"]');if(t)t.click()};
     li.appendChild(b);ul.appendChild(li);
@@ -1217,7 +1247,7 @@ function renderMySpots(){
     const f=spotForecast(s);fc.className="fc";
     if(f){
       const lv=spLevel(f.t);
-      fc.textContent=sp.n+" : "+f.t+"/100 aujourd'hui"+(f.k>0&&f.m>f.t?" · pic "+f.m+" (J+"+f.k+")":"");
+      fc.textContent=sp.n+(sp.toxic?"":" "+starsTxt(starsOf(f.t)))+" : "+f.t+"/100 aujourd'hui"+(f.k>0&&f.m>f.t?" · pic "+f.m+" (J+"+f.k+")":"");
       if(lv>=3){const bd=document.createElement("b");bd.className="ok";bd.textContent="Bon moment";fc.append(" ",bd)}
       li.appendChild(fc);
     }

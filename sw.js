@@ -1,9 +1,9 @@
 /* Service worker : la carte reste utilisable hors-ligne (dernières données et tuiles déjà vues).
    - Fichiers du site : réseau d'abord, cache en secours (les données du bot restent fraîches).
    - Leaflet, polices : cache d'abord, rafraîchi en arrière-plan.
-   - Tuiles de fond de carte : cache d'abord, plafonné.
+   - Tuiles de fond de carte et courbes de niveau IGN : cache d'abord, plafonné (le WMS forêt reste en direct).
    - API météo / GBIF / Wikipédia : jamais interceptées. */
-const V = "v2";
+const V = "v3";
 const SHELL = "shell-" + V, LIBS = "libs-" + V, TILES = "tiles-" + V;
 const TILE_MAX = 600;
 const PRECACHE = ["./", "index.html", "style.css", "species.js", "app.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
@@ -58,7 +58,8 @@ self.addEventListener("fetch", e => {
   const u = new URL(req.url);
   if (u.origin === location.origin) {
     e.respondWith(networkFirst(req, SHELL));
-  } else if (/(^|\.)tile\.openstreetmap\.org$|\.opentopomap\.org$/.test(u.hostname)) {
+  } else if (/(^|\.)tile\.openstreetmap\.org$|\.opentopomap\.org$/.test(u.hostname) ||
+             (u.hostname === "data.geopf.fr" && u.pathname === "/wmts" && u.searchParams.get("LAYER") === "ELEVATION.CONTOUR.LINE")) {
     e.respondWith(tile(req));
   } else if (/^(unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/.test(u.hostname)) {
     e.respondWith(swr(req, LIBS));

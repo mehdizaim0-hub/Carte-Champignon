@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -122,6 +122,22 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   doc.querySelectorAll('#days button')[3].click();
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
+
+  console.log('Courbes de niveau et note sur 5');
+  const cn = $('cnv');
+  cn.checked = true; cn.dispatchEvent(new w.Event('change')); await sleep(200);
+  check('courbes de niveau : couche IGN ELEVATION.CONTOUR.LINE à partir du zoom 11', !!w.__cnv() && /LAYER=ELEVATION\.CONTOUR\.LINE/.test(w.__cnv()._url) && w.__cnv().options.minZoom === 11, w.__cnv() && w.__cnv()._url);
+  check('courbes de niveau : indication de zoom affichée sous le zoom 11', !$('cnvnote').hidden && /zoomez/.test($('cnvnote').textContent), $('cnvnote').textContent);
+  cn.checked = false; cn.dispatchEvent(new w.Event('change')); await sleep(200);
+  check('courbes de niveau retirées', w.__cnv() === null && $('cnvnote').hidden);
+  check('service worker : tuiles de courbes de niveau en cache, WMS forêt non intercepté', /ELEVATION\.CONTOUR\.LINE/.test(read('sw.js')) && !/wms-v/.test(read('sw.js')));
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  const vs = doc.querySelector('#detail .verdict .stars');
+  const lvlOf = +doc.querySelector('#detail .verdict').className.match(/v(\d)/)[1];
+  check('note sur 5 dans le verdict, cohérente avec le niveau (' + lvlOf + ' -> ' + (lvlOf + 1) + ')', !!vs && vs.getAttribute('aria-label') === (lvlOf + 1) + ' sur 5' && vs.textContent.length === 5 && vs.textContent.split('★').length - 1 === lvlOf + 1, vs && vs.outerHTML);
+  check('note sur 5 dans « Ce qui sort ici »', [...doc.querySelectorAll('#nowl li .sc')].every(x => /^[★☆]{5} /.test(x.textContent)));
+  const starsAt = [0, 19, 20, 34, 35, 54, 55, 69, 70, 100].map(v => w.__stars(v)).join();
+  check('seuils des étoiles : 1 à 5 selon les niveaux du verdict (20 / 35 / 55 / 70)', starsAt === '1,1,2,2,3,3,4,4,5,5', starsAt);
 
   console.log('Calques forêt et pH');
   check('pH : couleurs de la rampe (acide, neutre, calcaire)', JSON.stringify([w.phRGB(4), w.phRGB(6.5), w.phRGB(9)]) === JSON.stringify([[179, 88, 6], [247, 247, 247], [84, 39, 136]]), JSON.stringify([w.phRGB(4), w.phRGB(6.5), w.phRGB(9)]));
@@ -203,7 +219,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   check('sélecteur de comparaison présent, sans tableau au départ', !!cs() && !doc.querySelector('#detail .cmpt'));
   cs().value = '1'; cs().dispatchEvent(new w.Event('change')); await sleep(300);
   const heads = [...doc.querySelectorAll('#detail .cmpt thead th')].map(t => t.textContent);
-  check('tableau comparatif : 2 espèces et 8 lignes', heads.length === 3 && doc.querySelectorAll('#detail .cmpt tbody tr').length === 8, heads.join('|'));
+  check('tableau comparatif : 2 espèces, 9 lignes dont la note sur 5', heads.length === 3 && doc.querySelectorAll('#detail .cmpt tbody tr').length === 9 && /Note sur 5/.test(doc.querySelector('#detail .cmpt tbody').textContent), heads.join('|'));
   check('une valeur gagnante surlignée par ligne non égale', doc.querySelectorAll('#detail .cmpt td.win').length >= 1);
   cs().value = '-1'; cs().dispatchEvent(new w.Event('change')); await sleep(300);
   check('comparaison retirée', !doc.querySelector('#detail .cmpt'));

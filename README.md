@@ -198,3 +198,8 @@ Dans la fiche de l espèce, trois graphiques montrent ce qu elle aime : tempéra
 ## Calques forêt et pH
 
 Options d affichage, « Calque » : **Type de forêt** (feuillus, résineux, mixte, bois épars, prairie ; blocs de ~1,4 km issus de `forets.json`) ou **pH du sol** (échelle orange acide, blanc neutre, violet calcaire ; blocs de ~2,8 km issus de `sol.json`). L image est tirée des grilles déjà chargées et replacée en projection Mercator ; la légende s affiche dans la légende de la carte. Le calque n est pas mémorisé entre deux visites.
+
+## Courbes de niveau et note sur 5
+
+- **Courbes de niveau** : case à cocher dans les options d affichage. Tuiles IGN `ELEVATION.CONTOUR.LINE` (Géoplateforme, équidistance 5 m, RGE ALTI), visibles à partir du zoom 11 ; le service worker les met en cache (le WMS forêt, lui, reste toujours en direct). Si le service IGN ne répond pas, une note l indique dans la légende.
+- **Note sur 5** : les 5 niveaux du verdict en étoiles (1 : très peu propice, 2 : peu, 3 : moyennement, 4 : propice, 5 : très propice ; seuils 20 / 35 / 55 / 70 sur 100). Affichée dans le verdict d un point, « Ce qui sort ici », les prévisions de spots et le comparateur. Jamais pour une espèce toxique.

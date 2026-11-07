@@ -34,6 +34,7 @@
 <label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
 <label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (plus lisible sous la couleur)</label>
 <label class="opt"><input type="checkbox" id="cvd"> Palette adaptée au daltonisme (jaune, vert, violet)</label>
+<label class="opt"><input type="checkbox" id="cnv"> Courbes de niveau (IGN, à partir du zoom 11)</label>
 <label class="opt">Calque <select id="calque" aria-label="Calque de la carte"><option value="">Aucun</option><option value="foret">Type de forêt</option><option value="ph">pH du sol</option></select></label>
 </details>
 </section>
@@ -82,6 +83,7 @@
 <div class="legline"><span class="lgviol"></span>contour violet = meilleures zones du moment</div>
 <div class="legline"><span class="lgpin"></span>incolore = peu ou pas favorable (villes, routes, cultures)</div>
 <div id="calleg" class="calleg" hidden></div>
+<div id="cnvnote" class="legline" hidden></div>
 </div></div>
 <div id="tip" role="status"></div>
 </div>
