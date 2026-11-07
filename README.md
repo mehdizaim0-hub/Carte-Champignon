@@ -175,7 +175,13 @@ Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point préci
 
 ## Mes spots
 
-Bouton « Enregistrer ce point » sous le résultat d un point ; la liste « Mes spots » (stockée dans le `localStorage` de l appareil, clé `cm:spots:v1`, 50 max) permet d y retourner en un toucher.
+Bouton « Enregistrer ce point » sous le résultat d'un point. La carte « Mes spots » (`localStorage`, clé `cm:spots:v1`, 50 max) liste les points enregistrés ; carte ouverte, chacun affiche :
+
+- la **prévision** pour l'espèce choisie (score du jour, pic des 8 prochains jours, badge « Bon moment »), calculée hors-ligne depuis la grille ;
+- un lien **« Y aller »** vers l'app de navigation (aussi dans la fiche d'un point) ;
+- un **carnet de trouvailles** (panier : espèce, quantité, date).
+
+**Exporter** / **Importer** sauvegardent ou restaurent les spots et leurs trouvailles au format JSON (les doublons sont ignorés).
 
 ## Comparateur d espèces
 

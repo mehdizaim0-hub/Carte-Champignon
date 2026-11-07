@@ -132,10 +132,33 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__fine=()=>FINE;window.__sp=SP;w
   spBtn().click(); await sleep(150);
   const saved = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
   check('spot enregistré avec son nom', saved.length === 1 && saved[0].name === 'Coin du chêne' && saved[0].lat === 47, JSON.stringify(saved));
-  check('liste « Mes spots » visible avec 1 entrée', !$('myspots').hidden && doc.querySelectorAll('#myspl li').length === 1);
+  const openSpots = () => { $('myspots').open = true; $('myspots').dispatchEvent(new w.Event('toggle')); };
+  check('carte « Mes spots » toujours visible, liste vide tant qu\'elle est fermée', !$('myspots').hidden && doc.querySelectorAll('#myspl li').length === 0);
+  openSpots(); await sleep(200);
+  check('liste « Mes spots » avec 1 entrée une fois ouverte', doc.querySelectorAll('#myspl li').length === 1);
+  const fcTxt = doc.querySelector('#myspl li .fc') ? doc.querySelector('#myspl li .fc').textContent : '';
+  check('prévision du spot : score du jour sur 100 pour l\'espèce choisie', /\d+\/100 aujourd'hui/.test(fcTxt), fcTxt);
+  const nav = doc.querySelector('#myspl li a.btn');
+  check('lien « Y aller » vers la navigation avec les coordonnées', !!nav && /destination=47,4/.test(nav.href), nav && nav.href);
+  check('lien « Y aller » aussi dans la fiche du point', [...doc.querySelectorAll('#detail .cta a')].some(x => /destination=47,4/.test(x.href)));
   check('le bouton propose de retirer le spot', /retirer/.test(spBtn().textContent));
+  // carnet de trouvailles
+  doc.querySelector('#myspl li .row button[aria-label^="Noter"]').click();
+  const fi = doc.querySelector('#myspl li .finform');
+  check('formulaire de trouvaille affiché au toucher du panier', !fi.hidden);
+  fi.querySelector('input').value = '2 kg'; fi.querySelector('button').click(); await sleep(150);
+  const withFind = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]')[0];
+  check('trouvaille enregistrée (espèce, quantité, date) et affichée', withFind.finds.length === 1 && withFind.finds[0].q === '2 kg' && !!withFind.finds[0].sp && /1 trouvaille/.test(doc.querySelector('#myspl li').textContent), JSON.stringify(withFind.finds));
+  // import d'une sauvegarde
+  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 46, lon: 2, name: 'Import', ts: 1, finds: [] }, { lat: 47, lon: 4, name: 'Doublon' }] })], 's.json')); await sleep(300);
+  const after = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
+  check('import : spot ajouté, doublon ignoré', after.length === 2 && after.some(x => x.name === 'Import') && !after.some(x => x.name === 'Doublon'), JSON.stringify(after.map(x => x.name)));
+  check('liste mise à jour après l\'import (2 entrées)', doc.querySelectorAll('#myspl li').length === 2);
   spBtn().click(); await sleep(150);
-  check('spot retiré : stockage et liste vides', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && $('myspots').hidden);
+  const rest = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
+  check('spot retiré depuis la fiche : seul l\'import reste', rest.length === 1 && rest[0].name === 'Import');
+  w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
+  check('aucun spot : message d\'invitation affiché', !$('myspempty').hidden && doc.querySelectorAll('#myspl li').length === 0);
 
   console.log('Comparateur d\'espèces');
   w.setPoint(47.0, 4.0, false); await sleep(900);

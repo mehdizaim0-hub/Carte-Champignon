@@ -175,7 +175,7 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
   aside>*{opacity:1;transform:none}
   .selpin .ring{display:none}
 }
-.mysp{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.mysp li{display:flex;gap:6px;align-items:center}
+.mysp{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.mysp li{display:grid;gap:4px}.mysp .row{display:flex;gap:6px;align-items:center}.mysp .fc{font-size:12.5px;color:var(--mute)}.mysp .ok{color:var(--acc-ink)}.mysp a.btn,.cta a.btn{text-decoration:none;display:inline-block}.finform{display:flex;gap:6px;flex-wrap:wrap}.finform input{flex:1;min-width:110px}
 .mysp .go{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mysp .del{padding:7px 10px;color:var(--mute)}
 .cmp{margin-top:12px}.cmp select{max-width:100%}.cmpt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 .cmpt th,.cmpt td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}.cmpt th:first-child{text-align:left;font-weight:600;color:var(--mute)}

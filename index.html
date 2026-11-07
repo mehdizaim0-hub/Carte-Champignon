@@ -46,10 +46,12 @@
 </article>
 </details>
 <section class="card" id="detail" style="--i:3" aria-live="polite"></section>
-<details class="card" id="myspots" style="--i:3" hidden>
+<details class="card" id="myspots" style="--i:3">
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Mes spots <span id="myspn"></span></summary>
+<p class="sub" id="myspempty" style="margin:8px 0 0">Aucun spot. Touchez la carte puis « Enregistrer ce point », ou importez une sauvegarde.</p>
 <ul class="mysp" id="myspl"></ul>
-<p class="sub" style="margin:8px 0 0">Enregistrés sur cet appareil uniquement.</p>
+<div class="cta"><button type="button" class="btn" id="spexp">Exporter</button><button type="button" class="btn" id="spimp">Importer</button><input type="file" id="spfile" accept="application/json,.json" hidden></div>
+<p class="sub" style="margin:8px 0 0">Enregistrés sur cet appareil uniquement : exportez pour sauvegarder. Prévision calculée pour l'espèce choisie.</p>
 </details>
 <details class="card" id="howto" style="--i:5">
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Comment cette carte est fabriquée ?</summary>

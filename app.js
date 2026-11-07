@@ -624,6 +624,7 @@ function build(){
 }
 function render(){
   const sp=SP[st.sp],d=st.day;
+  if(st.live)renderMySpots();
   document.querySelectorAll("#chips button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===st.sp));
   document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
   document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
@@ -1050,21 +1051,80 @@ function mySpotsHook(){
     }
     spotsSave(a);renderMySpots();renderDetail();
   };
-  const w=document.createElement("div");w.className="cta";w.appendChild(b);$("detail").appendChild(w);
+  const w=document.createElement("div"),nv=document.createElement("a");w.className="cta";
+  nv.className="btn";nv.textContent="Y aller";nv.href=navUrl(z.lat,z.lon);nv.target="_blank";nv.rel="noopener";
+  w.append(b,nv);$("detail").appendChild(w);
+}
+const navUrl=(lat,lon)=>"https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon+"&travelmode=driving";
+const fmtDay=ts=>new Date(ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+const spotSay=m=>{try{say(m)}catch(e){}};
+// Prévision d'un spot pour l'espèce choisie : zone reconstruite hors-ligne depuis la grille, comme pour un point touché sur la carte.
+function spotForecast(s){
+  if(!st.live)return null;
+  try{
+    const sp=SP[st.sp],z=makeZone(s.lat,s.lon);
+    if(z.anth)return{t:0,m:0,k:0};
+    const a=[...Array(8)].map((_,d)=>score(sp,z,d).sc),m=Math.max(...a);
+    return{t:a[0],m,k:a.indexOf(m)};
+  }catch(e){return null}
+}
+function spotsExport(){
+  const b=new Blob([JSON.stringify({v:1,spots:spotsLoad()},null,1)],{type:"application/json"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download="mes-spots-champignons.json";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function spotsImport(file){
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const j=JSON.parse(r.result),inc=(Array.isArray(j)?j:j.spots)||[],a=spotsLoad();let n=0;
+    inc.forEach(x=>{if(x&&isFinite(x.lat)&&isFinite(x.lon)&&spotNear(a,+x.lat,+x.lon)<0){
+      a.push({lat:+x.lat,lon:+x.lon,name:String(x.name||"Spot").slice(0,60),ts:+x.ts||Date.now(),
+        finds:(Array.isArray(x.finds)?x.finds:[]).slice(0,100).map(f=>({ts:+f.ts||Date.now(),sp:String(f.sp||"").slice(0,60),q:String(f.q||"").slice(0,40)}))});n++}});
+    spotsSave(a);renderMySpots();spotSay(n+" spot"+(n>1?"s":"")+" importé"+(n>1?"s":""));
+  }catch(e){spotSay("Fichier illisible : choisissez une sauvegarde exportée depuis cette carte.")}};
+  r.readAsText(file);
 }
 function renderMySpots(){
   const a=spotsLoad(),box=$("myspots"),ul=$("myspl");if(!box||!ul)return;
-  box.hidden=!a.length;$("myspn").textContent=a.length?"("+a.length+")":"";ul.textContent="";
+  $("myspn").textContent=a.length?"("+a.length+")":"";$("myspempty").hidden=!!a.length;ul.textContent="";
+  if(!box.open)return;   // les prévisions ne sont calculées que carte ouverte
+  const sp=SP[st.sp];
   a.forEach(s=>{
-    const li=document.createElement("li"),go=document.createElement("button"),del=document.createElement("button");
-    go.type=del.type="button";go.className="btn go";go.textContent=s.name;go.title=s.lat.toFixed(4)+"°N, "+s.lon.toFixed(4)+"°E";
+    const li=document.createElement("li"),row=document.createElement("div"),go=document.createElement("button"),nav=document.createElement("a"),
+      fb=document.createElement("button"),del=document.createElement("button"),fc=document.createElement("div");
+    row.className="row";
+    go.type=fb.type=del.type="button";go.className="btn go";go.textContent=s.name;go.title=s.lat.toFixed(4)+"°N, "+s.lon.toFixed(4)+"°E";
     go.onclick=()=>{setPoint(s.lat,s.lon,true)};
+    nav.className="btn";nav.textContent="Y aller";nav.href=navUrl(s.lat,s.lon);nav.target="_blank";nav.rel="noopener";nav.setAttribute("aria-label","Itinéraire vers "+s.name);
+    fb.className="btn";fb.textContent="🧺";fb.setAttribute("aria-label","Noter une trouvaille à "+s.name);
     del.className="btn del";del.textContent="✕";del.setAttribute("aria-label","Retirer "+s.name);
     del.onclick=()=>{const b=spotsLoad(),i=spotNear(b,s.lat,s.lon);if(i>=0){b.splice(i,1);spotsSave(b)}renderMySpots();if(st.pt)renderDetail()};
-    li.append(go,del);ul.appendChild(li);
+    row.append(go,nav,fb,del);li.appendChild(row);
+    const f=spotForecast(s);fc.className="fc";
+    if(f){
+      const lv=spLevel(f.t);
+      fc.textContent=sp.n+" : "+f.t+"/100 aujourd'hui"+(f.k>0&&f.m>f.t?" · pic "+f.m+" (J+"+f.k+")":"");
+      if(lv>=3){const bd=document.createElement("b");bd.className="ok";bd.textContent="Bon moment";fc.append(" ",bd)}
+      li.appendChild(fc);
+    }
+    const fl=(s.finds||[]);
+    if(fl.length){const p=document.createElement("div");p.className="fc";p.textContent="🧺 "+fl.length+" trouvaille"+(fl.length>1?"s":"")+" · dernière le "+fmtDay(fl[0].ts)+" ("+fl[0].sp+(fl[0].q?", "+fl[0].q:"")+")";li.appendChild(p)}
+    // formulaire de trouvaille
+    const form=document.createElement("div"),sel=document.createElement("select"),q=document.createElement("input"),ad=document.createElement("button");
+    form.className="finform";form.hidden=true;sel.setAttribute("aria-label","Espèce trouvée");
+    SP.forEach((x,i)=>{const o=document.createElement("option");o.value=x.n;o.textContent=x.n;if(i===st.sp)o.selected=true;sel.appendChild(o)});
+    q.type="text";q.maxLength=40;q.placeholder="Quantité (ex. 2 kg)";q.setAttribute("aria-label","Quantité");
+    ad.type="button";ad.className="btn";ad.textContent="Ajouter";
+    ad.onclick=()=>{const b=spotsLoad(),i=spotNear(b,s.lat,s.lon);if(i<0)return;
+      b[i].finds=[{ts:Date.now(),sp:sel.value,q:q.value.trim().slice(0,40)}].concat(b[i].finds||[]).slice(0,100);spotsSave(b);renderMySpots()};
+    fb.onclick=()=>{form.hidden=!form.hidden};
+    form.append(sel,q,ad);li.appendChild(form);ul.appendChild(li);
   });
 }
 renderMySpots();
+$("myspots").addEventListener("toggle",renderMySpots);
+$("spexp").onclick=spotsExport;$("spimp").onclick=()=>$("spfile").click();
+$("spfile").onchange=e=>{if(e.target.files[0])spotsImport(e.target.files[0]);e.target.value=""};
 // ---------- Données quotidiennes (data.json produit par build_data.py) ----------
 async function loadLive(){
   try{
