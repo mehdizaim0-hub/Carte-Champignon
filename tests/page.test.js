@@ -9,6 +9,7 @@ const errors = [], fails = [];
 const check = (nom, ok, detail = '') => { console.log((ok ? '  ok   ' : '  ÉCHEC ') + nom + (ok ? '' : '  ' + detail)); if (!ok) fails.push(nom); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+const html0 = read('index.html');
 let html = read('index.html')
   .replace(/<script src="https:\/\/unpkg.com\/leaflet[^>]*><\/script>/, '')
   .replace(/<link[^>]*(unpkg|fonts)[^>]*>/g, '');
@@ -134,6 +135,13 @@ try { w.eval(scripts[scripts.length - 1] + '\n;window.__st=st;window.__fine=()=>
   check('le bouton propose de retirer le spot', /retirer/.test(spBtn().textContent));
   spBtn().click(); await sleep(150);
   check('spot retiré : stockage et liste vides', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && $('myspots').hidden);
+
+  console.log('PWA hors-ligne');
+  let man = null; try { man = JSON.parse(read('manifest.webmanifest')) } catch (e) {}
+  check('manifeste valide, avec nom, start_url et icônes existantes', !!man && !!man.name && !!man.start_url && man.icons.length >= 2 && man.icons.every(i => fs.existsSync(path.join(ROOT, i.src))), JSON.stringify(man));
+  let swOk = true; try { new (require('vm').Script)(read('sw.js')) } catch (e) { swOk = false }
+  check('service worker : syntaxe valide et enregistré par la page', swOk && /serviceWorker\.register\("sw\.js"\)/.test(html0));
+  check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
 
   console.log('Erreurs JavaScript');
   check('aucune erreur dans la console', errors.length === 0, errors.join(' || '));
