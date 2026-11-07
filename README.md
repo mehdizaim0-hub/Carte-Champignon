@@ -166,3 +166,7 @@ Sans `relief.json`, la carte garde l'altitude de la maille. Pour un point préci
 - Sources : Open-Meteo (météo), SoilGrids/ISRIC (sols), IGN BD Forêt v2
   (forêts), GBIF (calendriers d'observations), OpenStreetMap/OpenTopoMap
   (fonds de carte). Merci à eux.
+
+## Hors-ligne (PWA)
+
+`sw.js` + `manifest.webmanifest` : la carte s installe sur l écran d accueil et reste utilisable sans réseau (dernières données du site, tuiles de fond de carte déjà vues). Les fichiers du site passent réseau d abord, donc les données du bot restent fraîches. Pour forcer un rafraîchissement du cache après un changement de `sw.js`, incrémenter `V`.
