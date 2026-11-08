@@ -23,8 +23,8 @@ def wait_ready(page, name):
 try:
     with sync_playwright() as p:
         b = p.chromium.launch()
-        for name, vp, dsf in (("desk", {"width": 1440, "height": 900}, 1), ("mob", {"width": 390, "height": 844}, 2)):
-            ctx = b.new_context(viewport=vp, device_scale_factor=dsf, locale="fr-FR")
+        for name, vp, dsf, cs in (("desk", {"width": 1440, "height": 900}, 1, "light"), ("mob", {"width": 390, "height": 844}, 2, "light"), ("dark", {"width": 390, "height": 844}, 2, "dark")):
+            ctx = b.new_context(viewport=vp, device_scale_factor=dsf, locale="fr-FR", color_scheme=cs)
             page = ctx.new_page()
             page.on("console", lambda m, n=name: log.append("[%s console.%s] %s" % (n, m.type, m.text)) if m.type in ("error", "warning") else None)
             page.on("pageerror", lambda e, n=name: log.append("[%s pageerror] %s" % (n, e)))
@@ -67,6 +67,20 @@ try:
             step("options", lambda: page.evaluate("document.querySelector('details.opts').open=true;document.getElementById('mode').value='flat';document.getElementById('mode').dispatchEvent(new Event('change'))"), 2000)
             step("france", lambda: page.evaluate("map.setView([46.6,2.6],6)"), 3000)
             shot("6_aplat")
+            # --- palettes, calque forêt, courbes de niveau IGN (zoom 12 près de Grenoble) ---
+            CH = "var e=document.getElementById('%s');e.%s;e.dispatchEvent(new Event('change'))"
+            step("retour points", lambda: page.evaluate(CH % ("mode", "value='dots'")), 1500)
+            step("pleurote", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'13\\']').click();map.setView([46.6,2.6],6)"), 4000)
+            shot("13_palette_standard")
+            step("cvd", lambda: page.evaluate(CH % ("cvd", "checked=true")), 2500)
+            shot("14_palette_daltonisme")
+            step("cvd off", lambda: page.evaluate(CH % ("cvd", "checked=false")), 1500)
+            step("calque foret", lambda: page.evaluate(CH % ("calque", "value='foret'") + ";map.setView([45.0,2.5],8)"), 4000)
+            shot("15_calque_foret")
+            step("calque off 2", lambda: page.evaluate(CH % ("calque", "value=''")), 1000)
+            step("contours", lambda: page.evaluate(CH % ("cnv", "checked=true") + ";map.setView([45.19,5.72],12)"), 9000)
+            shot("16_courbes_niveau")
+            step("contours off", lambda: page.evaluate(CH % ("cnv", "checked=false")), 800)
             ctx.close()
         b.close()
 finally:
