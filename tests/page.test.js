@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -63,7 +63,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('nuage de points tracé (vue Habitat)', (w.__arcs || 0) > 100, String(w.__arcs));
   doc.querySelectorAll('#views button')[1].click(); await sleep(200);
   check('état vide : invitation à toucher la carte', /Touchez la carte/.test(txt('detail')) && !!$('ctame') && !$('ctabest'));
-  check('fiche espèce : nom, latin, rubriques', txt('spsumn').length > 3 && txt('splat').length > 3 && $('spdl').querySelectorAll('dt').length >= 7);
+  check('fiche espèce : nom, latin, rubriques', txt('spsumn').length > 3 && txt('splat').length > 3 && $('spdl').querySelectorAll('dt').length + $('spmodel').querySelectorAll('dt').length >= 7);
   check('fiche espèce : photo et crédit', /Auteur Test/.test(txt('spcap')) && /500px/.test($('spimg').src));
   check('légende sur la carte', !!$('maplegend') && !!$('legbody'));
 
@@ -245,7 +245,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('coordonnées à la française : ouest en « O », virgule décimale, jamais de signe moins', w.__fmt(44.2, -0.9) === '44,20 °N, 0,90 °O' && w.__fmt(-21.1, 55.5) === '21,10 °S, 55,50 °E' && w.__fmt(47, 4, 4) === '47,0000 °N, 4,0000 °E', [w.__fmt(44.2, -0.9), w.__fmt(-21.1, 55.5)].join(' | '));
   w.setPoint(44.2, -0.9, false); await sleep(900);
   const h2t = doc.querySelector('#detail h2').textContent, subt = (doc.querySelector('#detail .sub') || {}).textContent || '';
-  check('titre du point : le lieu d\'abord (ou les coordonnées), coordonnées lisibles, sans « -0.9000°E »', !/-0\.9|°E/.test(h2t + subt) && (/Près de /.test(h2t) ? /0,90 °O/.test(subt) : /0,90 °O/.test(h2t)), h2t + ' / ' + subt);
+  check('titre du point : le lieu d\'abord (ou les coordonnées), coordonnées lisibles, sans « -0.9000°E »', !/-0\.9|°E/.test(h2t + subt) && /0,90 °O/.test(h2t + ' ' + subt), h2t + ' / ' + subt);
   const sparkI = [...doc.querySelectorAll('#detail .spark i')];
   check('barres des 8 jours : 8 barres colorées selon le score (palette) ou grises si peu favorable', sparkI.length === 8 && sparkI.every(i => /background:/.test(i.getAttribute('style'))) && /sur 100/.test(doc.querySelector('#detail .spark').getAttribute('aria-label')));
   const fe = doc.querySelector('#chips');
@@ -253,6 +253,30 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('fondu de bord : affiché quand la liste déborde à droite', fe.classList.contains('more'));
   fe.scrollLeft = 700; w.updFade();
   check('fondu de bord : retiré en fin de liste', !fe.classList.contains('more'));
+
+  console.log('État vide, fiche repliée, titre');
+  check('titre : « Secteur … » sans « Près de », un nom de lieu avec « Près de »', w.__nearT('Secteur Landes de Gascogne') === 'Secteur Landes de Gascogne' && w.__nearT('Mont-de-Marsan') === 'Près de Mont-de-Marsan');
+  check('fiche espèce : rubriques techniques repliées dans « Détails du modèle »', !!doc.querySelector('#spmodel details.mdl') && doc.querySelectorAll('#spmodel dt').length >= 2 && ![...doc.querySelectorAll('#spdl dt')].some(d => /\(modèle\)/.test(d.textContent)) && doc.querySelector('#spmodel details').open === false);
+  const em = $('emptymap'), waitAlts = async () => { for (let k = 0; k < 120 && /^Recherche/.test(em.querySelector('.alts') ? em.querySelector('.alts').textContent : 'x'); k++) await sleep(250); };
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  check('état vide : message affiché avec le meilleur score', !em.hidden && /Aucune zone favorable pour Cèpe de Bordeaux/.test(em.textContent) && /Meilleur score en France : 20\/100/.test(em.textContent), em.textContent.slice(0, 160));
+  await waitAlts();
+  const altBtns = [...em.querySelectorAll('.alts .btn')];
+  check('état vide : espèces favorables proposées (cliquables) ou, sinon, message de fin de saison', altBtns.length >= 1 ? altBtns.length <= 4 && altBtns.every(b => /\(\d+ zones\)/.test(b.textContent)) : /fin de saison/.test(em.textContent), em.querySelector('.alts').textContent.slice(0, 200));
+  if (altBtns.length) {
+    const nameAlt = altBtns[0].textContent.replace(/ \(\d+ zones\)$/, '');
+    altBtns[0].click(); await sleep(400);
+    check('toucher une proposition sélectionne cette espèce', w.__sp[w.__st.sp].n === nameAlt, w.__sp[w.__st.sp].n + ' / ' + nameAlt);
+    doc.querySelector('#chips button[data-i="0"]').click(); await sleep(300);
+  }
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 50]), w.__sp[0]);
+  check('carte non vide (meilleur score 50) : aucun message', em.hidden);
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  em.querySelector('.x').click();
+  check('message masquable', em.hidden);
+  w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  check('message masqué : ne revient pas tant que espèce, vue et jour ne changent pas', em.hidden);
+  w.__st.emptyHide = null;
 
   console.log('Pluie des 14 derniers jours');
   w.setPoint(47.0, 4.0, false); await sleep(900);

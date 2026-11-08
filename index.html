@@ -47,7 +47,7 @@
 <summary><img id="spthumb" alt="" width="44" height="44"><span class="sn"><b id="spsumn"></b><i id="spsuml"></i></span><span class="chev" aria-hidden="true">Fiche ▾</span></summary>
 <article class="spc" id="spcard" aria-live="polite">
   <figure class="ph"><img id="spimg" alt="" width="500" height="375" decoding="async"><figcaption id="spcap"></figcaption></figure>
-  <div class="spi"><h3 id="spname"></h3><div class="lat" id="splat"></div><dl id="spdl"></dl><div id="spsos" class="spsos"></div><div id="spcurves" class="curves"></div>
+  <div class="spi"><h3 id="spname"></h3><div class="lat" id="splat"></div><dl id="spdl"></dl><div id="spmodel"></div><div id="spsos" class="spsos"></div><div id="spcurves" class="curves"></div>
   <p class="toxban" id="toxban" hidden>⚠ Espèce toxique : ne la consommez pas. Cette carte indique où elle peut pousser, pas où la cueillir.</p>
   <p class="warn" id="spwarn">Ne consommez rien sans identification certaine : faites valider vos cueillettes par un pharmacien ou une société mycologique.</p></div>
 </article>
@@ -75,6 +75,7 @@
 <p class="note" style="--i:5">Les scores sont un modèle écologique : ils disent où chercher, pas où trouver. Fond de carte © OpenStreetMap / OpenTopoMap.</p>
 </aside>
 <div id="mapwrap">
+<div id="emptymap" class="emptymap" role="status" aria-live="polite" hidden></div>
 <div id="map" role="application" aria-label="Carte de France des zones favorables"></div>
 <div id="maplegend" role="group" aria-label="Légende de la carte">
 <button type="button" id="legtoggle" class="legbtn" aria-expanded="true">Légende</button>

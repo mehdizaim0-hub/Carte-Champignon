@@ -653,6 +653,7 @@ function render(){
   const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
   st.F=(st.live&&FINE)?buildFineField(sc,sp):buildField(sc);
   st.scoreSorted=Float32Array.from(sc.map(o=>o.r.sc)).sort();
+  renderEmptyMap(st.scoreSorted,sp);
   const dots=st.mode=="dots"&&!!st.F;
   if(dots){if(heatOverlay)heatOverlay.setOpacity(0)}else{if(heatOverlay)heatOverlay.setOpacity(1);paintHeat(sc)}
   drawDots();
@@ -669,7 +670,11 @@ function renderSpecies(){
   renderSosies(sp);
   renderCurves(sp,st.ptZ&&st.pt?st.ptZ:null,st.ptZ&&st.pt&&st.live?(()=>{try{return score(sp,st.ptZ,st.day).w.T}catch(e){return null}})():null,st.day);
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";$("spsumn").textContent=sp.n;$("spsuml").textContent=(sp.lat||"")+(sp.toxic?" · TOXIQUE":"");$("toxban").hidden=!sp.toxic;$("spwarn").hidden=!!sp.toxic;
-  $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+  const spRows=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]);
+  const rowsHtml=a=>a.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+  $("spdl").innerHTML=rowsHtml(spRows.filter(r=>!/\(modèle\)$/.test(r[0])));
+  const tech=spRows.filter(r=>/\(modèle\)$/.test(r[0]));
+  $("spmodel").innerHTML=tech.length?`<details class="mdl"><summary>Détails du modèle</summary><dl>${rowsHtml(tech.map(r=>[r[0].replace(" (modèle)",""),r[1]]))}</dl></details>`:"";
   const img=$("spimg"),cap=$("spcap"),k=st.sp,P=PHOTOS[k];
   const show=p=>{if(st.sp!==k)return;if(!p){img.style.visibility="hidden";cap.textContent="";$("spthumb").removeAttribute("src");return}$("spthumb").src=p.src;img.style.visibility="visible";img.alt=sp.n+" ("+sp.lat+")";img.src=p.src;cap.innerHTML=p.cap};
   if(P!==undefined){show(P);return}
@@ -741,6 +746,39 @@ function setCalque(key){
   if(!map.getPane("calque")){map.createPane("calque");const p=map.getPane("calque");p.style.zIndex=390;p.style.pointerEvents="none"}
   calqueLayer=L.imageOverlay(img.url,img.bounds,{pane:"calque",opacity:1,interactive:false}).addTo(map);
   lg.innerHTML=calqueLegend(st.calque);lg.hidden=false;
+}
+// ---------- État vide : aucune zone favorable (hors saison) -> expliquer et proposer des espèces qui sortent ----------
+let EMPTYC={key:"",out:null};
+function renderEmptyMap(sorted,sp){
+  const box=$("emptymap");if(!box)return;
+  const best=sorted&&sorted.length?sorted[sorted.length-1]:0,tok=st.emptyTok=(st.emptyTok||0)+1,vk=sp.n+"|"+st.view+"|"+st.day;
+  box.textContent="";
+  if(!sorted||!sorted.length||best>=22||st.emptyHide===vk){box.hidden=true;return}
+  const when=st.view==="hab"?"dans cette vue":st.view==="day"?"à cette date":"cette semaine";
+  const d0=Math.max(0,st.day),today=d0>0?"à cette date":"aujourd'hui";
+  const t=document.createElement("p"),x=document.createElement("button"),alts=document.createElement("div");
+  t.innerHTML=`<b>Aucune zone favorable</b> pour ${sp.n} ${when}. <span class="sub">Meilleur score en France : ${Math.round(best)}/100.</span>`;
+  x.type="button";x.className="x";x.textContent="×";x.setAttribute("aria-label","Masquer ce message");x.onclick=()=>{st.emptyHide=vk;box.hidden=true};
+  alts.className="alts";alts.textContent="Recherche d'espèces favorables…";
+  box.append(x,t,alts);box.hidden=false;
+  const show=list=>{
+    if(tok!==st.emptyTok)return;alts.textContent="";
+    const pick=list.filter(o=>o.i!==st.sp&&o.n>=10).sort((a,b)=>b.n-a.n).slice(0,4);
+    if(!pick.length){alts.textContent="Aucune espèce du catalogue n'est favorable "+today+" : c'est la fin de saison. Revenez dans quelques jours.";return}
+    alts.append("Favorables "+today+" : ");
+    pick.forEach(o=>{const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=SP[o.i].n+" ("+o.n+" zones)";
+      b.onclick=()=>{const c=document.querySelector('#chips button[data-i="'+o.i+'"]');if(c)c.click()};alts.appendChild(b)});
+  };
+  const key=[st.fetchedAt,st.dataDate,d0,st.rain,st.dt,st.live?1:0].join("|");
+  if(EMPTYC.key===key&&EMPTYC.out){show(EMPTYC.out);return}
+  const out=[];let k=0;
+  const step=()=>{
+    if(tok!==st.emptyTok)return;
+    const s2=SP[k];
+    if(!s2.toxic){let n=0;for(const z of Z)if(score(s2,z,d0).sc>=22)n++;out.push({i:k,n})}
+    if(++k<SP.length)setTimeout(step,0);else{EMPTYC={key,out};show(out)}
+  };
+  setTimeout(step,0);
 }
 // ---------- Courbes de niveau : tuiles IGN (RGE ALTI, équidistance 5 m), visibles à partir du zoom 11 ----------
 let cnvLayer=null,cnvFail=false;
@@ -1177,7 +1215,7 @@ function renderDetail(){
   const src=zsel.src||{};
   const sparkHtml=`<div class="spark" role="img" aria-label="Score des 8 prochains jours : ${arr.join(", ")} sur 100">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px;background:${v<22?"var(--line)":gC(v)}"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>`;
   const topHtml=`<p class="note" style="margin-top:6px"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
-  $("detail").innerHTML=`<h2>${zsel.near?"Près de "+zsel.near:zsel.n}</h2>${zsel.near?`<div class="sub">${zsel.n}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  $("detail").innerHTML=`<h2>${zsel.near?nearT(zsel.near):zsel.n}</h2>${zsel.near?`<div class="sub">${zsel.n}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   ${soilLine(zsel,sp,r)}
@@ -1245,7 +1283,7 @@ function mySpotsHook(){
     const a=spotsLoad(),i=spotNear(a,z.lat,z.lon);
     if(i>=0)a.splice(i,1);
     else{
-      const def=(st.ptZ&&st.ptZ.near)?"Près de "+st.ptZ.near:"Point "+fmtCoord(z.lat,z.lon);
+      const def=(st.ptZ&&st.ptZ.near)?nearT(st.ptZ.near):"Point "+fmtCoord(z.lat,z.lon);
       let n=def;try{const r=window.prompt("Nom du spot",def);if(r===null)return;n=r.trim().slice(0,60)||def}catch(e){}
       a.unshift({lat:+z.lat.toFixed(5),lon:+z.lon.toFixed(5),name:n,ts:Date.now()});
     }
@@ -1255,6 +1293,7 @@ function mySpotsHook(){
   nv.className="btn";nv.textContent="Y aller";nv.href=navUrl(z.lat,z.lon);nv.target="_blank";nv.rel="noopener";
   w.append(b,nv);$("detail").appendChild(w);
 }
+const nearT=n=>/^Secteur /.test(n)?n:"Près de "+n;
 const fmtCoord=(lat,lon,dec=2)=>Math.abs(lat).toFixed(dec).replace(".",",")+" °"+(lat>=0?"N":"S")+", "+Math.abs(lon).toFixed(dec).replace(".",",")+" °"+(lon>=0?"E":"O");
 const navUrl=(lat,lon)=>"https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon+"&travelmode=driving";
 const fmtDay=ts=>new Date(ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
