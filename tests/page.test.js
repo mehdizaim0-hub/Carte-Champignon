@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -240,6 +240,19 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const swSrc = read('sw.js');
   check('service worker : précache de la page, du CSS et des scripts', ['index.html', 'style.css', 'species.js', 'app.js'].every(f => swSrc.includes('"' + f + '"') && fs.existsSync(path.join(ROOT, f))));
   check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
+
+  console.log('Corrections d\'interface');
+  check('coordonnées à la française : ouest en « O », virgule décimale, jamais de signe moins', w.__fmt(44.2, -0.9) === '44,20 °N, 0,90 °O' && w.__fmt(-21.1, 55.5) === '21,10 °S, 55,50 °E' && w.__fmt(47, 4, 4) === '47,0000 °N, 4,0000 °E', [w.__fmt(44.2, -0.9), w.__fmt(-21.1, 55.5)].join(' | '));
+  w.setPoint(44.2, -0.9, false); await sleep(900);
+  const h2t = doc.querySelector('#detail h2').textContent, subt = (doc.querySelector('#detail .sub') || {}).textContent || '';
+  check('titre du point : le lieu d\'abord (ou les coordonnées), coordonnées lisibles, sans « -0.9000°E »', !/-0\.9|°E/.test(h2t + subt) && (/Près de /.test(h2t) ? /0,90 °O/.test(subt) : /0,90 °O/.test(h2t)), h2t + ' / ' + subt);
+  const sparkI = [...doc.querySelectorAll('#detail .spark i')];
+  check('barres des 8 jours : 8 barres colorées selon le score (palette) ou grises si peu favorable', sparkI.length === 8 && sparkI.every(i => /background:/.test(i.getAttribute('style'))) && /sur 100/.test(doc.querySelector('#detail .spark').getAttribute('aria-label')));
+  const fe = doc.querySelector('#chips');
+  Object.defineProperty(fe, 'scrollWidth', { configurable: true, value: 1000 }); Object.defineProperty(fe, 'clientWidth', { configurable: true, value: 300 }); fe.scrollLeft = 0; w.updFade();
+  check('fondu de bord : affiché quand la liste déborde à droite', fe.classList.contains('more'));
+  fe.scrollLeft = 700; w.updFade();
+  check('fondu de bord : retiré en fin de liste', !fe.classList.contains('more'));
 
   console.log('Pluie des 14 derniers jours');
   w.setPoint(47.0, 4.0, false); await sleep(900);

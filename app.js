@@ -615,6 +615,8 @@ function build(){
   $("cvd").onchange=e=>{setPalette(e.target.checked?"cvd":"std");savePrefs();render()};
   $("calque").onchange=e=>setCalque(e.target.value);
   $("cnv").onchange=e=>setContours(e.target.checked);
+  document.querySelectorAll("#chips,#days,.ctlrow .chips.seg").forEach(el=>el.addEventListener("scroll",updFade,{passive:true}));
+  addEventListener("resize",updFade);setTimeout(updFade,400);
   map.on("zoomend",cnvNote);
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
@@ -626,8 +628,12 @@ function build(){
   $("days").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.day=+b.dataset.d;render()};
   [["rain","rain"],["dt","dt"]].forEach(([id,k])=>$(id).oninput=e=>{st[k]=+e.target.value;render()});
 }
+function updFade(){
+  document.querySelectorAll("#chips,#days,.ctlrow .chips.seg").forEach(el=>el.classList.toggle("more",el.scrollWidth-el.clientWidth-el.scrollLeft>4));
+}
 function render(){
   const sp=SP[st.sp],d=st.day;
+  setTimeout(updFade,0);
   if(st.live){renderMySpots();scheduleNow()}
   document.querySelectorAll("#chips button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===st.sp));
   document.querySelectorAll("#days button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.d==d));
@@ -1058,7 +1064,7 @@ function setPoint(lat,lon,fly){
 }
 // Zone « virtuelle » au point : météo interpolée entre les 4 mailles voisines, terrain de la maille ou du bloc forestier.
 function makeZone(lat,lon){
-  const base={i:-1,lat,lon,n:"Point "+lat.toFixed(4)+"°N, "+lon.toFixed(4)+"°E",src:{w:"normales de saison (simulée)",a:"de la maille",f:"de la maille (17 km)",s:"de la maille (17 km)"}};
+  const base={i:-1,lat,lon,n:"Point "+fmtCoord(lat,lon),src:{w:"normales de saison (simulée)",a:"de la maille",f:"de la maille (17 km)",s:"de la maille (17 km)"}};
   if(!st.live||!heatGeom||!st.cellMap){
     let b=null,bk=1e9;Z.forEach(z=>{const k=km(lat,lon,z.lat,z.lon);if(k<bk){bk=k;b=z}});
     return Object.assign({},b,base,{near:b?b.n:""});
@@ -1169,9 +1175,9 @@ function renderDetail(){
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
   const top=SP.filter(s=>!s.toxic).map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
   const src=zsel.src||{};
-  const sparkHtml=`<div class="spark" role="img" aria-label="Score des 8 prochains jours">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>`;
+  const sparkHtml=`<div class="spark" role="img" aria-label="Score des 8 prochains jours : ${arr.join(", ")} sur 100">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px;background:${v<22?"var(--line)":gC(v)}"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>`;
   const topHtml=`<p class="note" style="margin-top:6px"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
-  $("detail").innerHTML=`<h2>${zsel.n}</h2>${zsel.near?`<div class="sub">près de ${zsel.near}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  $("detail").innerHTML=`<h2>${zsel.near?"Près de "+zsel.near:zsel.n}</h2>${zsel.near?`<div class="sub">${zsel.n}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   ${soilLine(zsel,sp,r)}
@@ -1239,7 +1245,7 @@ function mySpotsHook(){
     const a=spotsLoad(),i=spotNear(a,z.lat,z.lon);
     if(i>=0)a.splice(i,1);
     else{
-      const def=(st.ptZ&&st.ptZ.near)?"Près de "+st.ptZ.near:"Point "+z.lat.toFixed(3)+", "+z.lon.toFixed(3);
+      const def=(st.ptZ&&st.ptZ.near)?"Près de "+st.ptZ.near:"Point "+fmtCoord(z.lat,z.lon);
       let n=def;try{const r=window.prompt("Nom du spot",def);if(r===null)return;n=r.trim().slice(0,60)||def}catch(e){}
       a.unshift({lat:+z.lat.toFixed(5),lon:+z.lon.toFixed(5),name:n,ts:Date.now()});
     }
@@ -1249,6 +1255,7 @@ function mySpotsHook(){
   nv.className="btn";nv.textContent="Y aller";nv.href=navUrl(z.lat,z.lon);nv.target="_blank";nv.rel="noopener";
   w.append(b,nv);$("detail").appendChild(w);
 }
+const fmtCoord=(lat,lon,dec=2)=>Math.abs(lat).toFixed(dec).replace(".",",")+" °"+(lat>=0?"N":"S")+", "+Math.abs(lon).toFixed(dec).replace(".",",")+" °"+(lon>=0?"E":"O");
 const navUrl=(lat,lon)=>"https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon+"&travelmode=driving";
 const fmtDay=ts=>new Date(ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 const spotSay=m=>{try{say(m)}catch(e){}};
@@ -1287,7 +1294,7 @@ function renderMySpots(){
     const li=document.createElement("li"),row=document.createElement("div"),go=document.createElement("button"),nav=document.createElement("a"),
       fb=document.createElement("button"),del=document.createElement("button"),fc=document.createElement("div");
     row.className="row";
-    go.type=fb.type=del.type="button";go.className="btn go";go.textContent=s.name;go.title=s.lat.toFixed(4)+"°N, "+s.lon.toFixed(4)+"°E";
+    go.type=fb.type=del.type="button";go.className="btn go";go.textContent=s.name;go.title=fmtCoord(s.lat,s.lon,4);
     go.onclick=()=>{setPoint(s.lat,s.lon,true)};
     nav.className="btn";nav.textContent="Y aller";nav.href=navUrl(s.lat,s.lon);nav.target="_blank";nav.rel="noopener";nav.setAttribute("aria-label","Itinéraire vers "+s.name);
     fb.className="btn";fb.textContent="🧺";fb.setAttribute("aria-label","Noter une trouvaille à "+s.name);
