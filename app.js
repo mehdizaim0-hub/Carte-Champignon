@@ -622,7 +622,7 @@ function build(){
   $("map").classList.toggle("gray",$("gray").checked);
   $("views").innerHTML=VIEWS.map(v=>`<button data-v="${v.k}" aria-pressed="${v.k==st.view}">${v.t}</button>`).join("");
   $("views").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.view=b.dataset.v;render()};
-  $("days").innerHTML=[...Array(8)].map((_,i)=>{const dt=dateOf(i);const t=i==0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric"});return`<button data-d="${i}" aria-pressed="${i==st.day}">${t}</button>`}).join("");
+  $("days").innerHTML=[...Array(9)].map((_,k)=>{const i=k-1,dt=dateOf(i);const t=i==-1?"Hier":i==0?"Auj.":dt.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric"});return`<button data-d="${i}" aria-pressed="${i==st.day}">${t}</button>`}).join("");
   $("days").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.day=+b.dataset.d;render()};
   [["rain","rain"],["dt","dt"]].forEach(([id,k])=>$(id).oninput=e=>{st[k]=+e.target.value;render()});
 }
@@ -640,6 +640,7 @@ function render(){
   $("manual").style.display=live?"none":"";
   $("status").className="badge"+(live?" live":"");
   $("status").textContent=live?(st.off>st.past+1?"⚠ Données du "+st.dataDate+" (anciennes) : lancez une mise à jour":"Météo réelle (Open-Meteo), grille de "+Z.length+" mailles"):"Météo simulée : normales de saison, ajustez les curseurs";
+  if(st.day<0)$("status").textContent+=" · Hier : conditions observées, pas prévues";
   $("fetched").style.display=st.fetchedAt?"":"none";
   if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
   // champ de score : fin (forêt à 1,4 km) si disponible, sinon grossier

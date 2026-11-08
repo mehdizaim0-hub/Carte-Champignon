@@ -56,7 +56,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('bandeau de fraîcheur affiché', /Météo réelle|anciennes/.test(txt('status')), txt('status'));
   check('20 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 20 && doc.querySelectorAll('#chips .glab').length === 3);
   check('4 vues proposées', doc.querySelectorAll('#views button').length === 4);
-  check('8 jours proposés', doc.querySelectorAll('#days button').length === 8);
+  check('jours proposés : la veille et 8 jours (J à J+7)', doc.querySelectorAll('#days button').length === 9 && [...doc.querySelectorAll('#days button')].map(x => x.dataset.d).join() === '-1,0,1,2,3,4,5,6,7');
   check('section « Où chercher » supprimée', !$('rad') && !$('gps') && !$('near') && !/Où chercher \?/.test(txt('side')));
   // vue Habitat : indépendante de la météo du jour, donc stable d'une saison à l'autre
   doc.querySelectorAll('#views button')[3].click(); await sleep(500);
@@ -119,7 +119,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('surbrillance : exactement la puce choisie, pour chaque espèce', hl, detail);
   doc.querySelector('#chips button[data-i="1"]').click(); await sleep(300);
   check('changement d\'espèce pris en compte', st.sp === 1 && /Girolle/.test(txt('spsumn')));
-  doc.querySelectorAll('#days button')[3].click();
+  doc.querySelector('#days button[data-d="3"]').click();
   check('changement de jour pris en compte', st.day === 3);
   check('préférences enregistrées', /"sp":1/.test(w.localStorage.getItem('cm:v1') || ''), String(w.localStorage.getItem('cm:v1')));
 
@@ -240,6 +240,19 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const swSrc = read('sw.js');
   check('service worker : précache de la page, du CSS et des scripts', ['index.html', 'style.css', 'species.js', 'app.js'].every(f => swSrc.includes('"' + f + '"') && fs.existsSync(path.join(ROOT, f))));
   check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
+
+  console.log('Voir la veille');
+  const dayBtns = () => [...doc.querySelectorAll('#days button')];
+  check('9 boutons de jour : Hier, Auj., puis 7 jours à venir', dayBtns().length === 9 && dayBtns()[0].textContent.trim() === 'Hier' && dayBtns()[1].textContent.trim() === 'Auj.' && dayBtns()[0].dataset.d === '-1', dayBtns().map(b => b.textContent.trim()).join('|'));
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  dayBtns()[0].click(); await sleep(400);
+  check('« Hier » sélectionné (jour -1) et bouton pressé', w.__st.day === -1 && dayBtns()[0].getAttribute('aria-pressed') === 'true');
+  const yz = w.__score(w.__sp[0], w.__st.ptZ, -1), tz = w.__score(w.__sp[0], w.__st.ptZ, 0);
+  check('score d\'hier calculé sur la météo observée (valeurs finies, température du jour précédent)', isFinite(yz.sc) && yz.sc >= 0 && yz.sc <= 100 && isFinite(yz.w.T) && yz.w.src === 'live', JSON.stringify([yz.sc, yz.w && yz.w.T, yz.w && yz.w.src]));
+  const dtxt = doc.querySelector('#detail').textContent + doc.querySelector('#status').textContent;
+  check('fiche du point et statut sans NaN ni undefined, avec la mention « Hier »', !/NaN|undefined/.test(dtxt) && /Hier : conditions observées/.test(doc.querySelector('#status').textContent), dtxt.slice(0, 160));
+  dayBtns()[1].click(); await sleep(400);
+  check('retour à aujourd\'hui', w.__st.day === 0 && dayBtns()[1].getAttribute('aria-pressed') === 'true' && !/Hier : conditions/.test(doc.querySelector('#status').textContent));
 
   console.log('Erreurs JavaScript');
   check('aucune erreur dans la console', errors.length === 0, errors.join(' || '));

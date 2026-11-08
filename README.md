@@ -203,3 +203,7 @@ Options d affichage, « Calque » : **Type de forêt** (feuillus, résineux, mix
 
 - **Courbes de niveau** : case à cocher dans les options d affichage. Tuiles IGN `ELEVATION.CONTOUR.LINE` (Géoplateforme, équidistance 5 m, RGE ALTI), visibles à partir du zoom 11 ; le service worker les met en cache (le WMS forêt, lui, reste toujours en direct). Si le service IGN ne répond pas, une note l indique dans la légende.
 - **Note sur 5** : les 5 niveaux du verdict en étoiles (1 : très peu propice, 2 : peu, 3 : moyennement, 4 : propice, 5 : très propice ; seuils 20 / 35 / 55 / 70 sur 100). Affichée dans le verdict d un point, « Ce qui sort ici », les prévisions de spots et le comparateur. Jamais pour une espèce toxique.
+
+## Voir la veille
+
+Le sélecteur « Jour » propose **Hier** en plus d aujourd hui et des 7 jours à venir. La vue d hier utilise la météo observée déjà présente dans la série de données (aucun appel réseau en plus), et le statut le précise. Les vues « Zones durables » et « Meilleur jour » restent calculées sur J à J+7.
