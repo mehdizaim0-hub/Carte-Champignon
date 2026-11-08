@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -255,6 +255,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('fondu de bord : retiré en fin de liste', !fe.classList.contains('more'));
 
   console.log('État vide, fiche repliée, titre');
+  check('lieu déjà en phrase (« À 105 km au nord de… ») : jamais de « près de À », en titre comme en ligne', w.__nearT('À 105 km au nord de Clermont-Ferrand') === 'À 105 km au nord de Clermont-Ferrand' && w.__nearI('À 105 km au nord de Clermont-Ferrand') === 'à 105 km au nord de Clermont-Ferrand' && w.__nearI('Secteur Landes') === 'secteur Landes' && w.__nearI('Mont-de-Marsan') === 'près de Mont-de-Marsan' && !/près de (À|Secteur)/.test($('nowwhere').textContent), $('nowwhere').textContent);
   check('titre : « Secteur … » sans « Près de », un nom de lieu avec « Près de »', w.__nearT('Secteur Landes de Gascogne') === 'Secteur Landes de Gascogne' && w.__nearT('Mont-de-Marsan') === 'Près de Mont-de-Marsan');
   check('fiche espèce : rubriques techniques repliées dans « Détails du modèle »', !!doc.querySelector('#spmodel details.mdl') && doc.querySelectorAll('#spmodel dt').length >= 2 && ![...doc.querySelectorAll('#spdl dt')].some(d => /\(modèle\)/.test(d.textContent)) && doc.querySelector('#spmodel details').open === false);
   const em = $('emptymap'), waitAlts = async () => { for (let k = 0; k < 120 && /^Recherche/.test(em.querySelector('.alts') ? em.querySelector('.alts').textContent : 'x'); k++) await sleep(250); };

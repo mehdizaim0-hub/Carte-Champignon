@@ -1254,7 +1254,7 @@ function renderNow(){
   if(!(c.lat>=41&&c.lat<=51.5&&c.lng>=-5.5&&c.lng<=10))return say0("Centrez la carte sur la France pour voir les espèces du moment.");
   const z=makeZone(c.lat,c.lng);
   if(z.anth)return say0("Zone urbanisée ou routière : déplacez la carte vers la forêt.");
-  $("nowwhere").textContent="· près de "+z.near;
+  $("nowwhere").textContent="· "+nearInline(z.near);
   const rows=SP.map((s,i)=>{
     if(s.toxic)return null;
     const a=[...Array(8)].map((_,d)=>score(s,z,d).sc),m=Math.max(...a);
@@ -1295,7 +1295,10 @@ function mySpotsHook(){
   nv.className="btn";nv.textContent="Y aller";nv.href=navUrl(z.lat,z.lon);nv.target="_blank";nv.rel="noopener";
   w.append(b,nv);$("detail").appendChild(w);
 }
-const nearT=n=>/^Secteur /.test(n)?n:"Près de "+n;
+// Le nom de lieu est parfois déjà une phrase (« Secteur Landes… », « À 105 km au nord de… ») : on n'y ajoute pas « près de »
+const nearPhrase=n=>/^(Secteur|À) /.test(n);
+const nearT=n=>nearPhrase(n)?n:"Près de "+n;
+const nearInline=n=>nearPhrase(n)?n.charAt(0).toLowerCase()+n.slice(1):"près de "+n;
 const fmtCoord=(lat,lon,dec=2)=>Math.abs(lat).toFixed(dec).replace(".",",")+" °"+(lat>=0?"N":"S")+", "+Math.abs(lon).toFixed(dec).replace(".",",")+" °"+(lon>=0?"E":"O");
 const navUrl=(lat,lon)=>"https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon+"&travelmode=driving";
 const fmtDay=ts=>new Date(ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
