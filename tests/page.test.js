@@ -279,6 +279,9 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
   w.setPoint(47.0, 4.0, false); await sleep(300);
   check('toucher un point masque le message (il gênerait la carte)', em.hidden);
+  w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[1]);   // autre espèce : l'ancienne fermeture ne s'applique plus
+  w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  check('retour à l\'état initial après un détour : le message réapparaît (la fermeture n\'est pas permanente)', !em.hidden && /Cèpe de Bordeaux/.test(em.textContent));
   w.__st.emptyHide = null;
 
   console.log('Pluie des 14 derniers jours');

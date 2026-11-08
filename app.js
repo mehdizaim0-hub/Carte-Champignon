@@ -753,6 +753,7 @@ function renderEmptyMap(sorted,sp){
   const box=$("emptymap");if(!box)return;
   const best=sorted&&sorted.length?sorted[sorted.length-1]:0,tok=st.emptyTok=(st.emptyTok||0)+1,vk=sp.n+"|"+st.view+"|"+st.day;
   box.textContent="";
+  if(st.emptyHide&&st.emptyHide!==vk)st.emptyHide=null;   // la fermeture ne vaut que pour l'état où elle a été faite
   if(!sorted||!sorted.length||best>=22||st.emptyHide===vk){box.hidden=true;return}
   const when=st.view==="hab"?"dans cette vue":st.view==="day"?"à cette date":"cette semaine";
   const d0=Math.max(0,st.day),today=d0>0?"à cette date":"aujourd'hui";
