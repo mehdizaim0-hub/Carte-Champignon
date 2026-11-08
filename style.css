@@ -202,3 +202,4 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 .emptymap .alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px}.emptymap .alts .btn{padding:6px 10px}
 @media(max-width:860px){.emptymap{left:52px;right:60px}}
 .mdl{margin-top:6px;border-top:1px solid var(--line)}.mdl summary{cursor:pointer;padding:8px 0;font-size:13px;font-weight:600;color:var(--mute)}
+.emptymap .alts{gap:5px}.emptymap .alts .btn{padding:4px 9px;font-size:12px;flex:none}.rain .cap{font-size:12px;color:var(--mute);margin:0 0 4px}

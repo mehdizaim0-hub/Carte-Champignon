@@ -763,10 +763,10 @@ function renderEmptyMap(sorted,sp){
   box.append(x,t,alts);box.hidden=false;
   const show=list=>{
     if(tok!==st.emptyTok)return;alts.textContent="";
-    const pick=list.filter(o=>o.i!==st.sp&&o.n>=10).sort((a,b)=>b.n-a.n).slice(0,4);
+    const pick=list.filter(o=>o.i!==st.sp&&o.n>=10).sort((a,b)=>b.n-a.n).slice(0,3);
     if(!pick.length){alts.textContent="Aucune espèce du catalogue n'est favorable "+today+" : c'est la fin de saison. Revenez dans quelques jours.";return}
-    alts.append("Favorables "+today+" : ");
-    pick.forEach(o=>{const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=SP[o.i].n+" ("+o.n+" zones)";
+    alts.append("Favorables "+today+" (zones) : ");
+    pick.forEach(o=>{const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=SP[o.i].n+" · "+o.n;b.title=o.n+" zones favorables";
       b.onclick=()=>{const c=document.querySelector('#chips button[data-i="'+o.i+'"]');if(c)c.click()};alts.appendChild(b)});
   };
   const key=[st.fetchedAt,st.dataDate,d0,st.rain,st.dt,st.live?1:0].join("|");
@@ -1093,6 +1093,7 @@ function locateMe(){
   },()=>say("Position refusée ou introuvable : touchez la carte pour choisir un endroit."),{timeout:12000});
 }
 function setPoint(lat,lon,fly){
+  {const b=$("emptymap");if(b&&!b.hidden){st.emptyHide=SP[st.sp].n+"|"+st.view+"|"+st.day;b.hidden=true}}   // le message gênerait la carte une fois un point choisi
   if(!(lat>=41&&lat<=51.5&&lon>=-5.5&&lon<=10))return;
   st.pt={lat,lon};st.ptZ=makeZone(lat,lon);
   try{history.replaceState(null,"","#p="+lat.toFixed(5)+","+lon.toFixed(5))}catch(e){}

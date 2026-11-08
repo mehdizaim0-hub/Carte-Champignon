@@ -262,9 +262,9 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('état vide : message affiché avec le meilleur score', !em.hidden && /Aucune zone favorable pour Cèpe de Bordeaux/.test(em.textContent) && /Meilleur score en France : 20\/100/.test(em.textContent), em.textContent.slice(0, 160));
   await waitAlts();
   const altBtns = [...em.querySelectorAll('.alts .btn')];
-  check('état vide : espèces favorables proposées (cliquables) ou, sinon, message de fin de saison', altBtns.length >= 1 ? altBtns.length <= 4 && altBtns.every(b => /\(\d+ zones\)/.test(b.textContent)) : /fin de saison/.test(em.textContent), em.querySelector('.alts').textContent.slice(0, 200));
+  check('état vide : espèces favorables proposées (cliquables) ou, sinon, message de fin de saison', altBtns.length >= 1 ? altBtns.length <= 3 && altBtns.every(b => / · \d+$/.test(b.textContent)) : /fin de saison/.test(em.textContent), em.querySelector('.alts').textContent.slice(0, 200));
   if (altBtns.length) {
-    const nameAlt = altBtns[0].textContent.replace(/ \(\d+ zones\)$/, '');
+    const nameAlt = altBtns[0].textContent.replace(/ · \d+$/, '');
     altBtns[0].click(); await sleep(400);
     check('toucher une proposition sélectionne cette espèce', w.__sp[w.__st.sp].n === nameAlt, w.__sp[w.__st.sp].n + ' / ' + nameAlt);
     doc.querySelector('#chips button[data-i="0"]').click(); await sleep(300);
@@ -276,6 +276,9 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('message masquable', em.hidden);
   w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
   check('message masqué : ne revient pas tant que espèce, vue et jour ne changent pas', em.hidden);
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  w.setPoint(47.0, 4.0, false); await sleep(300);
+  check('toucher un point masque le message (il gênerait la carte)', em.hidden);
   w.__st.emptyHide = null;
 
   console.log('Pluie des 14 derniers jours');
