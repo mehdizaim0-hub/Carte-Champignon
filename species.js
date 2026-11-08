@@ -30,3 +30,54 @@ const SP=[
 {n:"Vesse de loup perlée",grp:"foret",open:{clair:0.6,prairie:0.3,autre:0.2},sparse:0.8,ph:[3.8, 4.8, 8.0, 9.0],pf:0.6,wc:0.15,ws:0.1,evp:1,evt:0,sol:"Indifférent : humus de sous-bois et de clairières (observations en France : pH 5,5 à 6,6)",det:"la vesse de loup perlée",du:"de la vesse de loup perlée",lat:"Lycoperdon perlatum",wiki:"Lycoperdon_perlatum",hote:"Aucun (saprophyte) : humus des bois de feuillus et de conifères, clairières, chemins forestiers",saison:"Août à novembre, pic en octobre",alt:"0 à 1 500 m",id:"Boule blanche en forme de poire ou de toupie, couverte de petits grains pointus (perles) qui s'enlèvent. Elle ne se mange que jeune, quand la chair est entièrement blanche, ferme et homogène : toujours la couper en deux. Écarter tout exemplaire à chair jaunâtre, brune ou violacée (trop mûr, ou scléroderme toxique) et tout « œuf » où l'on devine un chapeau, des lames ou un pied (jeune amanite, dont l'amanite phalloïde est mortelle).",ev:0,so:{a:1,c:0.9,n:1},fo:{f:1,r:0.8,m:1},al:[0, 0, 1300, 1800],t:[8, 12, 20, 25],ro:25,lag:4,frost:1,hu:[0.1, 0.28],gb:[0.0, 0.01, 0.0, 0.01, 0.02, 0.06, 0.03, 0.11, 0.31, 1.0, 0.57, 0.1],txt:"Humus des bois. Sort en quelques jours après les pluies d'automne, sur sol frais."},
 {n:"Vesse de loup géante",grp:"prairie",open:{clair:0.8,prairie:1,autre:0.7},sparse:0.9,ph:[4.8, 5.8, 8.0, 9.0],pf:0.6,wc:0.2,ws:0.1,soc:[15, 45],evp:1,evt:0,evo:0,sol:"Prairies et vergers riches (observations en France : pH 5,8 à 6,9)",det:"la vesse de loup géante",du:"de la vesse de loup géante",lat:"Calvatia gigantea",wiki:"Calvatia_gigantea",hote:"Aucun (saprophyte) : prairies, pelouses, vergers, lisières, souvent près des haies",saison:"Août à octobre",alt:"0 à 1 000 m",id:"Énorme boule blanche de 15 à 80 cm, sans pied, à peau lisse puis feutrée. Elle ne se mange que si la chair est entièrement blanche, ferme et homogène, comme du fromage frais : la couper en deux sur place. Écarter toute chair jaunâtre, verdâtre ou brune (trop mûre) et toute boule plus petite qui laisse voir un pied, un chapeau ou des lames.",ev:0,so:{a:0.7,c:1,n:1},fo:{f:0.35,r:0.1,m:0.35},al:[0, 0, 800, 1300],t:[9, 14, 21, 26],ro:25,lag:5,frost:1,hu:[0.1, 0.26],gb:[0.0, 0.05, 0.05, 0.05, 0.0, 0.09, 0.27, 0.77, 1.0, 0.82, 0.18, 0.0],txt:"Prairies et vergers. Pousse en quelques jours après les pluies tièdes de la fin d'été."}
 ];
+
+// ---------- Sosies dangereux : uniquement ce qui est étayé par une source (voir SOURCES). Une espèce absente de SOSIES n'a PAS « aucun sosie » : elle n'est simplement pas documentée ici. ----------
+// g : "mortel" | "toxique" | "nc" (non comestible) ; s : clés de SOURCES
+const SOURCES={
+  anses:{t:"ANSES : cueillette des champignons, vigilance (2025)",u:"https://www.anses.fr/fr/content/cueillette-des-champignons-vigilance-face-aux-risques-dintoxications"},
+  ordre:{t:"Ordre des pharmaciens, relais de l'ANSES (2025)",u:"https://www.ordre.pharmacien.fr/les-communications/focus-sur/les-actualites/cueillette-des-champignons-vigilance-face-aux-risques-d-intoxications"},
+  phallo:{t:"ANSES : syndrome phalloïdien et risques de confusion",u:"https://www.anses.fr/en/system/files/BIORISK2014sa0232Fi.pdf"},
+  futura:{t:"Futura Sciences, d'après l'ANSES : espèces mortelles et sosies",u:"https://www.futura-sciences.com/planete/actualites/champignon-champignons-ces-especes-mortelles-ressemblent-celles-vous-ramassez-voici-pieges-eviter-138528/"},
+  sone:{t:"SONE : des pires aux meilleurs champignons (conférence)",u:"https://www.sone.fr/wp-content/uploads/2021/11/Conference-des-Pires-aux-Meilleurs-.pdf"},
+  praticien:{t:"La Revue du Praticien : intoxications aux champignons",u:"https://www.larevuedupraticien.fr/article/intoxications-aux-champignons-quel-raisonnement"},
+  vapko:{t:"VAPKO (contrôleurs suisses) : tableau des confusions",u:"https://www.vapko.ch/phocadownload/public/FR/A-Z/confusions.pdf"},
+  laval:{t:"Université Laval : 30 champignons",u:"https://www.fsaa.ulaval.ca/fileadmin/FSAA_Fichiers/Faculte/Conferences/DinersBotaniques/A13/30_Champignons_-_Martin_T_V3.pdf"},
+  canada:{t:"Encyclopédie canadienne : champignons sauvages",u:"https://www.thecanadianencyclopedia.ca/fr/article/champignons-sauvages-au-canada"},
+  pqd:{t:"Pourquoi Docteur : bons réflexes (ANSES)",u:"https://www.pourquoidocteur.fr/Articles/Question-d-actu/52696-Cueillette-champignons-bons-reflexes-eviter-les-intoxications"}
+};
+const OEUF={n:"Jeunes amanites (stade « œuf »)",g:"mortel",c:"Cueillies avant l'ouverture du voile, elles peuvent être prises pour d'autres champignons.",s:["phallo"]};
+const CLITO={n:"Clitocybe de l'olivier",g:"toxique",c:"Confusion la plus fréquente en 2024 : troubles digestifs parfois sévères, déshydratation. Les chanterelles ont des plis sous le chapeau, pas de vraies lames.",s:["ordre","canada","vapko"]};
+const SOSIES={
+  "Girolle":[CLITO],
+  "Chanterelle en tube":[CLITO],
+  "Coulemelle":[
+    {n:"Amanite phalloïde",g:"mortel",c:"Atteinte du foie, parfois mortelle. Toxines non détruites par la cuisson, symptômes tardifs (plus de 6 h après le repas). Déterrer le pied entier : une volve (sac blanc) à la base signale une amanite.",s:["anses","phallo","sone"]},
+    {n:"Certaines petites lépiotes",g:"mortel",c:"Contiennent les mêmes toxines que l'amanite phalloïde.",s:["phallo"]}
+  ],
+  "Rosé des prés":[
+    {n:"Agaric jaunissant",g:"toxique",c:"Troubles gastro-intestinaux ; souvent confondu avec le rosé des prés.",s:["sone"]},
+    {n:"Amanites blanches (vireuse, printanière)",g:"mortel",c:"Blanches, elles peuvent être prises pour un rosé des prés.",s:["futura","phallo"]}
+  ],
+  "Russule charbonnière":[
+    {n:"Amanite phalloïde (formes vertes)",g:"mortel",c:"Elle est souvent prise pour une coulemelle, une russule charbonnière ou un rosé des prés, et ne ressemble pas toujours à l'image qu'on s'en fait.",s:["futura","sone"]}
+  ],
+  "Vesse de loup perlée":[Object.assign({},OEUF,{c:"Récoltées à l'état d'œuf, elles peuvent être prises pour des vesses-de-loup. Couper chaque vesse en deux : l'intérieur d'une vraie vesse est blanc, ferme et homogène.",s:["phallo","laval"]})],
+  "Vesse de loup géante":[Object.assign({},OEUF,{c:"Récoltées à l'état d'œuf, elles peuvent être prises pour des vesses-de-loup. Couper chaque vesse en deux : l'intérieur d'une vraie vesse est blanc, ferme et homogène.",s:["phallo","laval"]})],
+  "Morille":[
+    {n:"Gyromitre",g:"toxique",c:"Chapeau contourné et plissé, sans alvéoles ; pied et chapeau non entièrement creux. Couper la morille en deux : tout doit être creux.",s:["vapko","canada"]}
+  ],
+  "Cèpe de Bordeaux":[
+    {n:"Bolet amer",g:"nc",c:"Pores qui rosissent avec l'âge, chair très amère.",s:["laval","vapko"]},
+    {n:"Bolet de Satan",g:"toxique",c:"Provoque des troubles digestifs (syndrome résinoïdien).",s:["praticien"]},
+    OEUF
+  ],
+  "Cèpe d'été":[
+    {n:"Bolet amer",g:"nc",c:"Pores qui rosissent avec l'âge, chair très amère.",s:["laval","vapko"]},
+    {n:"Bolet de Satan",g:"toxique",c:"Provoque des troubles digestifs (syndrome résinoïdien).",s:["praticien"]},
+    OEUF
+  ],
+  "Marasme des oréades":[
+    {n:"Clitocybes blancs (ex. clitocybe blanchi)",g:"toxique",c:"Poussent aussi dans l'herbe ; provoquent le syndrome muscarinien.",s:["sone"]},
+    {n:"Inocybes (ex. inocybe fastigié)",g:"toxique",c:"Confusion possible dans les pelouses.",s:["sone"]}
+  ]
+};

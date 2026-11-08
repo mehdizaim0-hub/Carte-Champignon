@@ -207,3 +207,7 @@ Options d affichage, « Calque » : **Type de forêt** (feuillus, résineux, mix
 ## Voir la veille
 
 Le sélecteur « Jour » propose **Hier** en plus d aujourd hui et des 7 jours à venir. La vue d hier utilise la météo observée déjà présente dans la série de données (aucun appel réseau en plus), et le statut le précise. Les vues « Zones durables » et « Meilleur jour » restent calculées sur J à J+7.
+
+## Sosies dangereux
+
+La fiche de chaque espèce affiche ses sosies dangereux (gravité, critère de distinction, liens vers les sources) et un avertissement permanent (contrôle de la récolte par un pharmacien ou une association mycologique, pas de confiance aux applications de reconnaissance, appeler le 15). Les données sont dans `SOSIES` / `SOURCES` à la fin de `species.js`. **Règles** : aucune entrée sans source citée dans `SOURCES` ; une espèce absente de `SOSIES` affiche « aucun sosie renseigné », jamais « pas de sosie » ; les tests vérifient les liens entre espèces, gravités et sources.

@@ -660,6 +660,7 @@ function render(){
 const PHOTOS={};
 function renderSpecies(){
   const sp=SP[st.sp];
+  renderSosies(sp);
   renderCurves(sp,st.ptZ&&st.pt?st.ptZ:null,st.ptZ&&st.pt&&st.live?(()=>{try{return score(sp,st.ptZ,st.day).w.T}catch(e){return null}})():null,st.day);
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";$("spsumn").textContent=sp.n;$("spsuml").textContent=(sp.lat||"")+(sp.toxic?" · TOXIQUE":"");$("toxban").hidden=!sp.toxic;$("spwarn").hidden=!!sp.toxic;
   $("spdl").innerHTML=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
@@ -758,6 +759,35 @@ function setContours(on){
     cnvLayer.on("tileerror",()=>{err++;if(!ok&&err>=3&&!cnvFail){cnvFail=true;cnvNote()}});
   }
   cnvNote();
+}
+// ---------- Sosies dangereux et avertissement (données sourcées : SOSIES, SOURCES dans species.js) ----------
+const GRAV={mortel:"Mortel",toxique:"Toxique",nc:"Non comestible"};
+function srcLinks(keys){
+  const sp=document.createElement("span");sp.className="srcs";sp.append("Sources : ");
+  keys.forEach((k,i)=>{const S=SOURCES[k];if(!S)return;if(i)sp.append(" · ");const a=document.createElement("a");a.href=S.u;a.target="_blank";a.rel="noopener";a.textContent=S.t;sp.appendChild(a)});
+  return sp;
+}
+function renderSosies(sp){
+  const box=$("spsos");if(!box)return;box.textContent="";
+  const h=document.createElement("h4");h.textContent="Sosies dangereux";box.appendChild(h);
+  const list=SOSIES[sp.n];
+  if(list&&list.length){
+    const ul=document.createElement("ul");ul.className="sosl";
+    list.forEach(x=>{
+      const li=document.createElement("li"),b=document.createElement("b"),g=document.createElement("span"),p=document.createElement("p");
+      b.textContent=x.n;g.className="grav g-"+x.g;g.textContent=GRAV[x.g]||x.g;p.textContent=x.c;
+      li.append(b," ",g,p,srcLinks(x.s));ul.appendChild(li);
+    });
+    box.appendChild(ul);
+  }else{
+    const p=document.createElement("p");p.className="cap";
+    p.textContent="Aucun sosie renseigné pour cette espèce dans nos sources. Cela ne veut pas dire qu'il n'en existe pas : faites contrôler votre récolte.";
+    box.appendChild(p);
+  }
+  const w=document.createElement("div");w.className="safe";w.setAttribute("role","note");
+  const t=document.createElement("p");
+  t.textContent="Cette carte indique où chercher, pas ce qui se mange. Ne ramassez que des champignons que vous connaissez parfaitement, cueillez-les entiers et en bon état, évitez les jeunes spécimens, ne vous fiez pas aux applications de reconnaissance et faites contrôler votre récolte par un pharmacien ou une association mycologique avant de la manger. Symptômes après un repas de champignons : appelez le 15 ou votre centre antipoison.";
+  w.append(t,srcLinks(["anses","pqd"]));box.appendChild(w);
 }
 // ---------- Courbes d'optimum : où se situent température, altitude et saison par rapport à ce qu'aime l'espèce ----------
 function curveSvg(o){

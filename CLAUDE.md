@@ -64,3 +64,7 @@ Les patchs se font par remplacement de texte exact : toujours contrôler `node -
 ## Rigueur scientifique
 
 Les paramètres par espèce sont documentés dans `research/` avec un niveau de preuve (étayé / partiel / estimé), affiché dans la fiche de l'espèce. Les scores sont un **indice de conditions réunies**, pas une probabilité de trouver : aucune validation sur des cueillettes réelles n'a été faite (`calibrate_gbif.py` prépare une comparaison saisons/altitudes avec GBIF). Ne jamais présenter un paramètre estimé comme étayé.
+
+## Règle de sécurité : sosies
+
+Toute entrée de `SOSIES` (species.js) doit citer au moins une source de `SOURCES`. Ne jamais écrire ni laisser entendre qu une espèce n a « aucun sosie ». Ne pas ajouter de critère de distinction sans source.

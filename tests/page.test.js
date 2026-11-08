@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -240,6 +240,24 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const swSrc = read('sw.js');
   check('service worker : précache de la page, du CSS et des scripts', ['index.html', 'style.css', 'species.js', 'app.js'].every(f => swSrc.includes('"' + f + '"') && fs.existsSync(path.join(ROOT, f))));
   check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
+
+  console.log('Sosies dangereux');
+  const SOS = w.__sos, SRC = w.__src, spNames = w.__sp.map(s => s.n), sosAll = Object.values(SOS).flat();
+  check('chaque entrée de SOSIES vise une espèce du catalogue', Object.keys(SOS).every(k => spNames.includes(k)), Object.keys(SOS).filter(k => !spNames.includes(k)).join());
+  check('chaque sosie : nom, gravité valide, texte explicatif, au moins une source connue', sosAll.every(x => x.n && ['mortel', 'toxique', 'nc'].includes(x.g) && x.c.length > 20 && x.s.length >= 1 && x.s.every(k => SRC[k])));
+  check('chaque source : titre et adresse https', Object.values(SRC).every(s => s.t && /^https:\/\//.test(s.u)));
+  const usedSrc = new Set([...sosAll.flatMap(x => x.s), 'anses', 'pqd']);
+  check('aucune source orpheline (toutes servent)', Object.keys(SRC).every(k => usedSrc.has(k)), Object.keys(SRC).filter(k => !usedSrc.has(k)).join());
+  const pick = async n => { doc.querySelector('#chips button[data-i="' + spNames.indexOf(n) + '"]').click(); await sleep(250); };
+  await pick('Girolle');
+  check('Girolle : clitocybe de l\'olivier, badge toxique, sources cliquables sécurisées', /Clitocybe de l'olivier/.test($('spsos').textContent) && !!doc.querySelector('#spsos .grav.g-toxique') && [...doc.querySelectorAll('#spsos .sosl a')].every(a => a.rel === 'noopener' && a.target === '_blank' && /^https:/.test(a.href)) && doc.querySelectorAll('#spsos .sosl a').length >= 1);
+  await pick('Coulemelle');
+  check('Coulemelle : amanite phalloïde signalée comme mortelle, avec le critère de la volve', !!doc.querySelector('#spsos .grav.g-mortel') && /Amanite phalloïde/.test($('spsos').textContent) && /volve/.test($('spsos').textContent));
+  await pick('Langue de bœuf');
+  check('espèce non documentée : aucun faux « pas de sosie », message de prudence', /Aucun sosie renseigné/.test($('spsos').textContent) && /ne veut pas dire qu'il n'en existe pas/.test($('spsos').textContent) && !doc.querySelector('#spsos .sosl'));
+  check('avertissement permanent dans chaque fiche : contrôle de la récolte, applications, 15', /pharmacien|association mycologique/.test($('spsos').textContent) && /applications de reconnaissance/.test($('spsos').textContent) && /15/.test($('spsos').textContent));
+  check('avertissement permanent sous le résultat d\'un point', /où chercher, pas ce qui est comestible/.test(doc.querySelector('.safenote').textContent));
+  await pick(spNames[0]);
 
   console.log('Voir la veille');
   const dayBtns = () => [...doc.querySelectorAll('#days button')];
