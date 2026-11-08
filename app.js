@@ -760,6 +760,24 @@ function setContours(on){
   }
   cnvNote();
 }
+// ---------- Pluie des 14 derniers jours (séries déjà chargées) ----------
+function rainHook(z,d){
+  const L=z&&(z.L||(st.live&&z.i>=0?st.live[z.i]:null)),box=document.createElement("div"),h=document.createElement("h4");
+  box.className="rain";h.textContent="Pluie des 14 derniers jours";box.appendChild(h);
+  const cap=document.createElement("p");cap.className="cap";box.appendChild(cap);
+  if(!L||!L.p){cap.textContent="Pluie réelle indisponible (météo simulée).";$("detail").appendChild(box);return}
+  const e=Math.min((L.off!=null?L.off:st.off)+d,L.p.length-1),days=[];
+  for(let k=13;k>=0;k--){const i=e-k;if(i<0)continue;days.push({rel:d-k,mm:Math.max(0,L.p[i]||0)})}
+  const obs=days.filter(x=>x.rel<=0),tot=Math.round(obs.reduce((t,x)=>t+x.mm,0)),mx=Math.max(10,...days.map(x=>x.mm));
+  let ago=-1;for(let k=obs.length-1;k>=0;k--)if(obs[k].mm>=1){ago=obs.length-1-k;break}
+  const when=ago<0?"aucune pluie ≥ 1 mm":ago===0?"dernière pluie (≥ 1 mm) : aujourd'hui":ago===1?"dernière pluie (≥ 1 mm) : hier":"dernière pluie (≥ 1 mm) : il y a "+ago+" jours";
+  cap.textContent="Cumul observé sur "+obs.length+" jours : "+tot+" mm · "+when+(days.some(x=>x.rel>0)?" · barres claires : prévision":"");
+  const W=300,H=72,pt=10,pb=14,bw=W/days.length,fmt=r=>r===0?"auj.":dateOf(r).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+  const bars=days.map((x,i)=>{const hh=x.mm>0.05?Math.max(1.5,x.mm/mx*(H-pt-pb)):.8;
+    return `<rect class="rn-b${x.rel>0?" f":""}" x="${(i*bw+1.5).toFixed(1)}" y="${(H-pb-hh).toFixed(1)}" width="${(bw-3).toFixed(1)}" height="${hh.toFixed(1)}" rx="1.5"><title>${fmt(x.rel)} : ${Math.round(x.mm*10)/10} mm</title></rect>`}).join("");
+  const svg=`<svg class="cv rn" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pluie quotidienne sur ${days.length} jours : cumul observé ${tot} millimètres, maximum ${Math.round(Math.max(...days.map(x=>x.mm)))} millimètres en un jour">${bars}<text x="2" y="8">${Math.round(mx)} mm</text><text x="2" y="${H-3}">${fmt(days[0].rel)}</text><text x="${W-2}" y="${H-3}" text-anchor="end">${fmt(days[days.length-1].rel)}</text></svg>`;
+  box.insertAdjacentHTML("beforeend",svg);$("detail").appendChild(box);
+}
 // ---------- Sosies dangereux et avertissement (données sourcées : SOSIES, SOURCES dans species.js) ----------
 const GRAV={mortel:"Mortel",toxique:"Toxique",nc:"Non comestible"};
 function srcLinks(keys){
@@ -1161,6 +1179,7 @@ function renderDetail(){
   <p class="prov"><b>Origine des données</b> — météo : ${src.w||"de la maille"} · altitude : ${src.a||"de la maille"} · forêt : ${src.f||"de la maille"} · sol : ${src.s||"de la maille"}.</p>
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
   mySpotsHook();
+  rainHook(zsel,d);
   cmpHook();
   renderCurves(sp,zsel,r.w&&r.w.T,d);
 }

@@ -241,6 +241,22 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('service worker : précache de la page, du CSS et des scripts', ['index.html', 'style.css', 'species.js', 'app.js'].every(f => swSrc.includes('"' + f + '"') && fs.existsSync(path.join(ROOT, f))));
   check('page : manifeste et icône tactile référencés', /rel="manifest"/.test(html0) && /apple-touch-icon/.test(html0) && fs.existsSync(path.join(ROOT, 'apple-touch-icon.png')));
 
+  console.log('Pluie des 14 derniers jours');
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  doc.querySelector('#days button[data-d="0"]').click(); await sleep(400);   // des tests précédents laissent un autre jour sélectionné
+  const rainBars = () => doc.querySelectorAll('#detail .rain rect.rn-b');
+  check('graphique de pluie : 14 barres, description accessible', rainBars().length === 14 && /cumul observé/.test(doc.querySelector('#detail .rain svg').getAttribute('aria-label')));
+  const zr = w.__st.ptZ, Lr = zr.L || w.__st.live[zr.i], er = Math.min((Lr.off != null ? Lr.off : w.__st.off) + 0, Lr.p.length - 1);
+  let expTot = 0; for (let k = er - 13; k <= er; k++) expTot += Math.max(0, Lr.p[k] || 0);
+  const capTxt = doc.querySelector('#detail .rain .cap').textContent, shownTot = +capTxt.match(/jours : (\d+) mm/)[1];
+  check('cumul affiché = somme réelle des 14 jours de la série (' + Math.round(expTot) + ' mm)', shownTot === Math.round(expTot), capTxt);
+  check('dernière pluie indiquée, sans barre de prévision à la date du jour', /dernière pluie|aucune pluie/.test(capTxt) && doc.querySelectorAll('#detail .rain rect.f').length === 0, capTxt);
+  doc.querySelector('#days button[data-d="3"]').click(); await sleep(400);
+  check('jour futur : 3 barres claires de prévision, cumul sur les jours observés seulement', doc.querySelectorAll('#detail .rain rect.f').length === 3 && /Cumul observé sur 11 jours/.test(doc.querySelector('#detail .rain .cap').textContent) && /barres claires/.test(doc.querySelector('#detail .rain .cap').textContent), doc.querySelector('#detail .rain .cap').textContent);
+  doc.querySelector('#days button[data-d="0"]').click(); await sleep(400);
+  check('retour au jour même : 14 jours observés', /Cumul observé sur 14 jours/.test(doc.querySelector('#detail .rain .cap').textContent));
+  check('pluie sans NaN ni undefined', !/NaN|undefined/.test(doc.querySelector('#detail .rain').textContent + doc.querySelector('#detail .rain svg').outerHTML));
+
   console.log('Sosies dangereux');
   const SOS = w.__sos, SRC = w.__src, spNames = w.__sp.map(s => s.n), sosAll = Object.values(SOS).flat();
   check('chaque entrée de SOSIES vise une espèce du catalogue', Object.keys(SOS).every(k => spNames.includes(k)), Object.keys(SOS).filter(k => !spNames.includes(k)).join());

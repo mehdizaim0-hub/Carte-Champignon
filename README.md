@@ -211,3 +211,7 @@ Le sélecteur « Jour » propose **Hier** en plus d aujourd hui et des 7 jours �
 ## Sosies dangereux
 
 La fiche de chaque espèce affiche ses sosies dangereux (gravité, critère de distinction, liens vers les sources) et un avertissement permanent (contrôle de la récolte par un pharmacien ou une association mycologique, pas de confiance aux applications de reconnaissance, appeler le 15). Les données sont dans `SOSIES` / `SOURCES` à la fin de `species.js`. **Règles** : aucune entrée sans source citée dans `SOURCES` ; une espèce absente de `SOSIES` affiche « aucun sosie renseigné », jamais « pas de sosie » ; les tests vérifient les liens entre espèces, gravités et sources.
+
+## Pluie des 14 derniers jours
+
+Sous le résultat d un point, un graphique en barres montre la pluie quotidienne des 14 jours se terminant au jour choisi (séries déjà chargées, aucun appel en plus), avec le cumul observé et la date de la dernière pluie de 1 mm ou plus. Pour un jour à venir, les jours de prévision sont en barres claires et exclus du cumul. En météo simulée, le graphique indique que la pluie réelle est indisponible.
