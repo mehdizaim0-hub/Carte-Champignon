@@ -290,6 +290,9 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('chaque espèce du catalogue a ses arbres hôtes, et seulement elles', catNames.every(n => HT[n] && HT[n].length >= 1) && Object.keys(HT).every(n => catNames.includes(n)), catNames.filter(n => !HT[n]).join());
   check('chaque clé d\'arbre utilisée a une icône, un nom et une catégorie connue', Object.values(HT).flat().every(k => TI[k] && TI[k].t && TI[k].s && 'fcwh'.includes(TI[k].c)), Object.values(HT).flat().filter(k => !TI[k]).join());
   check('chaque icône est un dessin SVG non vide', Object.values(TI).every(i => /<(path|circle|ellipse|rect)/.test(i.s)));
+  const svgPairs = Object.entries(TI).filter(([k]) => k !== 'coniferes'), dupIcons = svgPairs.filter(([k, v], i) => svgPairs.some(([k2, v2], j) => j < i && v2.s === v.s)).map(([k]) => k);
+  check('silhouettes toutes distinctes (feuille propre à chaque arbre ; conifères = épicéa)', dupIcons.length === 0 && TI.coniferes.s === TI.epicea.s, dupIcons.join());
+  check('feuilles : un tracé rempli par feuille, aiguilles en traits pour les résineux', ['chene','hetre','chataignier','charme','orme','peuplier','saule','verger','feuillus','frene','herbe'].every(k => /<path d="M/.test(TI[k].s) && !/class="nd"/.test(TI[k].s)) && ['epicea','sapin','pin'].every(k => /class="nd"/.test(TI[k].s)));
   const hostPick = async n => { doc.querySelector('#chips button[data-i="' + catNames.indexOf(n) + '"]').click(); await sleep(250); };
   await hostPick('Cèpe de Bordeaux');
   const chips = [...doc.querySelectorAll('#spdl .trees .tree')];

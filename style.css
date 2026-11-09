@@ -204,5 +204,6 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 .mdl{margin-top:6px;border-top:1px solid var(--line)}.mdl summary{cursor:pointer;padding:8px 0;font-size:13px;font-weight:600;color:var(--mute)}
 .emptymap .alts{gap:5px}.emptymap .alts .btn{padding:4px 9px;font-size:12px;flex:none}.rain .cap{font-size:12px;color:var(--mute);margin:0 0 4px}
 .trees{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 5px}.tree{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 5px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--ink);background:var(--panel)}
-.tree svg{flex:none}.tree .tw{stroke:var(--panel);stroke-width:1.1;fill:none}.tr-f svg{color:#2e7d32}.tr-c svg{color:#1b5e6b}.tr-w svg{color:#7b5e3b}.tr-h svg{color:#7a8a1e}.hnote{display:block}
+.tree svg{flex:none}.tree .tw{stroke:var(--panel);stroke-width:.75;fill:none;stroke-linecap:round}.tree .nd{stroke:currentColor;stroke-width:1.2;fill:none;stroke-linecap:round}.tr-f svg{color:#2e7d32}.tr-c svg{color:#1b5e6b}.tr-w svg{color:#7b5e3b}.tr-h svg{color:#7a8a1e}.hnote{display:block}
 @media(prefers-color-scheme:dark){.tr-f svg{color:#7bc47f}.tr-c svg{color:#6fb7c6}.tr-w svg{color:#c9a27a}.tr-h svg{color:#c2d05a}}
+.tree{padding:2px 9px 2px 5px;gap:5px}
