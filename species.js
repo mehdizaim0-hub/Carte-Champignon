@@ -81,3 +81,27 @@ const SOSIES={
     {n:"Inocybes (ex. inocybe fastigié)",g:"toxique",c:"Confusion possible dans les pelouses.",s:["sone"]}
   ]
 };
+
+// ---------- Arbres hôtes ou appréciés, par espèce (clés de TREE_ICONS dans app.js). Établi d'après le champ « hote » de chaque fiche ; les saprophytes sont rattachés à leur milieu (prairie, bois mort...). ----------
+const HOTES={
+  "Cèpe de Bordeaux":["hetre","chene","chataignier","epicea","pin"],
+  "Girolle":["chene","hetre","epicea","pin"],
+  "Morille":["frene","orme","peuplier","verger"],
+  "Trompette de la mort":["hetre","chene","charme"],
+  "Pied-de-mouton":["hetre","chene","chataignier","epicea"],
+  "Lactaire délicieux":["pin","epicea"],
+  "Bolet bai":["pin","epicea","hetre","chene"],
+  "Chanterelle en tube":["epicea","sapin","hetre"],
+  "Coulemelle":["herbe"],
+  "Cèpe d'été":["chene","hetre","chataignier","charme"],
+  "Russule charbonnière":["hetre","chene","charme"],
+  "Bolet jaune":["pin"],
+  "Armillaire couleur de miel":["feuillus","coniferes","souche"],
+  "Pleurote en huître":["hetre","peuplier","saule","frene","souche"],
+  "Rosé des prés":["herbe"],
+  "Mousseron de la Saint-Georges":["herbe"],
+  "Marasme des oréades":["herbe"],
+  "Langue de bœuf":["chene","chataignier"],
+  "Vesse de loup perlée":["feuillus","coniferes"],
+  "Vesse de loup géante":["herbe"]
+};

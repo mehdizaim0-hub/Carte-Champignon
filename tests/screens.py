@@ -81,6 +81,8 @@ try:
             step("contours", lambda: page.evaluate(CH % ("cnv", "checked=true") + ";map.setView([45.19,5.72],12)"), 9000)
             shot("16_courbes_niveau")
             step("contours off", lambda: page.evaluate(CH % ("cnv", "checked=false")), 800)
+            step("hotes", lambda: page.evaluate("document.getElementById('spdet').open=true;document.getElementById('side').scrollTo(0,0);document.querySelector('#spdl').scrollIntoView({block:'start'})"), 1200)
+            shot("17_fiche_hotes")
             ctx.close()
         b.close()
 finally:

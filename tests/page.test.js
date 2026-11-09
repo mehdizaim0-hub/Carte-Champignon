@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -284,6 +284,21 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
   check('retour à l\'état initial après un détour : le message réapparaît (la fermeture n\'est pas permanente)', !em.hidden && /Cèpe de Bordeaux/.test(em.textContent));
   w.__st.emptyHide = null;
+
+  console.log('Icônes d\'arbres hôtes');
+  const HT = w.__hotes, TI = w.__trees, catNames = w.__sp.map(s => s.n);
+  check('chaque espèce du catalogue a ses arbres hôtes, et seulement elles', catNames.every(n => HT[n] && HT[n].length >= 1) && Object.keys(HT).every(n => catNames.includes(n)), catNames.filter(n => !HT[n]).join());
+  check('chaque clé d\'arbre utilisée a une icône, un nom et une catégorie connue', Object.values(HT).flat().every(k => TI[k] && TI[k].t && TI[k].s && 'fcwh'.includes(TI[k].c)), Object.values(HT).flat().filter(k => !TI[k]).join());
+  check('chaque icône est un dessin SVG non vide', Object.values(TI).every(i => /<(path|circle|ellipse|rect)/.test(i.s)));
+  const hostPick = async n => { doc.querySelector('#chips button[data-i="' + catNames.indexOf(n) + '"]').click(); await sleep(250); };
+  await hostPick('Cèpe de Bordeaux');
+  const chips = [...doc.querySelectorAll('#spdl .trees .tree')];
+  check('Cèpe de Bordeaux : 5 puces (hêtre, chêne, châtaignier, épicéa, pin), icône + nom écrit', chips.length === 5 && chips.every(c => c.querySelector('svg') && c.textContent.trim().length > 2) && chips.map(c => c.textContent.trim()).join('|') === 'Hêtre|Chêne|Châtaignier|Épicéa|Pin', chips.map(c => c.textContent.trim()).join('|'));
+  check('accessibilité : un seul libellé global pour les lecteurs d\'écran, icônes décoratives', /Arbres hôtes ou appréciés : Hêtre, Chêne, Châtaignier, Épicéa, Pin/.test(doc.querySelector('#spdl .trees').getAttribute('aria-label')) && chips.every(c => c.getAttribute('aria-hidden') === 'true'));
+  check('le texte détaillé des arbres hôtes reste affiché sous les icônes', /Hêtre, chênes, châtaignier/.test(doc.querySelector('#spdl .hnote').textContent));
+  await hostPick('Coulemelle');
+  check('espèce saprophyte (coulemelle) : milieu « Prairie, pelouse » avec le texte « Aucun (saprophyte) »', /Prairie, pelouse/.test(doc.querySelector('#spdl .trees').textContent) && /saprophyte/.test(doc.querySelector('#spdl .hnote').textContent));
+  await hostPick(catNames[0]);
 
   console.log('Pluie des 14 derniers jours');
   w.setPoint(47.0, 4.0, false); await sleep(900);

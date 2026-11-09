@@ -568,6 +568,7 @@ function drawDots(){
   const size=256*Math.pow(2,zoom),S=6,gain=F.gain;
   const a0=Math.floor(wx0/S),a1=Math.ceil((wx0+wpx)/S),b0=Math.floor(wy0/S),b1=Math.ceil((wy0+hpx)/S);
   g.globalAlpha=.95;
+  g.lineWidth=.5;g.strokeStyle="rgba(35,28,20,.5)";   // contour sombre très fin : les points pâles restent visibles sur le fond clair
   const{dLat:fdl,dLon:fdo,la0:fl0,lo0:fo0}=heatGeom||{},fK=FINE?FINE.K:12,fla=fl0-fdl/2,flo=fo0-fdo/2,fbl=fdl/fK,fbo=fdo/fK,roads=!!ROADS&&zoom>=10;
   for(let b=b0;b<=b1;b++)for(let a=a0;a<=a1;a++){
     const wx=(a+.5+(hash3(a,b,1)-.5)*.8)*S,wy=(b+.5+(hash3(a,b,2)-.5)*.8)*S;
@@ -578,7 +579,7 @@ function drawDots(){
     if(FINE&&FINE.urb){const fy=Math.floor((lat-fla)/fbl),fx=Math.floor((lon-flo)/fbo);if(fy>=0&&fx>=0&&fy<FINE.FH&&fx<FINE.FW&&FINE.urb[fy*FINE.FW+fx])continue}   // agglomération
     if(roads&&nearRoad(lat,lon,140))continue;                                                                                                               // axe routier
     g.fillStyle=DOTC[Math.round(v)];
-    g.beginPath();g.arc(wx-wx0,wy-wy0,1.1+1.9*Math.min(1,v/90),0,6.2832);g.fill();
+    g.beginPath();g.arc(wx-wx0,wy-wy0,1.1+1.9*Math.min(1,v/90),0,6.2832);g.fill();g.stroke();
   }
 }
 // ---------- UI ----------
@@ -670,7 +671,7 @@ function renderSpecies(){
   renderSosies(sp);
   renderCurves(sp,st.ptZ&&st.pt?st.ptZ:null,st.ptZ&&st.pt&&st.live?(()=>{try{return score(sp,st.ptZ,st.day).w.T}catch(e){return null}})():null,st.day);
   $("spname").textContent=sp.n;$("splat").textContent=sp.lat||"";$("spsumn").textContent=sp.n;$("spsuml").textContent=(sp.lat||"")+(sp.toxic?" · TOXIQUE":"");$("toxban").hidden=!sp.toxic;$("spwarn").hidden=!!sp.toxic;
-  const spRows=[["Arbres hôtes",sp.hote],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]);
+  const spRows=[["Arbres hôtes",(sp.hote?hostChips(sp.n)+"<span class=\"hnote\">"+sp.hote+"</span>":"")],["Sol",sp.sol],["Sol (modèle)",sp.ph?soilModelText(sp):""],["Forêt (modèle)",sp.open?"Lisières, clairières et prairies favorables (clairière 90 %, prairie 70 %, culture 15 %) ; forêt dense moins favorable. Estimé d'après l'écologie générale de l'espèce (saprophyte), sans étude de rendement.":"Arbre hôte nécessaire : un bloc sans forêt vaut 3 %, un bloc à demi boisé 55 %."],["Relief (modèle)","Versant nord et dépression favorables quand l'humidité manque (jusqu'à +25 %), pente au-delà de 15° pénalisée (jusqu'à −30 %), température corrigée de l'altitude (−6,5 °C par km). Étayé en Espagne méditerranéenne ; effet inverse signalé en climat humide."],["Saison",sp.saison],["Altitude",sp.alt],["Elle sort quand",sp.txt],["Reconnaître",sp.id]].filter(r=>r[1]);
   const rowsHtml=a=>a.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
   $("spdl").innerHTML=rowsHtml(spRows.filter(r=>!/\(modèle\)$/.test(r[0])));
   const tech=spRows.filter(r=>/\(modèle\)$/.test(r[0]));
@@ -851,6 +852,33 @@ function renderSosies(sp){
   const t=document.createElement("p");
   t.textContent="Cette carte indique où chercher, pas ce qui se mange. Ne ramassez que des champignons que vous connaissez parfaitement, cueillez-les entiers et en bon état, évitez les jeunes spécimens, ne vous fiez pas aux applications de reconnaissance et faites contrôler votre récolte par un pharmacien ou une association mycologique avant de la manger. Symptômes après un repas de champignons : appelez le 15 ou votre centre antipoison.";
   w.append(t,srcLinks(["anses","pqd"]));box.appendChild(w);
+}
+// ---------- Icônes d'arbres hôtes : pictogrammes simples (24x24, remplis), toujours accompagnés du nom ----------
+const burr=()=>{let l="";for(let k=0;k<12;k++){const r=k*Math.PI/6;l+=`<line x1="${(12+Math.cos(r)*5.6).toFixed(1)}" y1="${(12+Math.sin(r)*5.6).toFixed(1)}" x2="${(12+Math.cos(r)*10).toFixed(1)}" y2="${(12+Math.sin(r)*10).toFixed(1)}"/>`}return `<circle cx="12" cy="12" r="6"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round">${l}</g>`};
+const CROWN='<circle cx="12" cy="9" r="6.5"/><rect x="11.2" y="14" width="1.6" height="8"/>';
+const TREE_ICONS={
+  chene:{t:"Chêne",c:"f",s:'<rect x="11.2" y="2" width="1.6" height="3.5"/><path d="M5 11c0-3.5 3-5.5 7-5.5s7 2 7 5.5z"/><path d="M7 12.2h10c0 5-2.5 8.6-5 9.8-2.5-1.2-5-4.8-5-9.8z"/><path class="tw" d="M7.5 9h9M9 7.2l-1 3.2M12 6.5v3.8M15 7.2l1 3.2"/>'},
+  hetre:{t:"Hêtre",c:"f",s:'<path d="M12 2.5c4.5 2.5 7 6 6 10.5-.8 3.5-3.5 6-6 7.5-2.5-1.5-5.2-4-6-7.5-1-4.5 1.5-8 6-10.5z"/><path class="tw" d="M12 6v14M12 10l-3-1.5M12 10l3-1.5M12 14l-3.5-1.5M12 14l3.5-1.5"/>'},
+  chataignier:{t:"Châtaignier",c:"f",s:burr()},
+  charme:{t:"Charme",c:"f",s:CROWN},
+  orme:{t:"Orme",c:"f",s:CROWN},
+  frene:{t:"Frêne",c:"f",s:'<rect x="11.2" y="4" width="1.6" height="18"/><ellipse cx="7" cy="9" rx="3.6" ry="1.7" transform="rotate(-28 7 9)"/><ellipse cx="17" cy="9" rx="3.6" ry="1.7" transform="rotate(28 17 9)"/><ellipse cx="7" cy="14" rx="3.6" ry="1.7" transform="rotate(-28 7 14)"/><ellipse cx="17" cy="14" rx="3.6" ry="1.7" transform="rotate(28 17 14)"/><ellipse cx="12" cy="4" rx="1.8" ry="3"/>'},
+  peuplier:{t:"Peuplier",c:"f",s:'<ellipse cx="12" cy="9.5" rx="3.8" ry="8"/><rect x="11.2" y="16" width="1.6" height="6"/>'},
+  saule:{t:"Saule",c:"f",s:'<path d="M3 10a9 6.5 0 0 1 18 0z"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 10.5v8M8.5 10.5v10M12 10.5v6M15.5 10.5v10M19 10.5v8"/></g>'},
+  verger:{t:"Verger",c:"f",s:'<path d="M12 7.5c-2-2-6-1.4-7 2-1 4 1 9 4 11 1 .6 2 .2 3 0 1 .2 2 .6 3 0 3-2 5-7 4-11-1-3.4-5-4-7-2z"/><path d="M12 7.5c0-2 .8-3.6 2.2-4.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>'},
+  feuillus:{t:"Feuillus",c:"f",s:CROWN},
+  epicea:{t:"Épicéa",c:"c",s:'<path d="M12 2l5 6h-3l4 5h-3.5l4.5 6H5l4.5-6H6l4-5H7z"/><rect x="11" y="19" width="2" height="3"/>'},
+  sapin:{t:"Sapin",c:"c",s:'<path d="M12 2l6 17H6z"/><rect x="11" y="19" width="2" height="3"/>'},
+  coniferes:{t:"Conifères",c:"c",s:'<path d="M12 2l6 17H6z"/><rect x="11" y="19" width="2" height="3"/>'},
+  pin:{t:"Pin",c:"c",s:'<path d="M12 2c3 3 5 7 5 11a5 5 0 0 1-10 0c0-4 2-8 5-11z"/><path class="tw" d="M8 9l8 6M8 13l8 6M16 9l-8 6M16 13l-4 4M12 4v10"/><rect x="11.2" y="18" width="1.6" height="4"/>'},
+  souche:{t:"Bois mort, souche",c:"w",s:'<ellipse cx="12" cy="12" rx="9" ry="7"/><ellipse class="tw" cx="12" cy="12" rx="6" ry="4.4"/><ellipse class="tw" cx="12" cy="12" rx="3" ry="2"/>'},
+  herbe:{t:"Prairie, pelouse",c:"h",s:'<path d="M4 21C5 14 6 10 7 5c1 4.5 1.5 9.500 1 16zM10 21c0-6 1-11.500 2-17 1 5.500 2 11 2 17zM16 21c-.5-6 0-11 1-15 1 4 2 9 3 15z"/>'}
+};
+function hostChips(name){
+  const keys=(typeof HOTES!=="undefined"&&HOTES[name])||[];
+  if(!keys.length)return"";
+  const label=keys.map(k=>TREE_ICONS[k]&&TREE_ICONS[k].t).filter(Boolean).join(", ");
+  return `<span class="trees" role="img" aria-label="Arbres hôtes ou appréciés : ${label}">`+keys.filter(k=>TREE_ICONS[k]).map(k=>`<span class="tree tr-${TREE_ICONS[k].c}" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${TREE_ICONS[k].s}</svg>${TREE_ICONS[k].t}</span>`).join("")+`</span>`;
 }
 // ---------- Courbes d'optimum : où se situent température, altitude et saison par rapport à ce qu'aime l'espèce ----------
 function curveSvg(o){
