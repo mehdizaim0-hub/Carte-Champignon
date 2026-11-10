@@ -29,6 +29,7 @@ try:
             page.on("console", lambda m, n=name: log.append("[%s console.%s] %s" % (n, m.type, m.text)) if m.type in ("error", "warning") else None)
             page.on("pageerror", lambda e, n=name: log.append("[%s pageerror] %s" % (n, e)))
             page.on("requestfailed", lambda r, n=name: log.append("[%s requestfailed] %s %s" % (n, r.url[:120], r.failure)))
+            page.on("response", lambda r, n=name: log.append("[%s HTTP %s] %s" % (n, r.status, r.url[:200])) if r.status >= 400 else None)
             page.goto(URL, wait_until="domcontentloaded")
             wait_ready(page, name)
             def shot(label, **kw):
