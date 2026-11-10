@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__sheetPx=sheetPx;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -180,8 +180,8 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.prompt = () => 'Coin du chêne';
   w.localStorage.removeItem('cm:spots:v1');
   w.setPoint(47.0, 4.0, false); await sleep(900);
-  const spBtn = () => [...doc.querySelectorAll('#detail .cta button')].find(b => /point|Spot enregistré/.test(b.textContent));
-  check('bouton « Enregistrer ce point » présent sur un point', !!spBtn() && /Enregistrer/.test(spBtn().textContent));
+  const spBtn = () => $('actSave');   // l'enregistrement est dans la barre fixe du tiroir
+  check('bouton « Enregistrer ce spot » présent dans la barre fixe quand un point est choisi', !$('actions').hidden && /Enregistrer/.test(spBtn().textContent));
   spBtn().click(); await sleep(150);
   const saved = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
   check('spot enregistré avec son nom', saved.length === 1 && saved[0].name === 'Coin du chêne' && saved[0].lat === 47, JSON.stringify(saved));
@@ -243,6 +243,38 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const imp = JSON.parse(w.localStorage.getItem('cm:spots:v1')).find(x => x.name === 'Imp').finds;
   check('import : date invalide remplacée, score invalide ignoré, score valide arrondi et conservé', /^\d{4}-\d{2}-\d{2}$/.test(imp[0].d) && !imp[0].m && imp[1].d === '2023-11-14' && imp[1].m.sc === 61 && imp[1].m.pct === 80, JSON.stringify(imp));
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
+
+  console.log('Tiroir mobile et actions rapides');
+  const sp = n => w.__sheetPx(n);
+  check('snapSheet : cran le plus proche, ou le suivant dans le sens d\'un geste franc', w.snapSheet(sp('half'), 10) === 'half' && w.snapSheet(sp('half'), 90) === 'full' && w.snapSheet(sp('half'), -90) === 'peek' && w.snapSheet(sp('peek'), 90) === 'half' && w.snapSheet(sp('full'), -90) === 'half' && w.snapSheet(sp('full') - 5, 0) === 'full');
+  w.setSheet('full');
+  check('tiroir plein : 90 % de la hauteur, poignée dépliée', doc.documentElement.style.getPropertyValue('--sheet-h') === Math.round(w.innerHeight * .9) + 'px' && $('grab').getAttribute('aria-expanded') === 'true');
+  w.setSheet('peek');
+  check('tiroir réduit : 132 px, poignée repliée', doc.documentElement.style.getPropertyValue('--sheet-h') === '132px' && $('grab').getAttribute('aria-expanded') === 'false');
+  $('grab').dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+  check('flèche haut sur la poignée : de réduit à moyen', w.__st.sheet === 'half');
+  $('grab').click(); const afterClick1 = w.__st.sheet; $('grab').click();
+  check('toucher la poignée : moyen -> plein -> moyen', afterClick1 === 'full' && w.__st.sheet === 'half');
+  w.__st.pt = null; w.__st.ptZ = null; w.renderDetail();
+  check('sans point choisi : barre d\'actions masquée', $('actions').hidden);
+  w.localStorage.removeItem('cm:spots:v1'); const iso0 = iso(0);
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  check('avec un point : « Enregistrer ce spot » et « J\'ai trouvé ici » toujours visibles', !$('actions').hidden && /Enregistrer ce spot/.test($('actSave').textContent) && /trouvé ici/.test($('actFind').textContent));
+  check('fiche du point : plus de bouton d\'enregistrement, seulement « Y aller »', doc.querySelectorAll('#detail .cta button').length === 0 && !!doc.querySelector('#detail .cta a'));
+  $('actFind').click();
+  check('« J\'ai trouvé ici » : fenêtre ouverte, 20 espèces, date du jour, espèce courante présélectionnée', !$('findq').hidden && $('fqSp').options.length === 20 && $('fqDate').value === iso0 && $('fqSp').value === w.__sp[w.__st.sp].n, $('fqSp').options.length + ' / ' + $('fqDate').value);
+  $('fqSp').value = 'Girolle'; $('fqQty').value = '500 g'; $('fqOk').click(); await sleep(250);
+  const sv1 = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
+  check('un seul geste : le spot est créé au point avec la trouvaille (espèce, quantité, date, score du modèle)', sv1.length === 1 && sv1[0].finds.length === 1 && sv1[0].finds[0].sp === 'Girolle' && sv1[0].finds[0].q === '500 g' && sv1[0].finds[0].d === iso0 && !!sv1[0].finds[0].m && $('findq').hidden, JSON.stringify(sv1[0]));
+  check('la barre indique « Spot enregistré »', /Spot enregistré/.test($('actSave').textContent));
+  $('actFind').click(); $('fqQty').value = '2 kg'; $('fqOk').click(); await sleep(250);
+  const sv2 = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
+  check('seconde trouvaille au même point : même spot, pas de doublon', sv2.length === 1 && sv2[0].finds.length === 2);
+  $('actFind').click(); doc.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  check('Échap ferme la fenêtre sans rien enregistrer', $('findq').hidden && JSON.parse(w.localStorage.getItem('cm:spots:v1'))[0].finds.length === 2);
+  $('actSave').click(); await sleep(200);
+  check('« Spot enregistré · retirer » retire le spot et la barre revient à « Enregistrer ce spot »', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && /Enregistrer ce spot/.test($('actSave').textContent));
+  w.setSheet('half');
 
   console.log('Comparateur d\'espèces');
   w.setPoint(47.0, 4.0, false); await sleep(900);

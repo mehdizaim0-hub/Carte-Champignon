@@ -94,6 +94,17 @@ try:
               document.getElementById('side').scrollTo(0,0);document.getElementById('myspots').scrollIntoView({block:'start'})})()"""), 2500)
             shot("19_trouvailles")
             step("nettoyage", lambda: page.evaluate("localStorage.removeItem('cm:spots:v1');renderMySpots()"), 500)
+            # --- tiroir mobile : crans réduit / plein, et fenêtre « J'ai trouvé ici » ---
+            step("point tiroir", lambda: page.evaluate("setPoint(44.2,-0.9,true)"), 8000)
+            step("tiroir moyen", lambda: page.evaluate("setSheet('half');document.getElementById('side').scrollTo(0,0)"), 1200)
+            shot("20_tiroir_moyen")
+            step("tiroir reduit", lambda: page.evaluate("setSheet('peek')"), 1200)
+            shot("21_tiroir_reduit")
+            step("tiroir plein", lambda: page.evaluate("setSheet('full')"), 1200)
+            shot("22_tiroir_plein")
+            step("j ai trouve", lambda: page.evaluate("setSheet('half');openFindQ()"), 1200)
+            shot("23_j_ai_trouve")
+            step("ferme", lambda: page.evaluate("closeFindQ()"), 300)
             ctx.close()
         b.close()
 finally:

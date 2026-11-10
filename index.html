@@ -16,6 +16,7 @@
 <body>
 <div id="app">
 <aside id="side">
+<button type="button" class="grab" id="grab" aria-label="Agrandir ou réduire le panneau" aria-expanded="true"><i></i></button>
 <header style="--i:0">
 <div class="hd"><h1>Où poussent les <em>champignons</em> ?</h1><button class="icbtn" id="helpbtn" type="button" aria-label="Comment lire la carte" title="Comment lire la carte">?</button></div>
 <p class="lede">Où chercher aujourd'hui : météo réelle, sol, forêt et relief. Choisissez une espèce, puis touchez la carte pour juger un endroit.</p>
@@ -74,7 +75,15 @@
 </div>
 </details>
 <p class="note" style="--i:5">Les scores sont un modèle écologique : ils disent où chercher, pas où trouver. Fond de carte © OpenStreetMap / OpenTopoMap.</p>
+<div class="actions" id="actions" hidden><button type="button" class="btn pri" id="actSave" aria-pressed="false">Enregistrer ce spot</button><button type="button" class="btn" id="actFind">J'ai trouvé ici</button></div>
 </aside>
+<div id="findq" class="findq" role="dialog" aria-modal="true" aria-labelledby="findqt" hidden>
+<div class="findq-in"><h3 id="findqt">J'ai trouvé ici</h3>
+<label>Espèce<select id="fqSp"></select></label>
+<label>Date<input type="date" id="fqDate"></label>
+<label>Quantité<input type="text" id="fqQty" maxlength="40" placeholder="ex. 2 kg"></label>
+<div class="fq-btns"><button type="button" class="btn pri" id="fqOk">Enregistrer</button><button type="button" class="btn" id="fqNo">Annuler</button></div>
+</div></div>
 <div id="mapwrap">
 <div id="emptymap" class="emptymap" role="status" aria-live="polite" hidden></div>
 <div id="map" role="application" aria-label="Carte de France des zones favorables"></div>

@@ -602,7 +602,7 @@ function savePrefs(){
 }
 function scrollToDetail(){
   const a=$("side"),d=$("detail");if(!a||!d)return;
-  const top=d.getBoundingClientRect().top-a.getBoundingClientRect().top+a.scrollTop-10;
+  const g=$("grab"),top=d.getBoundingClientRect().top-a.getBoundingClientRect().top+a.scrollTop-10-(g?g.offsetHeight:0);
   try{a.scrollTo({top,behavior:"smooth"})}catch(e){a.scrollTop=top}
 }
 function build(){
@@ -616,6 +616,24 @@ function build(){
   $("cvd").onchange=e=>{setPalette(e.target.checked?"cvd":"std");savePrefs();render()};
   $("calque").onchange=e=>setCalque(e.target.value);
   $("cnv").onchange=e=>setContours(e.target.checked);
+  $("actSave").onclick=toggleSpotAtPoint;$("actFind").onclick=openFindQ;
+  $("fqNo").onclick=closeFindQ;$("findq").addEventListener("click",e=>{if(e.target===$("findq"))closeFindQ()});
+  $("fqOk").onclick=()=>{
+    if(!st.pt)return closeFindQ();
+    const r=recordFind(st.pt.lat,st.pt.lon,$("fqSp").value,$("fqDate").value,$("fqQty").value);closeFindQ();
+    spotSay("Trouvaille enregistrée"+(r.find.m?" · modèle : "+r.find.m.sc+"/100":""));
+  };
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("findq").hidden)closeFindQ()});
+  (function(){const g=$("grab");if(!g)return;
+    let y0=0,h0=0,drag=false,moved=false,skip=false;
+    g.addEventListener("pointerdown",e=>{drag=true;moved=false;y0=e.clientY;h0=$("side").getBoundingClientRect().height;try{g.setPointerCapture(e.pointerId)}catch(x){}$("side").classList.add("dragging")});
+    g.addEventListener("pointermove",e=>{if(!drag)return;const dy=y0-e.clientY;if(Math.abs(dy)>4)moved=true;document.documentElement.style.setProperty("--sheet-h",Math.max(SHEET_MIN,Math.min(innerHeight*.92,h0+dy))+"px")});
+    const end=e=>{if(!drag)return;drag=false;$("side").classList.remove("dragging");if(!moved)return;skip=true;setSheet(snapSheet($("side").getBoundingClientRect().height,y0-e.clientY));ensureVisible()};
+    g.addEventListener("pointerup",end);g.addEventListener("pointercancel",end);
+    g.addEventListener("click",()=>{if(skip){skip=false;return}setSheet(st.sheet==="half"?"full":"half");ensureVisible()});
+    g.addEventListener("keydown",e=>{if(e.key==="ArrowUp"){e.preventDefault();setSheet(st.sheet==="peek"?"half":"full")}else if(e.key==="ArrowDown"){e.preventDefault();setSheet(st.sheet==="full"?"half":"peek")}});
+    addEventListener("resize",()=>setSheet(st.sheet||"half"));setSheet("half");
+  })();
   document.querySelectorAll("#chips,#days,.ctlrow .chips.seg").forEach(el=>el.addEventListener("scroll",updFade,{passive:true}));
   addEventListener("resize",updFade);setTimeout(updFade,400);
   map.on("zoomend",cnvNote);
@@ -1128,6 +1146,7 @@ function setPoint(lat,lon,fly){
   if(fly&&map)map.flyTo([lat,lon],Math.max(map.getZoom(),9),{duration:.8});
   if(spotLayer){spotLayer.remove();spotLayer=null}
   renderPointMarker();renderDetail();scrollToDetail();savePrefs();refinePoint(st.ptZ);updateSpots(true);
+  if(mqMobile.matches){if(st.sheet==="peek")setSheet("half");setTimeout(ensureVisible,fly?900:60)}
 }
 // Zone « virtuelle » au point : météo interpolée entre les 4 mailles voisines, terrain de la maille ou du bloc forestier.
 function makeZone(lat,lon){
@@ -1231,6 +1250,7 @@ function soilLine(z,sp,r){
   return `<p class="prov"><b>Sol</b> (${(z.src&&z.src.s)||"maille"}) — ${mes}${tx?" · texture "+tx:""}${dr?" · drainage "+dr:""} (déduit de la texture seule).${fac?`<br>Adéquation pour ${sp.det} : ${fac}.`:""}</p>`;
 }
 function renderDetail(){
+  updateActions();
   const sp=SP[st.sp],d=st.day,zsel=st.ptZ;
   if(!zsel){
     $("detail").innerHTML=`<h2>Un endroit à juger ?</h2><p class="sub" style="margin:0">Touchez la carte pour savoir si l'endroit est propice à ${sp.det} : météo, forêt, sol et relief y sont interrogés exactement.</p><div class="cta"><button class="btn" id="ctame" type="button">Ma position</button></div><p class="hint">Astuce : survolez la carte pour voir le niveau de propice, déplacez-vous au zoom 10 ou plus pour voir les petits massifs.</p>`;
@@ -1306,21 +1326,67 @@ function spotsSave(a){try{localStorage.setItem(SPOTS_KEY,JSON.stringify(a.slice(
 const spotNear=(a,lat,lon)=>a.findIndex(s=>Math.abs(s.lat-lat)<.001&&Math.abs(s.lon-lon)<.001);
 function mySpotsHook(){
   const z=st.pt;if(!z)return;
-  const saved=spotNear(spotsLoad(),z.lat,z.lon)>=0,b=document.createElement("button");
-  b.type="button";b.className="btn";b.textContent=saved?"★ Spot enregistré · retirer":"☆ Enregistrer ce point";
-  b.onclick=()=>{
-    const a=spotsLoad(),i=spotNear(a,z.lat,z.lon);
-    if(i>=0)a.splice(i,1);
-    else{
-      const def=(st.ptZ&&st.ptZ.near)?nearT(st.ptZ.near):"Point "+fmtCoord(z.lat,z.lon);
-      let n=def;try{const r=window.prompt("Nom du spot",def);if(r===null)return;n=r.trim().slice(0,60)||def}catch(e){}
-      a.unshift({lat:+z.lat.toFixed(5),lon:+z.lon.toFixed(5),name:n,ts:Date.now()});
-    }
-    spotsSave(a);renderMySpots();renderDetail();
-  };
   const w=document.createElement("div"),nv=document.createElement("a");w.className="cta";
   nv.className="btn";nv.textContent="Y aller";nv.href=navUrl(z.lat,z.lon);nv.target="_blank";nv.rel="noopener";
-  w.append(b,nv);$("detail").appendChild(w);
+  w.append(nv);$("detail").appendChild(w);
+}
+// ---------- Barre fixe du tiroir : « Enregistrer ce spot » et « J'ai trouvé ici » ----------
+function updateActions(){
+  const bar=$("actions");if(!bar)return;
+  bar.hidden=!st.pt;if(!st.pt)return;
+  const saved=spotNear(spotsLoad(),st.pt.lat,st.pt.lon)>=0;
+  $("actSave").textContent=saved?"★ Spot enregistré · retirer":"Enregistrer ce spot";
+  $("actSave").setAttribute("aria-pressed",saved);
+}
+function toggleSpotAtPoint(){
+  const z=st.pt;if(!z)return;
+  const a=spotsLoad(),i=spotNear(a,z.lat,z.lon);
+  if(i>=0)a.splice(i,1);
+  else{
+    const def=(st.ptZ&&st.ptZ.near)?nearT(st.ptZ.near):"Point "+fmtCoord(z.lat,z.lon);
+    let n=def;try{const r=window.prompt("Nom du spot",def);if(r===null)return;n=r.trim().slice(0,60)||def}catch(e){}
+    a.unshift({lat:+z.lat.toFixed(5),lon:+z.lon.toFixed(5),name:n,ts:Date.now()});
+  }
+  spotsSave(a);renderMySpots();renderDetail();
+}
+// Enregistre une trouvaille ; crée le spot s'il n'existe pas encore à cet endroit (un seul geste depuis la carte).
+function recordFind(lat,lon,spName,iso,q){
+  const a=spotsLoad();let i=spotNear(a,lat,lon);
+  if(i<0){
+    const z=st.ptZ&&st.pt&&Math.abs(st.pt.lat-lat)<.001&&Math.abs(st.pt.lon-lon)<.001?st.ptZ:null;
+    a.unshift({lat:+(+lat).toFixed(5),lon:+(+lon).toFixed(5),name:(z&&z.near)?nearT(z.near):"Point "+fmtCoord(lat,lon),ts:Date.now()});i=0;
+  }
+  const day=(iso&&iso<=isoDay(Date.now()))?iso:isoDay(Date.now()),o={ts:new Date(day+"T12:00:00").getTime(),d:day,sp:spName,q:String(q||"").trim().slice(0,40)},m=findSnapshot(a[i],spName,day);
+  if(m)o.m=m;
+  a[i].finds=[o].concat(a[i].finds||[]).sort((x,y)=>y.ts-x.ts).slice(0,100);
+  spotsSave(a);renderMySpots();renderDetail();return{spot:a[i],find:o};
+}
+function openFindQ(){
+  if(!st.pt)return;
+  const sel=$("fqSp");
+  if(!sel.options.length)SP.forEach(x=>{const o=document.createElement("option");o.value=x.n;o.textContent=x.n;sel.appendChild(o)});
+  sel.value=SP[st.sp].n;$("fqDate").value=isoDay(Date.now());$("fqDate").max=$("fqDate").value;$("fqQty").value="";
+  $("findq").hidden=false;try{sel.focus()}catch(e){}
+}
+function closeFindQ(){$("findq").hidden=true;try{$("actFind").focus()}catch(e){}}
+// ---------- Tiroir mobile : trois crans (réduit, moyen, plein), glissé depuis la poignée ----------
+const mqMobile=window.matchMedia?window.matchMedia("(max-width:860px)"):{matches:false,addEventListener(){}};
+const SHEET_MIN=132;
+const sheetPx=n=>n==="peek"?SHEET_MIN:n==="full"?Math.round(innerHeight*.9):Math.round(innerHeight*.48);
+function setSheet(n){
+  st.sheet=n;document.documentElement.style.setProperty("--sheet-h",sheetPx(n)+"px");
+  const g=$("grab");if(g){g.setAttribute("aria-expanded",n!=="peek");g.dataset.state=n}
+}
+// cran visé après un glissement : le plus proche, ou le suivant dans le sens du geste si celui-ci est franc (> 60 px)
+function snapSheet(h,dy){
+  let n=["peek","half","full"].map(k=>[k,Math.abs(sheetPx(k)-h)]).sort((x,y)=>x[1]-y[1])[0][0];
+  if(Math.abs(dy)>60)n=dy>0?(n==="peek"?"half":"full"):(n==="full"?"half":"peek");
+  return n;
+}
+function ensureVisible(){   // garde le point choisi visible au-dessus du tiroir
+  if(!mqMobile.matches||!st.pt||!map)return;
+  const sz=map.getSize(),vis=sz.y-sheetPx(st.sheet||"half"),p=map.latLngToContainerPoint([st.pt.lat,st.pt.lon]);
+  if(p.y>vis-50||p.y<50)map.panBy([0,p.y-vis/2],{animate:true});
 }
 // Le nom de lieu est parfois déjà une phrase (« Secteur Landes… », « À 105 km au nord de… ») : on n'y ajoute pas « près de »
 const nearPhrase=n=>/^(Secteur|À) /.test(n);
@@ -1435,9 +1501,7 @@ function renderMySpots(){
     q.type="text";q.maxLength=40;q.placeholder="Quantité";q.setAttribute("aria-label","Quantité");
     ad.type="button";ad.className="btn";ad.textContent="Ajouter";
     ad.onclick=()=>{const b=spotsLoad(),i=spotNear(b,s.lat,s.lon);if(i<0)return;
-      const iso=(dt.value&&dt.value<=isoDay(Date.now()))?dt.value:isoDay(Date.now()),o={ts:new Date(iso+"T12:00:00").getTime(),d:iso,sp:sel.value,q:q.value.trim().slice(0,40)},m=findSnapshot(b[i],sel.value,iso);
-      if(m)o.m=m;
-      b[i].finds=[o].concat(b[i].finds||[]).sort((x,y)=>y.ts-x.ts).slice(0,100);spotsSave(b);renderMySpots()};
+      recordFind(s.lat,s.lon,sel.value,dt.value,q.value)};
     fb.onclick=()=>{form.hidden=!form.hidden};
     form.append(sel,dt,q,ad);li.appendChild(form);ul.appendChild(li);
   });
