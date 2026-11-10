@@ -207,3 +207,4 @@ aside>*{opacity:0;transform:translateY(8px);animation:enter var(--dur-long) var(
 .tree svg{flex:none}.tree .tw{stroke:var(--panel);stroke-width:.75;fill:none;stroke-linecap:round}.tree .nd{stroke:currentColor;stroke-width:1.2;fill:none;stroke-linecap:round}.tr-f svg{color:#2e7d32}.tr-c svg{color:#1b5e6b}.tr-w svg{color:#7b5e3b}.tr-h svg{color:#7a8a1e}.hnote{display:block}
 @media(prefers-color-scheme:dark){.tr-f svg{color:#7bc47f}.tr-c svg{color:#6fb7c6}.tr-w svg{color:#c9a27a}.tr-h svg{color:#c2d05a}}
 .tree{padding:2px 9px 2px 5px;gap:5px}
+.myfinds{margin-top:10px}.myfinds h4{margin:0 0 4px;font-size:13px}.finl{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:6px}.finl li{font-size:13px;border-left:3px solid var(--line);padding-left:8px}.finform input[type=date]{min-width:130px}

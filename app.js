@@ -1345,13 +1345,59 @@ function spotsExport(){
   a.href=URL.createObjectURL(b);a.download="mes-spots-champignons.json";document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
+// ---------- Trouvailles contre modèle ----------
+// Le score du modèle est calculé AU MOMENT où la trouvaille est enregistrée (la grille météo ne garde que ~40 jours d'historique) et conservé avec elle.
+const isoDay=ts=>{const x=new Date(ts);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const daysAgo=iso=>{const a=new Date(iso+"T12:00:00"),b=new Date();b.setHours(12,0,0,0);return Math.round((b-a)/864e5)};
+function findSnapshot(spot,spName,iso){
+  const k=daysAgo(iso),sp=SP.find(x=>x.n===spName);
+  if(!sp||sp.toxic||!st.live||!(k>=0)||k>st.off)return null;
+  try{
+    const z=makeZone(spot.lat,spot.lon);if(z.anth)return null;
+    const r=score(sp,z,-k),days=[];
+    for(let d=Math.max(-st.off,-k-29);d<=-k;d++)days.push(score(sp,z,d).sc);
+    const below=days.filter(v=>v<r.sc).length;
+    return{sc:Math.round(r.sc),k,n:days.length,pct:days.length>=10?Math.round(100*below/days.length):null,part:k>st.off-26,
+      f:{so:Math.round(r.so*100),fo:Math.round(r.fo*100),al:Math.round(r.al*100),tf:Math.round(r.tf*100),rf:Math.round(r.rf*100),sf:Math.round(r.sf*100)}};
+  }catch(e){return null}
+}
+// Bilan : AUCUN ajustement du modèle sous 8 trouvailles évaluées réparties sur au moins 3 jours (trop peu pour distinguer le modèle du hasard).
+function calibSummary(finds){
+  const ms=finds.filter(f=>f&&f.m&&isFinite(f.m.sc)),n=ms.length,days=new Set(ms.map(f=>f.d||isoDay(f.ts))).size;
+  const sc=ms.map(f=>f.m.sc).sort((x,y)=>x-y),med=n?(n%2?sc[(n-1)/2]:(sc[n/2-1]+sc[n/2])/2):null;
+  const pc=ms.map(f=>f.m.pct).filter(v=>v!=null).sort((x,y)=>x-y),pmed=pc.length?pc[Math.floor(pc.length/2)]:null;
+  const hi=ms.filter(f=>f.m.sc>=55).length;
+  let verdict="insuffisant";
+  if(n>=8&&days>=3)verdict=med>=55?"coherent":med>=35?"prudent":"tresprudent";
+  return{n,days,med,pmed,hi,verdict};
+}
+function renderFinds(a){
+  const box=$("myfinds");if(!box)return;box.textContent="";
+  const all=[];a.forEach(s=>(s.finds||[]).forEach(f=>all.push({s,f})));
+  if(!all.length)return;
+  all.sort((x,y)=>y.f.ts-x.f.ts);
+  const h=document.createElement("h4"),ul=document.createElement("ul"),sm=calibSummary(all.map(x=>x.f)),p=document.createElement("p");
+  h.textContent="Trouvailles et modèle";ul.className="finl";
+  all.slice(0,6).forEach(({s,f})=>{
+    const li=document.createElement("li"),m=f.m,l1=document.createElement("div"),l2=document.createElement("div");
+    l1.textContent=fmtDay(f.ts)+" · "+f.sp+(f.q?" ("+f.q+")":"")+" · "+s.name;
+    l2.className="fc";
+    l2.textContent=m?"Modèle ce jour-là : "+m.sc+"/100 "+starsTxt(starsOf(m.sc))+(m.pct!=null?" · meilleur que "+m.pct+" % des 30 jours précédents":"")+(m.part?" (historique partiel)":""):"Modèle non évalué (trouvaille trop ancienne, espèce inconnue ou zone urbaine).";
+    li.append(l1,l2);ul.appendChild(li);
+  });
+  p.className="fc";
+  if(sm.verdict==="insuffisant")p.textContent="Bilan : "+sm.n+" trouvaille"+(sm.n>1?"s":"")+" évaluée"+(sm.n>1?"s":"")+" sur "+sm.days+" jour"+(sm.days>1?"s":"")+". Trop peu de trouvailles pour conclure : il en faut au moins 8, sur au moins 3 jours différents. Le modèle n'est pas modifié.";
+  else p.textContent="Bilan sur "+sm.n+" trouvailles ("+sm.days+" jours) : score médian "+sm.med+"/100, "+sm.hi+" sur "+sm.n+" au niveau « propice » ou mieux"+(sm.pmed!=null?", rang médian "+sm.pmed+" %":"")+". "+
+    (sm.verdict==="coherent"?"Le modèle est cohérent avec tes trouvailles.":sm.verdict==="prudent"?"Le modèle est plutôt prudent pour toi : tes trouvailles ont lieu à des scores moyens.":"Le modèle semble très prudent pour toi : tes trouvailles ont lieu à des scores bas. Cela justifierait un ajustement ; il n'est pas appliqué automatiquement.");
+  box.append(h,ul,p);
+}
 function spotsImport(file){
   const r=new FileReader();
   r.onload=()=>{try{
     const j=JSON.parse(r.result),inc=(Array.isArray(j)?j:j.spots)||[],a=spotsLoad();let n=0;
     inc.forEach(x=>{if(x&&isFinite(x.lat)&&isFinite(x.lon)&&spotNear(a,+x.lat,+x.lon)<0){
       a.push({lat:+x.lat,lon:+x.lon,name:String(x.name||"Spot").slice(0,60),ts:+x.ts||Date.now(),
-        finds:(Array.isArray(x.finds)?x.finds:[]).slice(0,100).map(f=>({ts:+f.ts||Date.now(),sp:String(f.sp||"").slice(0,60),q:String(f.q||"").slice(0,40)}))});n++}});
+        finds:(Array.isArray(x.finds)?x.finds:[]).slice(0,100).map(f=>{const ts=+f.ts||Date.now(),o={ts,d:/^\d{4}-\d{2}-\d{2}$/.test(f.d||"")?f.d:isoDay(ts),sp:String(f.sp||"").slice(0,60),q:String(f.q||"").slice(0,40)};if(f.m&&isFinite(f.m.sc)&&f.m.sc>=0&&f.m.sc<=100)o.m={sc:Math.round(+f.m.sc),k:+f.m.k||0,n:+f.m.n||0,pct:isFinite(f.m.pct)?Math.round(+f.m.pct):null,part:!!f.m.part};return o})});n++}});
     spotsSave(a);renderMySpots();spotSay(n+" spot"+(n>1?"s":"")+" importé"+(n>1?"s":""));
   }catch(e){spotSay("Fichier illisible : choisissez une sauvegarde exportée depuis cette carte.")}};
   r.readAsText(file);
@@ -1380,18 +1426,22 @@ function renderMySpots(){
       li.appendChild(fc);
     }
     const fl=(s.finds||[]);
-    if(fl.length){const p=document.createElement("div");p.className="fc";p.textContent="🧺 "+fl.length+" trouvaille"+(fl.length>1?"s":"")+" · dernière le "+fmtDay(fl[0].ts)+" ("+fl[0].sp+(fl[0].q?", "+fl[0].q:"")+")";li.appendChild(p)}
+    if(fl.length){const p=document.createElement("div");p.className="fc";p.textContent="🧺 "+fl.length+" trouvaille"+(fl.length>1?"s":"")+" · dernière le "+fmtDay(fl[0].ts)+" ("+fl[0].sp+(fl[0].q?", "+fl[0].q:"")+")"+(fl[0].m?" · modèle : "+fl[0].m.sc+"/100":"");li.appendChild(p)}
     // formulaire de trouvaille
-    const form=document.createElement("div"),sel=document.createElement("select"),q=document.createElement("input"),ad=document.createElement("button");
+    const form=document.createElement("div"),sel=document.createElement("select"),q=document.createElement("input"),dt=document.createElement("input"),ad=document.createElement("button");
     form.className="finform";form.hidden=true;sel.setAttribute("aria-label","Espèce trouvée");
     SP.forEach((x,i)=>{const o=document.createElement("option");o.value=x.n;o.textContent=x.n;if(i===st.sp)o.selected=true;sel.appendChild(o)});
+    dt.type="date";dt.value=isoDay(Date.now());dt.max=dt.value;dt.setAttribute("aria-label","Date de la trouvaille");
     q.type="text";q.maxLength=40;q.placeholder="Quantité (ex. 2 kg)";q.setAttribute("aria-label","Quantité");
     ad.type="button";ad.className="btn";ad.textContent="Ajouter";
     ad.onclick=()=>{const b=spotsLoad(),i=spotNear(b,s.lat,s.lon);if(i<0)return;
-      b[i].finds=[{ts:Date.now(),sp:sel.value,q:q.value.trim().slice(0,40)}].concat(b[i].finds||[]).slice(0,100);spotsSave(b);renderMySpots()};
+      const iso=(dt.value&&dt.value<=isoDay(Date.now()))?dt.value:isoDay(Date.now()),o={ts:new Date(iso+"T12:00:00").getTime(),d:iso,sp:sel.value,q:q.value.trim().slice(0,40)},m=findSnapshot(b[i],sel.value,iso);
+      if(m)o.m=m;
+      b[i].finds=[o].concat(b[i].finds||[]).sort((x,y)=>y.ts-x.ts).slice(0,100);spotsSave(b);renderMySpots()};
     fb.onclick=()=>{form.hidden=!form.hidden};
-    form.append(sel,q,ad);li.appendChild(form);ul.appendChild(li);
+    form.append(sel,dt,q,ad);li.appendChild(form);ul.appendChild(li);
   });
+  renderFinds(a);
 }
 renderMySpots();
 $("myspots").addEventListener("toggle",renderMySpots);

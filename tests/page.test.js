@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -199,7 +199,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   doc.querySelector('#myspl li .row button[aria-label^="Noter"]').click();
   const fi = doc.querySelector('#myspl li .finform');
   check('formulaire de trouvaille affiché au toucher du panier', !fi.hidden);
-  fi.querySelector('input').value = '2 kg'; fi.querySelector('button').click(); await sleep(150);
+  fi.querySelector('input[type="text"]').value = '2 kg'; fi.querySelector('button').click(); await sleep(150);
   const withFind = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]')[0];
   check('trouvaille enregistrée (espèce, quantité, date) et affichée', withFind.finds.length === 1 && withFind.finds[0].q === '2 kg' && !!withFind.finds[0].sp && /1 trouvaille/.test(doc.querySelector('#myspl li').textContent), JSON.stringify(withFind.finds));
   // import d'une sauvegarde
@@ -212,6 +212,37 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('spot retiré depuis la fiche : seul l\'import reste', rest.length === 1 && rest[0].name === 'Import');
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
   check('aucun spot : message d\'invitation affiché', !$('myspempty').hidden && doc.querySelectorAll('#myspl li').length === 0);
+
+  console.log('Trouvailles et modèle');
+  const iso = n => w.__iso(Date.now() - n * 864e5), CB = 'Cèpe de Bordeaux', spt = { lat: 47, lon: 4 };
+  const s0 = w.findSnapshot(spt, CB, iso(0)), s10 = w.findSnapshot(spt, CB, iso(10));
+  check('instantané du jour : score entier 0-100, 6 facteurs, jour 0', !!s0 && Number.isInteger(s0.sc) && s0.sc >= 0 && s0.sc <= 100 && s0.k === 0 && ['so','fo','al','tf','rf','sf'].every(k => Number.isFinite(s0.f[k])), JSON.stringify(s0));
+  const zz = w.makeZone(47, 4);
+  check('instantané d\'il y a 10 jours : identique au score du modèle rejoué (jour -10)', !!s10 && s10.k === 10 && s10.sc === Math.round(w.__score(w.__sp[0], zz, -10).sc), JSON.stringify(s10));
+  check('rang parmi les 30 jours précédents : vide si trop peu de jours, sinon entre 0 et 100', s10.pct === null || (s10.pct >= 0 && s10.pct <= 100), String(s10.pct));
+  check('refus honnête : trop ancienne (80 j), date future, espèce inconnue', w.findSnapshot(spt, CB, iso(80)) === null && w.findSnapshot(spt, CB, iso(-2)) === null && w.findSnapshot(spt, 'Champignon inconnu', iso(0)) === null);
+  const mk = scs => scs.map((sc, i) => ({ ts: Date.now() - i * 864e5, d: iso(i), m: { sc, pct: 50 } }));
+  check('bilan : sous 8 trouvailles ou 3 jours, aucun verdict', w.calibSummary(mk([60, 70, 80])).verdict === 'insuffisant' && w.calibSummary(mk([60, 70, 80, 60, 70, 80, 60])).verdict === 'insuffisant' && w.calibSummary([...mk([60, 60, 60, 60]), ...mk([60, 60, 60, 60]).map(x => ({ ...x, d: iso(0), ts: Date.now() }))].map(x => ({ ...x, d: iso(0) }))).verdict === 'insuffisant');
+  check('bilan : scores élevés -> cohérent, moyens -> prudent, bas -> très prudent', w.calibSummary(mk([60, 70, 80, 65, 72, 58, 90, 61])).verdict === 'coherent' && w.calibSummary(mk([40, 50, 45, 38, 52, 41, 36, 48])).verdict === 'prudent' && w.calibSummary(mk([10, 20, 15, 30, 5, 25, 12, 18])).verdict === 'tresprudent');
+  check('bilan : médiane et nombre au niveau « propice » exacts', (r => r.med === 67.5 && r.hi === 7 && r.n === 8)(w.calibSummary(mk([60, 70, 80, 65, 72, 58, 90, 40]))), JSON.stringify(w.calibSummary(mk([60, 70, 80, 65, 72, 58, 90, 40]))));
+  // parcours réel : enregistrer un spot, noter une trouvaille datée d'il y a 5 jours
+  w.localStorage.removeItem('cm:spots:v1');
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  spBtn().click(); await sleep(150);
+  $('myspots').open = true; $('myspots').dispatchEvent(new w.Event('toggle')); await sleep(300);
+  doc.querySelector('#myspl li .row button[aria-label^="Noter"]').click();
+  const ff = doc.querySelector('#myspl li .finform');
+  check('formulaire de trouvaille : un champ date, limité à aujourd\'hui', !!ff.querySelector('input[type="date"]') && ff.querySelector('input[type="date"]').max === iso(0) && ff.querySelector('input[type="date"]').value === iso(0));
+  ff.querySelector('input[type="date"]').value = iso(5); ff.querySelector('input[type="text"]').value = '1 kg'; ff.querySelector('button').click(); await sleep(200);
+  const sv = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]')[0].finds[0];
+  check('trouvaille enregistrée avec sa date réelle et le score du modèle ce jour-là', sv.d === iso(5) && sv.q === '1 kg' && !!sv.m && sv.m.k === 5 && Number.isFinite(sv.m.sc), JSON.stringify(sv));
+  const mf = $('myfinds').textContent;
+  check('bloc « Trouvailles et modèle » : score du jour de la trouvaille et refus de conclure avec une seule trouvaille', /Modèle ce jour-là : \d+\/100/.test(mf) && /Trop peu de trouvailles pour conclure/.test(mf) && /n'est pas modifié/.test(mf), mf.slice(0, 260));
+  // import : date invalide corrigée, score invalide ignoré
+  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 45, lon: 2, name: 'Imp', ts: 1, finds: [{ ts: 1700000000000, d: 'pas-une-date', sp: CB, q: 'x', m: { sc: 'abc' } }, { ts: 1700000000000, d: '2023-11-14', sp: CB, q: 'y', m: { sc: 61.4, k: 3, n: 30, pct: 80 } }] }] })], 'i.json')); await sleep(300);
+  const imp = JSON.parse(w.localStorage.getItem('cm:spots:v1')).find(x => x.name === 'Imp').finds;
+  check('import : date invalide remplacée, score invalide ignoré, score valide arrondi et conservé', /^\d{4}-\d{2}-\d{2}$/.test(imp[0].d) && !imp[0].m && imp[1].d === '2023-11-14' && imp[1].m.sc === 61 && imp[1].m.pct === 80, JSON.stringify(imp));
+  w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
 
   console.log('Comparateur d\'espèces');
   w.setPoint(47.0, 4.0, false); await sleep(900);

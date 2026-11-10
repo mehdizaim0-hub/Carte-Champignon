@@ -83,6 +83,16 @@ try:
             step("contours off", lambda: page.evaluate(CH % ("cnv", "checked=false")), 800)
             step("hotes", lambda: page.evaluate("document.getElementById('spdet').open=true;document.getElementById('side').scrollTo(0,0);document.querySelector('#spdl').scrollIntoView({block:'start'})"), 1200)
             shot("17_fiche_hotes")
+            step("hotes cepe", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'0\\']').click();document.getElementById('spdet').open=true;document.getElementById('side').scrollTo(0,0);document.querySelector('#spdl').scrollIntoView({block:'start'})"), 1500)
+            shot("18_hotes_cepe")
+            step("trouvailles", lambda: page.evaluate("""(()=>{const t=Date.now()-3*864e5,u=Date.now()-9*864e5;
+              localStorage.setItem('cm:spots:v1',JSON.stringify([{lat:44.2,lon:-0.9,name:'Mon coin',ts:t,finds:[
+                {ts:t,d:isoDay(t),sp:'Cèpe de Bordeaux',q:'2 kg',m:{sc:62,k:3,n:30,pct:80,part:false}},
+                {ts:u,d:isoDay(u),sp:'Girolle',q:'1 kg',m:{sc:41,k:9,n:30,pct:55,part:false}}]}]));
+              document.getElementById('myspots').open=true;renderMySpots();
+              document.getElementById('side').scrollTo(0,0);document.getElementById('myspots').scrollIntoView({block:'start'})})()"""), 2500)
+            shot("19_trouvailles")
+            step("nettoyage", lambda: page.evaluate("localStorage.removeItem('cm:spots:v1');renderMySpots()"), 500)
             ctx.close()
         b.close()
 finally:
