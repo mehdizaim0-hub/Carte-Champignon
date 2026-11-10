@@ -245,6 +245,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
 
   console.log('Tiroir mobile et actions rapides');
+  check('cadrage de la France : fonction disponible, sans erreur (bureau)', typeof w.franceView === 'function' && (() => { try { w.franceView(false); return true } catch (e) { return false } })());
   const sp = n => w.__sheetPx(n);
   check('snapSheet : cran le plus proche, ou le suivant dans le sens d\'un geste franc', w.snapSheet(sp('half'), 10) === 'half' && w.snapSheet(sp('half'), 90) === 'full' && w.snapSheet(sp('half'), -90) === 'peek' && w.snapSheet(sp('peek'), 90) === 'half' && w.snapSheet(sp('full'), -90) === 'half' && w.snapSheet(sp('full') - 5, 0) === 'full');
   w.setSheet('full');

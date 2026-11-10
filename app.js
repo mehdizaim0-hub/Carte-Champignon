@@ -1,3 +1,7 @@
+// ---------- Tiroir mobile : constantes (placées en tête : la carte les utilise dès son initialisation) ----------
+const mqMobile=window.matchMedia?window.matchMedia("(max-width:860px)"):{matches:false,addEventListener(){}};
+const SHEET_MIN=132;
+function sheetPx(n){return n==="peek"?SHEET_MIN:n==="full"?Math.round(innerHeight*.9):Math.round(innerHeight*.48)}
 // 1er janvier : date par défaut de nombreuses observations GBIF sans jour connu. Pour les espèces qui ne poussent pas en hiver, janvier est ramené au niveau de février.
 SP.forEach(sp=>{if(!sp.winter&&sp.n!=="Chanterelle en tube"&&sp.gb[0]>sp.gb[1])sp.gb[0]=sp.gb[1]});
 // nom, lat, lon, altitude, sol (a acide, c calcaire, n neutre), forêt (f feuillus, r résineux, m mixte), microclimat
@@ -213,10 +217,17 @@ function showTip(e){
   t.textContent=v<12?"Peu ou pas favorable":tipLabel(v)+" · "+Math.round(v);
   t.style.display="block";t.style.left=Math.min(e.containerPoint.x+14,$("map").clientWidth-190)+"px";t.style.top=(e.containerPoint.y+16)+"px";
 }
+// Sur mobile, la France est cadrée dans la partie de la carte visible au-dessus du tiroir (pas sous lui).
+function franceView(fly){
+  if(mqMobile.matches){
+    const b=[[41.2,-5.4],[51.2,9.9]],o={paddingTopLeft:[8,72],paddingBottomRight:[8,sheetPx(st.sheet||"half")+8]};
+    if(fly)map.flyToBounds(b,o);else map.fitBounds(b,o);
+  }else if(fly)map.flyTo([46.6,2.6],6,{duration:.7});else map.setView([46.6,2.6],6);
+}
 function initMap(){
   map=L.map("map",{preferCanvas:true,zoomControl:true,minZoom:5,maxZoom:14,zoomSnap:.5,wheelPxPerZoomLevel:90,
     maxBounds:[[40.5,-6.5],[52.2,11.5]],maxBoundsViscosity:.8});
-  map.setView([46.6,2.6],6);
+  franceView(false);
   const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"});
   const topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap, SRTM · © OpenTopoMap (CC-BY-SA)"});
   osm.addTo(map);
@@ -229,7 +240,7 @@ function initMap(){
   map.on("mousemove",showTip);map.on("mouseout",()=>{$("tip").style.display="none"});map.on("movestart",()=>{$("tip").style.display="none"});
   const Rec=L.Control.extend({options:{position:"topleft"},onAdd(){
     const b=L.DomUtil.create("button","leaflet-bar recbtn");b.type="button";b.title="Voir toute la France";b.setAttribute("aria-label","Voir toute la France");b.textContent="⌂";
-    L.DomEvent.disableClickPropagation(b);b.onclick=()=>map.flyTo([46.6,2.6],6,{duration:.7});return b}});
+    L.DomEvent.disableClickPropagation(b);b.onclick=()=>franceView(true);return b}});
   map.addControl(new Rec());
 }
 // ---------- Couche de chaleur : un seul canvas lissé (pas de cercles superposés) ----------
@@ -1370,9 +1381,6 @@ function openFindQ(){
 }
 function closeFindQ(){$("findq").hidden=true;try{$("actFind").focus()}catch(e){}}
 // ---------- Tiroir mobile : trois crans (réduit, moyen, plein), glissé depuis la poignée ----------
-const mqMobile=window.matchMedia?window.matchMedia("(max-width:860px)"):{matches:false,addEventListener(){}};
-const SHEET_MIN=132;
-const sheetPx=n=>n==="peek"?SHEET_MIN:n==="full"?Math.round(innerHeight*.9):Math.round(innerHeight*.48);
 function setSheet(n){
   st.sheet=n;document.documentElement.style.setProperty("--sheet-h",sheetPx(n)+"px");
   const g=$("grab");if(g){g.setAttribute("aria-expanded",n!=="peek");g.dataset.state=n}
