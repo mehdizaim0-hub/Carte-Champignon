@@ -87,7 +87,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     doc.querySelector('#chips button[data-i="' + ti + '"]').click(); await sleep(200);
     check('espèce toxique : puce marquée, bandeau et mention dans la fiche', doc.querySelector('#chips button[data-i="' + ti + '"]').classList.contains('tox') && !$('toxban').hidden && /TOXIQUE/.test(txt('spsuml')) && $('spwarn').hidden);
     w.setPoint(47.0, 4.0, false); await sleep(900);
-    check('espèce toxique : avertissement dans le résultat et absente des meilleures espèces', /Espèce toxique/.test(txt('detail')) && !/Meilleures espèces[^.]*Bolet de Satan/.test(txt('detail')), txt('detail').slice(0, 200));
+    check('espèce toxique : avertissement dans le résultat et absente des meilleures espèces', /Espèce toxique/.test(txt('detail')) && !/Bolet de Satan/.test((doc.querySelector('#detail .sphere') || { textContent: '' }).textContent), txt('detail').slice(0, 200));
     doc.querySelector('#chips button[data-i="0"]').click(); await sleep(150);
     check('espèce comestible : bandeau toxique masqué', $('toxban').hidden && !$('spwarn').hidden);
   } else check('aucune espèce toxique au catalogue : mécanisme d\'avertissement inactif', true);
@@ -276,6 +276,29 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   $('actSave').click(); await sleep(200);
   check('« Spot enregistré · retirer » retire le spot et la barre revient à « Enregistrer ce spot »', JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 0 && /Enregistrer ce spot/.test($('actSave').textContent));
   w.setSheet('half');
+
+  console.log('Vos espèces ici et Conditions ici');
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  doc.querySelector('#days button[data-d="0"]').click(); await sleep(300);
+  const rowsSp = [...doc.querySelectorAll('#detail .sphere .spr')], scOf = b => +b.querySelector('.spv').textContent;
+  check('« Vos espèces ici » : 8 espèces au plus, classées par score décroissant, jamais de toxique', rowsSp.length >= 3 && rowsSp.length <= 8 && rowsSp.every((b, i) => i === 0 || scOf(rowsSp[i - 1]) >= scOf(b)), rowsSp.map(scOf).join('>'));
+  check('chaque ligne : nom, mot de niveau, score, jauge avec repère à la bonne position', rowsSp.every(b => b.querySelector('.spn').textContent.length > 2 && ['Très peu propice','Peu propice','Moyennement propice','Propice','Très propice'].includes(b.querySelector('.spl').textContent) && b.querySelector('.spg .mk').style.left === scOf(b) + '%'));
+  check('l\'espèce choisie est repérée (aria-current) dans la liste', rowsSp.filter(b => b.getAttribute('aria-current') === 'true').every(b => +b.dataset.i === w.__st.sp));
+  const tgt = rowsSp[rowsSp.length - 1];
+  tgt.click(); await sleep(400);
+  check('toucher une ligne sélectionne cette espèce', w.__st.sp === +tgt.dataset.i, String(w.__st.sp));
+  doc.querySelector('#chips button[data-i="0"]').click(); await sleep(400);
+  const cc = [...doc.querySelectorAll('#detail .cond .cc')], ccTitle = c => c.querySelector('.cct').textContent;
+  check('« Conditions ici » : cartes Température, Humidité du sol, Pluie, Saison', ['Température','Humidité du sol','Saison'].every(t => cc.some(c => ccTitle(c) === t)) && cc.some(c => /^Pluie/.test(ccTitle(c))) && cc.length === 4, cc.map(ccTitle).join('|'));
+  const zc = w.__st.ptZ, rc = w.__score(w.__sp[0], zc, 0), tcard = cc.find(c => ccTitle(c) === 'Température');
+  check('carte Température : valeur du modèle (' + rc.w.T.toFixed(1) + ' °C), mot cohérent avec le facteur, repère dans la jauge', tcard.querySelector('.ccv').textContent === rc.w.T.toFixed(1).replace('.', ',') + ' °C' && tcard.querySelector('.ccl').textContent === w.lvlWord(rc.tf) && +tcard.querySelector('.mk').style.left.replace('%', '') >= 0 && +tcard.querySelector('.mk').style.left.replace('%', '') <= 100, tcard.textContent);
+  check('mots de niveau : Défavorable / Moyen / Favorable aux seuils 0,34 et 0,67', w.lvlWord(0) === 'Défavorable' && w.lvlWord(.33) === 'Défavorable' && w.lvlWord(.34) === 'Moyen' && w.lvlWord(.66) === 'Moyen' && w.lvlWord(.67) === 'Favorable' && w.lvlWord(1) === 'Favorable');
+  check('cartes : jauges décoratives (aria-hidden), segments toléré et idéal présents pour la température', cc.every(c => !c.querySelector('.gauge') || c.querySelector('.gauge').getAttribute('aria-hidden') === 'true') && !!tcard.querySelector('.gauge .s1') && !!tcard.querySelector('.gauge .s2'));
+  check('pluie : espèce dépendante de la pluie cumulée (cèpe) -> carte « Pluie cumulée » avec sa jauge', cc.some(c => ccTitle(c) === 'Pluie cumulée' && !!c.querySelector('.gauge')));
+  doc.querySelector('#chips button[data-i="' + w.__sp.findIndex(s => !s.rr && !s.toxic) + '"]').click(); await sleep(400);
+  check('espèce sans dépendance à la pluie cumulée : carte « Pluie récente » informative (sans jauge ni verdict)', [...doc.querySelectorAll('#detail .cond .cc')].some(c => ccTitle(c) === 'Pluie récente' && !c.querySelector('.gauge') && !c.querySelector('.ccl')));
+  check('aucun NaN ni undefined dans ces blocs', !/NaN|undefined/.test(doc.querySelector('#detail .cond').textContent + doc.querySelector('#detail .sphere').textContent));
+  doc.querySelector('#chips button[data-i="0"]').click(); await sleep(300);
 
   console.log('Comparateur d\'espèces');
   w.setPoint(47.0, 4.0, false); await sleep(900);

@@ -829,11 +829,72 @@ function setContours(on){
     if(!map.getPane("cnv")){map.createPane("cnv");const p=map.getPane("cnv");p.style.zIndex=450;p.style.pointerEvents="none"}
     let ok=0,err=0;
     cnvLayer=L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ELEVATION.CONTOUR.LINE&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
-      {pane:"cnv",minZoom:CNV_MINZ,maxNativeZoom:18,opacity:.85,attribution:"Courbes de niveau © IGN"}).addTo(map);
+      {pane:"cnv",minZoom:CNV_MINZ,maxNativeZoom:18,opacity:.85,attribution:"Courbes de niveau © IGN",errorTileUrl:"data:image/gif;base64,R0lGODlhAQABAAAAACw="}).addTo(map);
     cnvLayer.on("tileload",()=>{ok++;if(cnvFail){cnvFail=false;cnvNote()}});
     cnvLayer.on("tileerror",()=>{err++;if(!ok&&err>=3&&!cnvFail){cnvFail=true;cnvNote()}});
   }
   cnvNote();
+}
+// ---------- Vos espèces ici + Conditions ici : jauges lisibles, fondées sur les paramètres réels du modèle ----------
+const LEVEL_WORD=["Très peu propice","Peu propice","Moyennement propice","Propice","Très propice"];
+function lvlWord(f){return f<.34?"Défavorable":f<.67?"Moyen":"Favorable"}
+function insertBeforeDetails(el){const det=$("detail").querySelector("details");if(det)det.parentNode.insertBefore(el,det);else $("detail").appendChild(el)}
+// segs : [début, fin, classe] avec classe 0 = hors plage, 1 = toléré, 2 = idéal ; le repère marque la valeur actuelle
+function gaugeHtml(min,max,segs,val){
+  const pct=v=>Math.max(0,Math.min(100,(v-min)/(max-min)*100));
+  return `<div class="gauge" aria-hidden="true">${segs.map(g=>`<i class="s${g[2]}" style="flex:${Math.max(.001,g[1]-g[0]).toFixed(3)}"></i>`).join("")}${val!=null?`<b class="mk" style="left:${pct(val).toFixed(1)}%"></b>`:""}</div>`;
+}
+function condCard(title,sub,val,f,gauge,note){
+  const k=f==null?"n":f<.34?"d":f<.67?"m":"f";
+  return `<div class="cc cc-${k}"><div class="cct">${title}</div><div class="ccs">${sub}</div><div class="ccv">${val}</div>${f!=null?`<div class="ccl">${lvlWord(f)}</div>`:""}${gauge||""}${note?`<div class="ccn">${note}</div>`:""}</div>`;
+}
+function rainTotals(z,d){
+  const L=z&&(z.L||(st.live&&z.i>=0?st.live[z.i]:null));if(!L||!L.p)return null;
+  const e=Math.min((L.off!=null?L.off:st.off)+Math.min(0,d),L.p.length-1);let tot=0,ago=-1;
+  for(let k=0;k<14;k++){const i=e-k;if(i<0)break;tot+=Math.max(0,L.p[i]||0);if(ago<0&&(L.p[i]||0)>=8)ago=k}
+  return{tot:Math.round(tot),ago};
+}
+function conditionsHook(sp,z,r,d){
+  const w=r.w,fr=n=>String(n).replace(".",","),cards=[],t=sp.t,MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  cards.push(condCard("Température","moyenne des "+(sp.tw||7)+" derniers jours",fr(w.T.toFixed(1))+" °C",r.tf,
+    gaugeHtml(t[0]-4,t[3]+4,[[t[0]-4,t[0],0],[t[0],t[1],1],[t[1],t[2],2],[t[2],t[3],1],[t[3],t[3]+4,0]],w.T),"idéal "+t[1]+" à "+t[2]+" °C"));
+  if(w.SM!=null){
+    const h=sp.hu||[.12,.3],mn=Math.max(0,h[0]-.1),mx=h[1]+.12;
+    cards.push(condCard("Humidité du sol","moyenne des 7 derniers jours",Math.round(w.SM*100)+" %",r.rf,
+      gaugeHtml(mn,mx,[[mn,h[0],0],[h[0],h[1],1],[h[1],mx,2]],w.SM),"pleinement favorable dès "+Math.round(h[1]*100)+" %"));
+  }else{
+    cards.push(condCard("Pluie (météo simulée)","décalée de "+(sp.lag||0)+" jours",Math.round(w.R)+" mm",r.rf,
+      gaugeHtml(0,sp.ro*4,[[0,sp.ro*.25,0],[sp.ro*.25,sp.ro,1],[sp.ro,sp.ro*4,2]],w.R),"optimum dès "+sp.ro+" mm"));
+  }
+  if(sp.rr&&w.RL!=null){
+    cards.push(condCard("Pluie cumulée","sur "+sp.rw+" jours",Math.round(w.RL)+" mm",clamp(w.RL/sp.rr),
+      gaugeHtml(0,sp.rr*1.5,[[0,sp.rr,1],[sp.rr,sp.rr*1.5,2]],w.RL),"pleine intensité dès "+sp.rr+" mm"));
+  }else{
+    const rt=rainTotals(z,d);
+    if(rt)cards.push(condCard("Pluie récente","cumul des 14 derniers jours",rt.tot+" mm",null,"",
+      (rt.ago<0?"aucune pluie d'au moins 8 mm":rt.ago===0?"dernière pluie d'au moins 8 mm : aujourd'hui":"dernière pluie d'au moins 8 mm : il y a "+rt.ago+" j")+" · pour information : cette espèce est jugée sur l'humidité du sol"));
+  }
+  const gm=Math.max(...sp.gb);
+  cards.push(condCard("Saison",MOIS[dateOf(d).getMonth()],Math.round(r.sf*100)+" %",gm>0?clamp(r.sf/gm):0,
+    gaugeHtml(0,gm,[[0,gm*.34,0],[gm*.34,gm*.67,1],[gm*.67,gm,2]],Math.min(r.sf,gm)),"poids du mois dans les observations (pic en "+MOIS[sp.gb.indexOf(gm)]+")"));
+  const box=document.createElement("section");box.className="cond";
+  box.innerHTML=`<h4>Conditions ici</h4><p class="cap">évaluées pour ${sp.n}</p><div class="ccg">${cards.join("")}</div>`;
+  insertBeforeDetails(box);
+}
+function speciesHook(z,d){
+  const rows=SP.map((s,i)=>({s,i,sc:s.toxic?-1:score(s,z,d).sc})).filter(x=>x.sc>=0).sort((a,b)=>b.sc-a.sc).slice(0,8);
+  const box=document.createElement("section");box.className="sphere";
+  const grad="linear-gradient(90deg,var(--line) 0 22%,"+STOPS.map(x=>`rgb(${x[1]},${x[2]},${x[3]}) ${x[0]}%`).join(",")+")";
+  box.innerHTML=`<h4>Vos espèces ici</h4><p class="cap">Chaque espèce est jugée sur sa propre échelle. Touchez-en une pour la voir sur la carte.</p>`;
+  const ul=document.createElement("ul");
+  rows.forEach(x=>{
+    const li=document.createElement("li"),b=document.createElement("button");
+    b.type="button";b.className="spr"+(x.i===st.sp?" cur":"");b.dataset.i=x.i;if(x.i===st.sp)b.setAttribute("aria-current","true");
+    b.innerHTML=`<span class="spn">${x.s.n}</span><span class="spl">${LEVEL_WORD[spLevel(x.sc)]}</span><span class="spv">${x.sc}</span><span class="spg" aria-hidden="true" style="background:${grad}"><b class="mk" style="left:${x.sc}%"></b></span>`;
+    b.onclick=()=>{const c=document.querySelector('#chips button[data-i="'+x.i+'"]');if(c)c.click()};
+    li.appendChild(b);ul.appendChild(li);
+  });
+  box.appendChild(ul);insertBeforeDetails(box);
 }
 // ---------- Pluie des 14 derniers jours (séries déjà chargées) ----------
 function rainHook(z,d){
@@ -1271,11 +1332,9 @@ function renderDetail(){
   const r=score(sp,zsel,d),rv=viewScore(sp,zsel);
   const arr=[...Array(8)].map((_,k)=>score(sp,zsel,k).sc);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
-  const top=SP.filter(s=>!s.toxic).map(s=>({s,v:score(s,zsel,d).sc})).sort((a,b)=>b.v-a.v).slice(0,3);
   const src=zsel.src||{};
   const sparkHtml=`<div class="spark" role="img" aria-label="Score des 8 prochains jours : ${arr.join(", ")} sur 100">${arr.map((v,k)=>`<div class="${k==d?"sel":""}" title="${v}"><i style="height:${Math.max(2,v*.34)}px;background:${v<22?"var(--line)":gC(v)}"></i>${k==0?"auj.":"J+"+k}</div>`).join("")}</div>`;
-  const topHtml=`<p class="note" style="margin-top:6px"><b>Meilleures espèces ce jour-là :</b> ${top.map(t=>t.s.n+" ("+t.v+")").join(", ")}</p>`;
-  $("detail").innerHTML=`<h2>${zsel.near?nearT(zsel.near):zsel.n}</h2>${zsel.near?`<div class="sub">${zsel.n}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${topHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
+  $("detail").innerHTML=`<h2>${zsel.near?nearT(zsel.near):zsel.n}</h2>${zsel.near?`<div class="sub">${zsel.n}</div>`:""}${verdictHtml(sp,zsel,r,rv,arr,d)}${sp.toxic?`<p class="toxnote">⚠ Espèce toxique : ce résultat indique où elle peut pousser, pas où la cueillir pour la consommer.</p>`:""}${sparkHtml}${spotsHtml()}<details class="why"><summary>Pourquoi ce score ? (détail du calcul)</summary><div class="sub" style="margin:8px 0 6px">${sp.n} : <b style="color:${col(r.sc)}">${r.sc}/100</b>${st.view!="day"?` · vue « ${VIEWS.find(v=>v.k==st.view).t} » : <b style="color:${col(rv.sc)}">${rv.sc}</b>`:""} · ${zsel.alt} m · sol ${SOIL[zsel.so]}${zsel.ph?" (pH "+zsel.ph+")":""} · ${zsel.urb?"zone urbanisée / sans forêt":zsel.nf?"pas de forêt ici":FOR[zsel.fo]}${r.w.frostHard?" · ⚠ gel fort récent":r.w.frostLight?" · gelée légère récente":""}</div>
   ${bar("Sol",r.so)}${bar("Forêt",r.fo)}${bar("Altitude",r.al)}${bar("Température",r.tf)}${bar("Humidité",r.rf)}${bar("Saison",r.sf)}
   <div class="sub">Pluie 14 j : ${Math.round(r.w.R)} mm${r.w.RL!=null?" · "+sp.rw+" j : "+Math.round(r.w.RL)+" mm":""} · température moyenne : ${r.w.T.toFixed(1)} °C</div>
   ${soilLine(zsel,sp,r)}
@@ -1284,6 +1343,8 @@ function renderDetail(){
   <p class="note">Solidité des paramètres de ${sp.n} : ${["estimés avec prudence (peu d'études directes)","partiellement documentés","appuyés sur des études de terrain (souvent hors France)"][sp.ev||0]}.</p></details>`;
   mySpotsHook();
   rainHook(zsel,d);
+  speciesHook(zsel,d);
+  conditionsHook(sp,zsel,r,d);
   cmpHook();
   renderCurves(sp,zsel,r.w&&r.w.T,d);
 }

@@ -39,6 +39,7 @@ try:
                 try: fn(); page.wait_for_timeout(wait)
                 except Exception as e: log.append("[%s] étape %s en échec : %s" % (name, label, str(e)[:160]))
             shot("1_accueil")
+            log.append("[debug %s] %s" % (name, json.dumps(page.evaluate("({size:map.getSize(),center:map.getCenter(),zoom:map.getZoom(),innerH:innerHeight,mobile:mqMobile.matches,sheet:st.sheet,sheetH:sheetPx(st.sheet||'half'),map:document.getElementById('map').getBoundingClientRect(),side:document.getElementById('side').getBoundingClientRect()})"))))
             step("point", lambda: page.evaluate("setPoint(44.2,-0.9,true)"), 9000)
             shot("2_point_landes")
             step("espece", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'12\\']').click()"), 2500)
