@@ -218,7 +218,16 @@ function showTip(e){
   t.style.display="block";t.style.left=Math.min(e.containerPoint.x+14,$("map").clientWidth-190)+"px";t.style.top=(e.containerPoint.y+16)+"px";
 }
 // Sur mobile, la France est cadrée dans la partie de la carte visible au-dessus du tiroir (pas sous lui).
+const BASE_BOUNDS=[[40.5,-6.5],[52.2,11.5]];
+function applyBounds(){
+  if(!map)return;
+  const b=L.latLngBounds(BASE_BOUNDS);
+  if(!mqMobile.matches){map.setMaxBounds(b);return}
+  const z=map.getZoom(),ext=map.unproject(map.project(b.getSouthWest(),z).add([0,sheetPx(st.sheet||"half")]),z);
+  map.setMaxBounds(L.latLngBounds([Math.min(ext.lat,b.getSouth()),b.getWest()],[b.getNorth(),b.getEast()]));
+}
 function franceView(fly){
+  applyBounds();
   if(mqMobile.matches){
     const b=[[41.2,-5.4],[51.2,9.9]],o={paddingTopLeft:[8,72],paddingBottomRight:[8,sheetPx(st.sheet||"half")+8]};
     if(fly)map.flyToBounds(b,o);else map.fitBounds(b,o);
@@ -226,7 +235,7 @@ function franceView(fly){
 }
 function initMap(){
   map=L.map("map",{preferCanvas:true,zoomControl:true,minZoom:5,maxZoom:14,zoomSnap:.5,wheelPxPerZoomLevel:90,
-    maxBounds:[[40.5,-6.5],[52.2,11.5]],maxBoundsViscosity:.8});
+    maxBoundsViscosity:.8});
   franceView(false);
   const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"});
   const topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap, SRTM · © OpenTopoMap (CC-BY-SA)"});
@@ -235,6 +244,7 @@ function initMap(){
   initDots();
   map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
   map.on("zoomend",drawOutline);
+  map.on("zoomend",applyBounds);
   map.on("moveend",scheduleNow);
   map.on("zoomend resize",()=>{clearTimeout(st.spT);st.spT=setTimeout(()=>updateSpots(false),220)});
   map.on("mousemove",showTip);map.on("mouseout",()=>{$("tip").style.display="none"});map.on("movestart",()=>{$("tip").style.display="none"});
@@ -1445,6 +1455,7 @@ function closeFindQ(){$("findq").hidden=true;try{$("actFind").focus()}catch(e){}
 function setSheet(n){
   st.sheet=n;document.documentElement.style.setProperty("--sheet-h",sheetPx(n)+"px");
   const g=$("grab");if(g){g.setAttribute("aria-expanded",n!=="peek");g.dataset.state=n}
+  applyBounds();
 }
 // cran visé après un glissement : le plus proche, ou le suivant dans le sens du geste si celui-ci est franc (> 60 px)
 function snapSheet(h,dy){

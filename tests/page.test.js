@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__sheetPx=sheetPx;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__sheetPx=sheetPx;window.__mq=mqMobile;window.__map=()=>map;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -245,6 +245,10 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
 
   console.log('Tiroir mobile et actions rapides');
+  w.__mq.matches = false; w.applyBounds(); const bDesk = w.__map().options.maxBounds ? w.__map().options.maxBounds.getSouth() : null;
+  w.__mq.matches = true; w.setSheet('half'); w.applyBounds(); const bMob = w.__map().options.maxBounds.getSouth(); w.setSheet('full'); const bFull = w.__map().options.maxBounds.getSouth();
+  w.__mq.matches = false; w.setSheet('half'); w.applyBounds();
+  check('limites de la carte : bureau = France ; mobile = étendues vers le sud de la hauteur du tiroir (plus haut = plus étendu)', Math.abs(bDesk - 40.5) < .01 && bMob < 40.5 - 1 && bFull < bMob, [bDesk, bMob, bFull].join(' / '));
   check('cadrage de la France : fonction disponible, sans erreur (bureau)', typeof w.franceView === 'function' && (() => { try { w.franceView(false); return true } catch (e) { return false } })());
   const sp = n => w.__sheetPx(n);
   check('snapSheet : cran le plus proche, ou le suivant dans le sens d\'un geste franc', w.snapSheet(sp('half'), 10) === 'half' && w.snapSheet(sp('half'), 90) === 'full' && w.snapSheet(sp('half'), -90) === 'peek' && w.snapSheet(sp('peek'), 90) === 'half' && w.snapSheet(sp('full'), -90) === 'half' && w.snapSheet(sp('full') - 5, 0) === 'full');
