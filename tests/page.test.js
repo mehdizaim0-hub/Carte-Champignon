@@ -249,6 +249,9 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.__mq.matches = true; w.setSheet('half'); w.applyBounds(); const bMob = w.__map().options.maxBounds.getSouth(); w.setSheet('full'); const bFull = w.__map().options.maxBounds.getSouth();
   w.__mq.matches = false; w.setSheet('half'); w.applyBounds();
   check('limites de la carte : bureau = France ; mobile = étendues vers le sud de la hauteur du tiroir (plus haut = plus étendu)', Math.abs(bDesk - 40.5) < .01 && bMob < 40.5 - 1 && bFull < bMob, [bDesk, bMob, bFull].join(' / '));
+  w.__mq.matches = true; w.placeEmpty(); const hostMob = $('emptymap').parentNode.id; w.setSheet('full'); const legFull = doc.documentElement.dataset.sheet; w.setSheet('half');
+  w.__mq.matches = false; w.placeEmpty(); const hostDesk = $('emptymap').parentNode.id;
+  check('état vide : dans le tiroir sur mobile, sur la carte sur ordinateur ; légende masquée tiroir plein', hostMob === 'emptyside' && hostDesk === 'mapwrap' && legFull === 'full', [hostMob, hostDesk, legFull].join(' / '));
   check('cadrage de la France : fonction disponible, sans erreur (bureau)', typeof w.franceView === 'function' && (() => { try { w.franceView(false); return true } catch (e) { return false } })());
   const sp = n => w.__sheetPx(n);
   check('snapSheet : cran le plus proche, ou le suivant dans le sens d\'un geste franc', w.snapSheet(sp('half'), 10) === 'half' && w.snapSheet(sp('half'), 90) === 'full' && w.snapSheet(sp('half'), -90) === 'peek' && w.snapSheet(sp('peek'), 90) === 'half' && w.snapSheet(sp('full'), -90) === 'half' && w.snapSheet(sp('full') - 5, 0) === 'full');

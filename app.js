@@ -656,7 +656,7 @@ function build(){
     addEventListener("resize",()=>setSheet(st.sheet||"half"));setSheet("half");
   })();
   document.querySelectorAll("#chips,#days,.ctlrow .chips.seg").forEach(el=>el.addEventListener("scroll",updFade,{passive:true}));
-  addEventListener("resize",updFade);setTimeout(updFade,400);
+  addEventListener("resize",updFade);addEventListener("resize",placeEmpty);setTimeout(updFade,400);
   map.on("zoomend",cnvNote);
   $("helpbtn").onclick=()=>{const d=$("howto");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})};
   $("legtoggle").onclick=()=>{const l=$("maplegend"),m=l.classList.toggle("min");$("legtoggle").setAttribute("aria-expanded",String(!m))};
@@ -789,8 +789,14 @@ function setCalque(key){
 }
 // ---------- État vide : aucune zone favorable (hors saison) -> expliquer et proposer des espèces qui sortent ----------
 let EMPTYC={key:"",out:null};
+// Sur mobile, le message vit dans le tiroir : superposé à la carte, il cacherait la moitié nord de la France.
+function placeEmpty(){
+  const box=$("emptymap"),host=mqMobile.matches?$("emptyside"):$("mapwrap");
+  if(!box||!host||box.parentNode===host)return;
+  if(host===$("mapwrap"))host.insertBefore(box,$("map"));else host.appendChild(box);
+}
 function renderEmptyMap(sorted,sp){
-  const box=$("emptymap");if(!box)return;
+  const box=$("emptymap");if(!box)return;placeEmpty();
   const best=sorted&&sorted.length?sorted[sorted.length-1]:0,tok=st.emptyTok=(st.emptyTok||0)+1,vk=sp.n+"|"+st.view+"|"+st.day;
   box.textContent="";
   if(st.emptyHide&&st.emptyHide!==vk)st.emptyHide=null;   // la fermeture ne vaut que pour l'état où elle a été faite
@@ -877,7 +883,7 @@ function conditionsHook(sp,z,r,d){
       gaugeHtml(0,sp.ro*4,[[0,sp.ro*.25,0],[sp.ro*.25,sp.ro,1],[sp.ro,sp.ro*4,2]],w.R),"optimum dès "+sp.ro+" mm"));
   }
   if(sp.rr&&w.RL!=null){
-    cards.push(condCard("Pluie cumulée","sur "+sp.rw+" jours",Math.round(w.RL)+" mm",clamp(w.RL/sp.rr),
+    cards.push(condCard("Pluie cumulée","sur "+sp.rw+" jours, fenêtre décalée selon l'espèce",Math.round(w.RL)+" mm",clamp(w.RL/sp.rr),
       gaugeHtml(0,sp.rr*1.5,[[0,sp.rr,1],[sp.rr,sp.rr*1.5,2]],w.RL),"pleine intensité dès "+sp.rr+" mm"));
   }else{
     const rt=rainTotals(z,d);
@@ -1454,6 +1460,7 @@ function closeFindQ(){$("findq").hidden=true;try{$("actFind").focus()}catch(e){}
 // ---------- Tiroir mobile : trois crans (réduit, moyen, plein), glissé depuis la poignée ----------
 function setSheet(n){
   st.sheet=n;document.documentElement.style.setProperty("--sheet-h",sheetPx(n)+"px");
+  document.documentElement.dataset.sheet=n;
   const g=$("grab");if(g){g.setAttribute("aria-expanded",n!=="peek");g.dataset.state=n}
   applyBounds();
 }
