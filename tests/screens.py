@@ -111,6 +111,10 @@ try:
             step("j ai trouve", lambda: page.evaluate("setSheet('half');openFindQ()"), 1200)
             shot("23_j_ai_trouve")
             step("ferme", lambda: page.evaluate("closeFindQ()"), 300)
+            # --- vue « Toutes les espèces » ---
+            step("vue toutes", lambda: page.evaluate("setSheet('half');document.querySelector('#views button[data-v=\\'all\\']').click();map.setView([46.6,2.6],6)"), 15000)
+            shot("26_vue_toutes")
+            step("retour vue", lambda: page.evaluate("document.querySelector('#views button[data-v=\\'dur\\']').click()"), 1500)
             ctx.close()
         b.close()
 finally:

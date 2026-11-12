@@ -168,7 +168,8 @@ const VIEWS=[
  {k:"day",t:"Jour choisi",note:"Score du jour sélectionné, d'après la météo réelle ou prévue."},
  {k:"dur",t:"Zones durables",note:"Moyenne pondérée des 8 prochains jours (les jours lointains comptent moins). Ressortent les zones bonnes longtemps, pas juste un jour."},
  {k:"best",t:"Meilleur jour",note:"Le meilleur score de la semaine pour chaque zone."},
- {k:"hab",t:"Habitat",note:"Sol, forêt et altitude seulement, sans la météo : les grands massifs durablement propices. Villes et cultures s'effacent."}
+ {k:"hab",t:"Habitat",note:"Sol, forêt et altitude seulement, sans la météo : les grands massifs durablement propices. Villes et cultures s'effacent."},
+ {k:"all",t:"Toutes les espèces",note:"Le meilleur score parmi toutes les espèces, pour le jour choisi. Zones de 17 km : choisissez une espèce pour le détail fin."},
 ];
 const WD=[1,1,.9,.8,.7,.6,.5,.4];
 function habOnly(sp,z){
@@ -176,8 +177,35 @@ function habOnly(sp,z){
   const Ha=Math.pow(so*Math.max(al,.001),.7);
   return{sc:z.anth?0:Math.round(Math.min(100,100*Ha*Math.pow(fo,.7))),so,fo,al,M:1,Ha,sfx,rf:1};
 }
-function viewScore(sp,z){
-  const v=st.view;
+function allScore(z){
+  const c=st.allCache,ok=c&&c.key===allKey()&&z.i!=null&&z.i>=0&&z.i<c.sc.length;
+  return{sc:ok?c.sc[z.i]:0,best:ok?c.best[z.i]:-1,M:0,Ha:0,fo:0,al:0,so:0,sfx:0,rf:0};
+}
+const allKey=()=>[st.fetchedAt,st.dataDate,Math.max(-1,st.day),st.rain,st.dt,st.live?1:0].join("|");
+function ensureAll(){
+  if(st.view!=="all"){st.allJob=null;return false}   // on a quitté la vue : le calcul en cours est abandonné
+  const key=allKey();
+  if(st.allCache&&st.allCache.key===key)return true;
+  if(st.allJob&&st.allJob.key===key)return false;   // déjà en cours pour cet état
+  const job=st.allJob={key,i:0,sc:new Float32Array(Z.length),best:new Int8Array(Z.length).fill(-1)};
+  const sps=SP.map((x,i)=>[x,i]).filter(x=>!x[0].toxic),N=Z.length,CH=60,d0=Math.max(-1,st.day);
+  const step=()=>{
+    if(st.allJob!==job)return;   // annulé : vue ou jour changés entre-temps
+    const end=Math.min(N,job.i+CH);
+    for(let c=job.i;c<end;c++){
+      const z=Z[c];let m=0,b=-1;
+      if(!z.anth)for(const[x,i]of sps){const v=score(x,z,d0).sc;if(v>m){m=v;b=i}}
+      job.sc[z.i]=m;job.best[z.i]=b;
+    }
+    job.i=end;
+    if(end<N){const t=$("status");if(t)t.textContent="Toutes les espèces : calcul en cours… "+Math.round(100*end/N)+" %";setTimeout(step,0)}
+    else{st.allCache={key,sc:job.sc,best:job.best};st.allJob=null;render()}
+  };
+  setTimeout(step,0);return false;
+}
+function viewScore(sp,z,forDetail){
+  const v=(st.view==="all"&&forDetail)?"day":st.view;
+  if(v==="all")return allScore(z);
   if(v=="hab")return habOnly(sp,z);
   if(v=="day")return score(sp,z,st.day);
   const a=[...Array(8)].map((_,d)=>score(sp,z,d)),r0=a[0];
@@ -690,8 +718,9 @@ function render(){
   $("fetched").style.display=st.fetchedAt?"":"none";
   if(st.fetchedAt)$("fetched").textContent="Données récupérées le "+st.fetchedAt;
   // champ de score : fin (forêt à 1,4 km) si disponible, sinon grossier
+  ensureAll();
   const sc=Z.map(z=>({z,r:viewScore(sp,z)}));
-  st.F=(st.live&&FINE)?buildFineField(sc,sp):buildField(sc);
+  st.F=(st.live&&FINE&&st.view!=="all")?buildFineField(sc,sp):buildField(sc);   // en vue « toutes », pas de détail fin propre à une espèce
   st.scoreSorted=Float32Array.from(sc.map(o=>o.r.sc)).sort();
   renderEmptyMap(st.scoreSorted,sp);
   const dots=st.mode=="dots"&&!!st.F;
@@ -799,8 +828,15 @@ function renderEmptyMap(sorted,sp){
   const box=$("emptymap");if(!box)return;placeEmpty();
   const best=sorted&&sorted.length?sorted[sorted.length-1]:0,tok=st.emptyTok=(st.emptyTok||0)+1,vk=sp.n+"|"+st.view+"|"+st.day;
   box.textContent="";
+  if(st.view==="all"&&st.allJob){box.hidden=true;return}   // calcul en cours : rien à conclure
   if(st.emptyHide&&st.emptyHide!==vk)st.emptyHide=null;   // la fermeture ne vaut que pour l'état où elle a été faite
   if(!sorted||!sorted.length||best>=22||st.emptyHide===vk){box.hidden=true;return}
+  if(st.view==="all"){
+    const t0=document.createElement("p"),x0=document.createElement("button");
+    t0.innerHTML=`<b>Aucune zone favorable</b> ${st.day>0?"à cette date":"aujourd'hui"}, toutes espèces confondues. <span class="sub">Meilleur score en France : ${Math.round(best)}/100.</span> C'est la fin de saison : revenez dans quelques jours.`;
+    x0.type="button";x0.className="x";x0.textContent="×";x0.setAttribute("aria-label","Masquer ce message");x0.onclick=()=>{st.emptyHide=vk;box.hidden=true};
+    box.append(x0,t0);box.hidden=false;return;
+  }
   const when=st.view==="hab"?"dans cette vue":st.view==="day"?"à cette date":"cette semaine";
   const d0=Math.max(0,st.day),today=d0>0?"à cette date":"aujourd'hui";
   const t=document.createElement("p"),x=document.createElement("button"),alts=document.createElement("div");
@@ -1166,7 +1202,7 @@ function fineSpots(z,R,sp,D){
       else{nf=true;sparse=false;const w2=forestAt(la,lo,7);open=w2.frac>=.2?"clair":(z.blk==7?"prairie":"autre")}
     }
     const zc={i:-1,lat:la,lon:lo,alt:e,so:z.so,fo,nf,open,sparse,urb:false,sol:z.sol,rel:{slope,north,tpi},L:z.L,dT:-.0065*(e-altS),mi:z.mi,n:"",src:{}};
-    cand.push({la,lo,dx,dy,d,sc:viewScore(sp,zc).sc,e,slope,north,fo,nf,open,sparse});
+    cand.push({la,lo,dx,dy,d,sc:viewScore(sp,zc,true).sc,e,slope,north,fo,nf,open,sparse});
   }
   const top=pickTop(cand,Math.max(250,R/4));top.forEach(describeSpot);return top;
 }
@@ -1309,7 +1345,7 @@ function verdictHtml(sp,z,r,rv,arr,d){
   }
   const v=rv.sc,lvl=v>=70?4:v>=55?3:v>=35?2:v>=20?1:0;
   const lab=["Très peu propice","Peu propice","Moyennement propice","Propice","Très propice"][lvl];
-  const S=st.scoreSorted;let pct=null;
+  const S=st.view==="all"?null:st.scoreSorted;let pct=null;   // en vue « toutes », le rang parmi toutes les espèces n'a pas de sens pour une seule
   if(S&&S.length){let lo=0,hi=S.length;while(lo<hi){const m=(lo+hi)>>1;if(S[m]<v)lo=m+1;else hi=m}pct=Math.round(100*lo/S.length)}
   const hab=habOnly(sp,z).sc,cond=Math.round(100*(r.M||0));
   const fac=[["le sol",r.so],["la forêt",r.fo],["l'altitude",r.al],["la température",r.tf],["l'humidité",r.rf],["la saison",r.sf]].sort((a,b)=>a[1]-b[1])[0];
@@ -1345,7 +1381,7 @@ function renderDetail(){
     $("ctame").onclick=locateMe;
     return;
   }
-  const r=score(sp,zsel,d),rv=viewScore(sp,zsel);
+  const r=score(sp,zsel,d),rv=viewScore(sp,zsel,true);
   const arr=[...Array(8)].map((_,k)=>score(sp,zsel,k).sc);
   const bar=(l,v)=>`<div class="m"><span>${l}</span><i><span style="width:${Math.round(v*100)}%"></span></i><b>${Math.round(v*100)}</b></div>`;
   const src=zsel.src||{};

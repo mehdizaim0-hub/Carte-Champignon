@@ -44,7 +44,7 @@ w.fetch = async u => {
 w.eval(read('node_modules/leaflet/dist/leaflet.js'));
 const appSrc = read('species.js') + '\n' + read('app.js');
 w.addEventListener('error', e => errors.push('window.error: ' + e.message + ' @' + e.lineno));
-try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__sheetPx=sheetPx;window.__mq=mqMobile;window.__map=()=>map;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
+try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__stars=starsOf;window.__fine=()=>FINE;window.__sp=SP;window.__score=score;window.__sos=SOSIES;window.__src=SOURCES;window.__fmt=fmtCoord;window.__nearT=nearT;window.__nearI=nearInline;window.__trees=TREE_ICONS;window.__iso=isoDay;window.__sheetPx=sheetPx;window.__mq=mqMobile;window.__map=()=>map;window.__Z=()=>Z;window.__hotes=HOTES;') } catch (e) { errors.push('eval: ' + e.stack.split('\n').slice(0, 4).join(' | ')) }
 
 (async () => {
   const doc = w.document, $ = id => doc.getElementById(id), txt = id => ($(id).textContent || '').replace(/\s+/g, ' ');
@@ -55,7 +55,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('forêt fine chargée', !!w.__fine());
   check('bandeau de fraîcheur affiché', /Météo réelle|anciennes/.test(txt('status')), txt('status'));
   check('20 espèces proposées, en 3 groupes d\'habitat', doc.querySelectorAll('#chips button').length === 20 && doc.querySelectorAll('#chips .glab').length === 3);
-  check('4 vues proposées', doc.querySelectorAll('#views button').length === 4);
+  check('5 vues proposées (dont « Toutes les espèces »)', doc.querySelectorAll('#views button').length === 5);
   check('jours proposés : la veille et 8 jours (J à J+7)', doc.querySelectorAll('#days button').length === 9 && [...doc.querySelectorAll('#days button')].map(x => x.dataset.d).join() === '-1,0,1,2,3,4,5,6,7');
   check('section « Où chercher » supprimée', !$('rad') && !$('gps') && !$('near') && !/Où chercher \?/.test(txt('side')));
   // vue Habitat : indépendante de la météo du jour, donc stable d'une saison à l'autre
@@ -443,6 +443,37 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('fiche du point et statut sans NaN ni undefined, avec la mention « Hier »', !/NaN|undefined/.test(dtxt) && /Hier : conditions observées/.test(doc.querySelector('#status').textContent), dtxt.slice(0, 160));
   dayBtns()[1].click(); await sleep(400);
   check('retour à aujourd\'hui', w.__st.day === 0 && dayBtns()[1].getAttribute('aria-pressed') === 'true' && !/Hier : conditions/.test(doc.querySelector('#status').textContent));
+
+  console.log('Vue « Toutes les espèces »');
+  {
+  const vbtn = k => [...doc.querySelectorAll('#views button')].find(b => b.dataset.v === k);
+  const waitAll = async () => { for (let k = 0; k < 400 && !(w.__st.allCache && w.__st.allCache.key === [w.__st.fetchedAt, w.__st.dataDate, Math.max(-1, w.__st.day), w.__st.rain, w.__st.dt, w.__st.live ? 1 : 0].join('|')); k++) await sleep(250); };
+  check('5 vues, « Toutes les espèces » en dernier (les positions des autres boutons ne changent pas)', [...doc.querySelectorAll('#views button')].map(b => b.dataset.v).join() === 'day,dur,best,hab,all' && vbtn('all').textContent === 'Toutes les espèces');
+  vbtn('all').click(); await sleep(60);
+  check('calcul lancé en arrière-plan (ou déjà terminé), sans figer la page', !!w.__st.allJob || !!w.__st.allCache);
+  await waitAll();
+  const AC = w.__st.allCache, Zs = w.__Z(), d0 = Math.max(-1, w.__st.day);
+  check('résultat : un score 0-100 par maille, tableau de la taille de la grille', !!AC && AC.sc.length === Zs.length && AC.best.length === Zs.length && Zs.every((z, i) => z.i === i) && Array.from(AC.sc).every(v => v >= 0 && v <= 100), AC && AC.sc.length + ' / ' + Zs.length);
+  const idxs = [0, Math.floor(Zs.length / 3), Math.floor(2 * Zs.length / 3), Zs.length - 1], nonTox = w.__sp.map((s, i) => [s, i]).filter(x => !x[0].toxic);
+  const okIdx = idxs.every(i => { const z = Zs[i]; let m = 0, b = -1; if (!z.anth) for (const [s, k] of nonTox) { const v = w.__score(s, z, d0).sc; if (v > m) { m = v; b = k } } return AC.sc[i] === m && AC.best[i] === b; });
+  check('vérification indépendante sur 4 mailles : score = maximum des espèces, espèce gagnante exacte', okIdx);
+  check('champ de la carte construit, mailles triées, statut redevenu normal, sélecteur de jour visible', !!w.__st.F && w.__st.scoreSorted.length === Zs.length && w.__st.scoreSorted[Zs.length - 1] === Math.max(...AC.sc) && /grille de/.test($('status').textContent) && $('days').closest('.ctlrow').style.display === '');
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 5, 20]), w.__sp[0]);
+  check('vue « toutes » sans zone favorable : message adapté, sans proposition d\'autre espèce', !em.hidden && /toutes espèces confondues/.test(em.textContent) && !em.querySelector('.alts'), em.textContent.slice(0, 160));
+  w.__st.emptyHide = null; w.renderEmptyMap(Float32Array.from([1, 50]), w.__sp[0]);
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  const dTxt = doc.querySelector('#detail').textContent;
+  check('fiche d\'un point en vue « toutes » : verdict de l\'espèce choisie, sans rang trompeur « sur cette vue »', /propice/i.test(dTxt) && !/sur cette vue/.test(dTxt));
+  const keyBefore = w.__st.allCache.key;
+  doc.querySelector('#days button[data-d="2"]').click(); await sleep(80);
+  check('changer de jour invalide le cache et relance un calcul', !!w.__st.allJob && w.__st.allJob.key !== keyBefore);
+  await waitAll();
+  check('nouveau cache prêt pour le nouveau jour', w.__st.allCache.key !== keyBefore && !w.__st.allJob);
+  doc.querySelector('#days button[data-d="3"]').click(); await sleep(80);
+  vbtn('dur').click(); await sleep(400);
+  check('quitter la vue pendant le calcul : calcul abandonné, vue « Zones durables » rétablie', w.__st.view === 'dur' && !w.__st.allJob && /grille de/.test($('status').textContent));
+  doc.querySelector('#days button[data-d="0"]').click(); await sleep(300);
+  }
 
   console.log('Erreurs JavaScript');
   check('aucune erreur dans la console', errors.length === 0, errors.join(' || '));
