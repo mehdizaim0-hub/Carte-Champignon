@@ -1,0 +1,38 @@
+name: Calibrage météo (GBIF x Open-Meteo)
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Budget Open-Meteo pour ce passage (quota gratuit : 10000/jour, 5000/heure)"
+        default: "3000"
+  push:
+    branches: [calibrage-meteo]
+    paths: [research/lancer-meteo.txt]
+permissions:
+  contents: write
+concurrency:
+  group: calibrage-meteo
+  cancel-in-progress: false
+jobs:
+  meteo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - name: Calibrage
+        shell: bash
+        env:
+          METEO_BUDGET: ${{ inputs.budget || '3000' }}
+        run: python3 tools/gbif_meteo.py 2>&1 | tee research/calibration-meteo.txt
+      - name: Enregistrer (échantillon, cache météo, résultats)
+        if: always()
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -f research/meteo-cache.json.gz research/meteo-obs.json.gz research/calibration-meteo.json research/calibration-meteo.txt 2>/dev/null || true
+          git commit -m "calibrage météo : passage" || echo "rien"
+          for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done
