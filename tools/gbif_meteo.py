@@ -21,6 +21,8 @@ Y0, Y1, TEST_FROM = 2018, 2025, 2024          # années utilisées ; années de 
 LOOKBACK = 45                                  # jours de météo avant chaque observation
 WINS = (7, 14, 21)                             # longueurs de fenêtre de pluie testées (jours)
 DMAX = 25                                      # délai maximal testé (jours)
+MAXMIN = float(os.environ.get("METEO_MAXMIN") or 100)       # durée maximale du passage (min) : on s'arrête proprement avant le délai du job
+T0 = time.time()
 BUDGET = float(os.environ.get("METEO_BUDGET") or 3000)   # poids d'appels Open-Meteo pour ce passage
 SEED = 42
 MAXN_SP, BG_PER_MONTH, BG_PAGES, BG_LIMIT = 1200, 250, 3, 100
@@ -37,6 +39,10 @@ BASE = dict(country="FR", basisOfRecord="HUMAN_OBSERVATION", hasCoordinate="true
 
 class Stop(Exception):
     pass
+
+
+def log(m):
+    print("[%5.0f s] %s" % (time.time() - T0, m), flush=True)
 
 
 def http(url, tries=5):
@@ -92,9 +98,12 @@ def fetch_species(name):
         d = gbif(taxonKey=key, limit=300, offset=off, year="%d,%d" % (Y0, Y1), **BASE)
         out += [o for o in map(parse, d.get("results", [])) if o]
         off += 300
+        if (off // 300) % 20 == 0:
+            log("  %s : %d enregistrements lus" % (name, off))
         if d.get("endOfRecords") or not d.get("results"):
             break
         time.sleep(.15)
+    log("%s : %d observations utilisables" % (name, len(out)))
     return out
 
 
@@ -102,6 +111,7 @@ def fetch_bg(months, rnd):
     """Champignons (règne Fungi, taxonKey 5) : quelques petites pages à décalages aléatoires par année et mois."""
     out = []
     for y in range(Y0, Y1 + 1):
+        log("témoin : année %d" % y)
         for m in months:
             c = gbif(taxonKey=5, limit=0, year=str(y), month=m, **BASE)["count"]
             if c == 0:
@@ -123,8 +133,9 @@ def load_gz(p, default):
 
 def save_gz(p, obj):
     os.makedirs(os.path.dirname(p), exist_ok=True)
-    with gzip.open(p, "wt", encoding="utf-8") as f:
+    with gzip.open(p + ".tmp", "wt", encoding="utf-8") as f:
         json.dump(obj, f, separators=(",", ":"))
+    os.replace(p + ".tmp", p)
 
 
 # ---------- grille de mailles (celle de data.json) ----------
@@ -184,7 +195,10 @@ def collect(ranges, cache, rnd):
     todo = [r for r in ranges if not all(r[1] + timedelta(i) in dm.get(r[0], {}) for i in range((r[2] - r[1]).days + 1))]
     rnd.shuffle(todo)
     used, n = 0.0, 0
+    log("météo : %d plages à récupérer" % len(todo))
     for ck, s, e in todo:
+        if (time.time() - T0) / 60 > MAXMIN:
+            print("ARRÊT : durée maximale du passage atteinte"); break
         w = ((e - s).days + 1) / 14 * 0.3            # poids Open-Meteo : lieux x (jours/14) x (variables/10)
         if used + w > BUDGET:
             break
@@ -202,6 +216,7 @@ def collect(ranges, cache, rnd):
         used += w; n += 1
         if n % 100 == 0:
             save_gz(CACHE, cache)
+            log("météo : %d plages récupérées, poids %.0f / %.0f" % (n, used, BUDGET))
         time.sleep(max(.4, w / 7))                   # reste sous 600 poids/minute
     save_gz(CACHE, cache)
     return len(ranges), len(todo), n, used
@@ -375,6 +390,7 @@ def main():
         bg_raw = fetch_bg(months, rnd)
         saved = {"especes": sp_raw, "temoin": bg_raw, "mois": months}
         save_gz(OBSF, saved)
+        log("échantillon GBIF enregistré")
     sp = {n: to_cells(saved["especes"][n], cell_of, rnd, MAXN_SP) for n, _, _ in SPECIES}
     bm = defaultdict(list)
     for o in to_cells(saved["temoin"], cell_of, rnd):
@@ -385,6 +401,7 @@ def main():
     allo = [o for v in sp.values() for o in v] + bg
     nr, nt, nf, used = collect(plan(allo), cache, rnd)
     print("plages météo : %d au total, %d manquantes avant ce passage, %d récupérées (poids %.0f, budget %.0f)" % (nr, nt, nf, used, BUDGET))
+    log("analyse")
     dm = daymap(cache)
     B = arrays(bg, dm)
     out = {"meta": {"annees": [Y0, Y1], "test_depuis": TEST_FROM, "budget": BUDGET, "plages_total": nr, "plages_manquantes": max(0, nt - nf),
