@@ -1,0 +1,28 @@
+name: Observations GBIF par bloc (calque)
+on:
+  workflow_dispatch:
+  push:
+    branches: [surcouche-gbif]
+    paths: [research/lancer-gbif.txt]
+permissions:
+  contents: write
+jobs:
+  gbif:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collecte
+        shell: bash
+        run: python3 -u build_gbif.py 2>&1 | tee research/gbif-obs.txt
+      - name: Enregistrer
+        if: always()
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add gbif.json research/gbif-obs.txt 2>/dev/null || true
+          git commit -m "observations GBIF par bloc : gbif.json" || echo "rien"
+          for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done
