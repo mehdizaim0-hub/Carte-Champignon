@@ -23,16 +23,25 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install numpy
-      - name: Calibrage
+      - name: Calibrage (avec commits de progression toutes les 4 minutes)
         shell: bash
         env:
           METEO_BUDGET: ${{ inputs.budget || '3000' }}
-        run: python3 tools/gbif_meteo.py 2>&1 | tee research/calibration-meteo.txt
-      - name: Enregistrer (échantillon, cache météo, résultats)
-        if: always()
+          METEO_MAXMIN: "100"
         run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
-          git add -f research/meteo-cache.json.gz research/meteo-obs.json.gz research/calibration-meteo.json research/calibration-meteo.txt 2>/dev/null || true
-          git commit -m "calibrage météo : passage" || echo "rien"
-          for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done
+          save() {
+            git add -f research/meteo-cache.json.gz research/meteo-obs.json.gz research/calibration-meteo.json research/calibration-meteo.txt 2>/dev/null || true
+            git commit -q -m "calibrage météo : $1" || return 0
+            for i in 1 2 3; do git pull -q --rebase --autostash && git push -q && break || sleep 5; done
+          }
+          python3 -u tools/gbif_meteo.py > research/calibration-meteo.txt 2>&1 &
+          PID=$!
+          while kill -0 $PID 2>/dev/null; do
+            for i in $(seq 1 24); do kill -0 $PID 2>/dev/null || break; sleep 10; done
+            save "progression"
+          done
+          wait $PID; RC=$?
+          save "résultat (code $RC)"
+          exit $RC
