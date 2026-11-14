@@ -80,6 +80,12 @@ try:
             step("calque foret", lambda: page.evaluate(CH % ("calque", "value='foret'") + ";map.setView([45.0,2.5],8)"), 4000)
             shot("15_calque_foret")
             step("calque off 2", lambda: page.evaluate(CH % ("calque", "value=''")), 1000)
+            # --- calque Observations GBIF (cèpe) : France entière, puis zoom régional ; on remet la pleurote ensuite ---
+            step("gbif cepe", lambda: page.evaluate("document.querySelector('#chips button[data-i=\'0\']').click();" + CH % ("calque", "value='gbif'") + ";map.setView([46.6,2.6],6)"), 4000)
+            shot("15b_calque_gbif_france")
+            step("gbif cepe zoom", lambda: page.evaluate("map.setView([44.3,-0.6],9)"), 3000)
+            shot("15c_calque_gbif_regional")
+            step("calque off 3", lambda: page.evaluate(CH % ("calque", "value=''") + ";document.querySelector('#chips button[data-i=\'13\']').click();map.setView([46.6,2.6],6)"), 2000)
             step("contours", lambda: page.evaluate(CH % ("cnv", "checked=true") + ";map.setView([45.19,5.72],12)"), 9000)
             shot("16_courbes_niveau")
             step("contours off", lambda: page.evaluate(CH % ("cnv", "checked=false")), 800)
