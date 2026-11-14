@@ -19,8 +19,9 @@ prudemment ici et marquées (~).
 | Chanterelle en tube | 0-4-11-16 | 30 mm | 11 (~7-15) | acide | léger = stimule | .16-.32 |
 | Coulemelle | 7-12-19-25 | 15 mm | 6 (5-8) | peu exigeant pH~6 | tue (<0) | .10-.24 (saprophyte) |
 
-*lactaire : délai réel 21-40 j après pluie, mais la série ne couvre que 14 j
-passés ; lag plafonné à 12 avec la pluie la plus ancienne disponible.
+*lactaire : délai réel 21-40 j après pluie ; lag plafonné à 12 (choix du modèle,
+non validé). La série météo couvre 40 j passés, mais la fenêtre de pluie du calcul
+reste de 14 j (voir « Décalage de la fenêtre de pluie » plus bas).
 
 ## Corrections majeures vs ancien modèle
 1. Lactaire délicieux était noté sol calcaire (c:1) -> la recherche dit
@@ -49,3 +50,18 @@ score = 100 x habitat^0.7 x (température x humidité)^0.9 x saison(GBIF) x gel 
 - saison : poids mensuels GBIF interpolés au jour
 - gel : coupe (sensibles), neutre (tolérants), bonus si gel léger (stimulées)
 - amplitude : bonus jusqu'à +10 % si choc thermique 6-13 °C
+
+## Décalage de la fenêtre de pluie (le « +4 »)
+
+Dans `weather()`, la fenêtre de pluie de 14 j se termine au jour `i - lag + 4`, et non à
+`i - lag`. Ce `+4` existe depuis le premier ajout du `lag` (commit 6c9afe3, « modèle
+calibré ») et n'est justifié nulle part. Conséquences : la pluie moyenne prise en compte
+est celle d'environ `lag + 2,5` jours avant le jour évalué (et non `lag + 6,5` avec la
+définition ci-dessus), et un `lag` de 3 ou moins fait finir la fenêtre au lendemain
+(pluie prévue). Ce décalage ne joue que sans humidité du sol réelle (repli) et pour la
+fenêtre longue `rr`.
+
+État : comportement conservé. Un calibrage sur observations GBIF datées (météo ERA5 par
+maille, comparaison à un groupe témoin d'autres champignons du même mois) est en cours
+sur la branche `calibrage-meteo` pour trancher. Aucun paramètre ne sera modifié sans
+intervalle de confiance excluant l'absence de signal et confirmation hors échantillon.
