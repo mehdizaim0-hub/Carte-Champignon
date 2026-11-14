@@ -1,1 +1,1 @@
-passage 1 bis - budget 3000 - journal et progression
+passage 2 - budget 3000 - 6 requetes en parallele
