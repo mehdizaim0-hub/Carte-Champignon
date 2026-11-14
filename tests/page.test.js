@@ -29,7 +29,7 @@ w.requestAnimationFrame = cb => setTimeout(cb, 0);
 w.Element.prototype.scrollTo = function () {};
 w.Element.prototype.scrollIntoView = function () {};
 
-const files = { 'data.json': 'data.json', 'terrain.json': 'terrain.json', 'forets.json': 'forets.json', 'urbain.json': 'urbain.json', 'routes.json': 'routes.json', 'sol.json': 'sol.json', 'relief.json': 'relief.json' };
+const files = { 'data.json': 'data.json', 'terrain.json': 'terrain.json', 'forets.json': 'forets.json', 'urbain.json': 'urbain.json', 'routes.json': 'routes.json', 'sol.json': 'sol.json', 'relief.json': 'relief.json', 'gbif.json': 'gbif.json' };
 w.fetch = async u => {
   u = String(u);
   for (const k in files) if (u.endsWith(k)) return { ok: true, status: 200, json: async () => JSON.parse(read(files[k])) };
@@ -150,6 +150,14 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('calque forêt : couche ajoutée à la carte et légende affichée', !!doc.querySelector('.leaflet-calque-pane img') && !$('calleg').hidden && /Feuillus/.test($('calleg').textContent));
   cq.value = 'ph'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
   check('calque pH : une seule couche, légende pH', doc.querySelectorAll('.leaflet-calque-pane img').length === 1 && /pH du sol/.test($('calleg').textContent));
+  cq.value = 'gbif'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  const gim = w.calqueImage('gbif');
+  check('calque GBIF : image générée sur la France, des blocs peints', !!gim && /^data:image/.test(gim.url) && gim.bounds[0][0] > 40 && gim.bounds[1][0] < 53 && gim.n > 100, gim && 'n=' + gim.n);
+  check('calque GBIF : une seule couche, légende avec la source et l\'avertissement', doc.querySelectorAll('.leaflet-calque-pane img').length === 1 && /GBIF\.org/.test($('calleg').textContent) && /pas une abondance/.test($('calleg').textContent));
+  const leg0 = $('calleg').textContent, spCur = w.__st.sp, spOther = spCur === 1 ? 2 : 1;
+  doc.querySelector('#chips button[data-i="' + spOther + '"]').click(); await sleep(400);
+  check('calque GBIF : suit l\'espèce choisie (légende changée, toujours une seule couche)', $('calleg').textContent !== leg0 && /Observations GBIF/.test($('calleg').textContent) && doc.querySelectorAll('.leaflet-calque-pane img').length === 1);
+  doc.querySelector('#chips button[data-i="' + spCur + '"]').click(); await sleep(300);
   cq.value = ''; cq.dispatchEvent(new w.Event('change')); await sleep(200);
   check('calque retiré : couche et légende disparues', !doc.querySelector('.leaflet-calque-pane img') && $('calleg').hidden);
 
