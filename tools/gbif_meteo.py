@@ -15,12 +15,14 @@ import gzip, json, os, random, sys, time, urllib.parse, urllib.request, urllib.e
 from collections import Counter, defaultdict
 from datetime import date, timedelta
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.getcwd()
 Y0, Y1, TEST_FROM = 2018, 2025, 2024          # années utilisées ; années de test (validation hors échantillon)
 LOOKBACK = 45                                  # jours de météo avant chaque observation
 WINS = (7, 14, 21)                             # longueurs de fenêtre de pluie testées (jours)
 DMAX = 25                                      # délai maximal testé (jours)
+WORKERS = int(os.environ.get("METEO_WORKERS") or 6)         # requêtes météo simultanées (la latence, pas le quota, était le facteur limitant)
 MAXMIN = float(os.environ.get("METEO_MAXMIN") or 100)       # durée maximale du passage (min) : on s'arrête proprement avant le délai du job
 T0 = time.time()
 BUDGET = float(os.environ.get("METEO_BUDGET") or 3000)   # poids d'appels Open-Meteo pour ce passage
@@ -190,34 +192,49 @@ def daymap(cache):
     return dm
 
 
+def fetch_range(ck, s, e):
+    la, lo = ck.split(",")
+    url = OM + "?" + urllib.parse.urlencode(dict(latitude=la, longitude=lo, start_date=s.isoformat(), end_date=e.isoformat(),
+                                                 daily="precipitation_sum,temperature_2m_mean,temperature_2m_min", timezone="UTC"))
+    dd = http(url)["daily"]
+    time.sleep(1.2)                                   # chaque fil reste sous ~1 requête/s : au plus ~6 par seconde en tout, loin des 600 poids/minute
+    return [dd["time"][0], dd["precipitation_sum"], dd["temperature_2m_mean"], dd["temperature_2m_min"]]
+
+
 def collect(ranges, cache, rnd):
     dm = daymap(cache)
     todo = [r for r in ranges if not all(r[1] + timedelta(i) in dm.get(r[0], {}) for i in range((r[2] - r[1]).days + 1))]
     rnd.shuffle(todo)
-    used, n = 0.0, 0
-    log("météo : %d plages à récupérer" % len(todo))
-    for ck, s, e in todo:
-        if (time.time() - T0) / 60 > MAXMIN:
-            print("ARRÊT : durée maximale du passage atteinte"); break
-        w = ((e - s).days + 1) / 14 * 0.3            # poids Open-Meteo : lieux x (jours/14) x (variables/10)
+    batch, used = [], 0.0
+    for r in todo:                                    # poids Open-Meteo : lieux x (jours/14) x (variables/10)
+        w = ((r[2] - r[1]).days + 1) / 14 * 0.3
         if used + w > BUDGET:
             break
-        la, lo = ck.split(",")
-        url = OM + "?" + urllib.parse.urlencode(dict(latitude=la, longitude=lo, start_date=s.isoformat(), end_date=e.isoformat(),
-                                                     daily="precipitation_sum,temperature_2m_mean,temperature_2m_min", timezone="UTC"))
+        batch.append(r); used += w
+    log("météo : %d plages manquantes, %d dans le budget (poids %.0f), %d requêtes en parallèle" % (len(todo), len(batch), used, WORKERS))
+    stop = {"v": False}
+
+    def work(r):
+        if stop["v"] or (time.time() - T0) / 60 > MAXMIN:
+            return r, None
         try:
-            d = http(url)
+            return r, fetch_range(*r)
         except Stop as ex:
-            print("ARRÊT :", ex); break
-        except urllib.error.HTTPError as ex:
-            print("plage ignorée", ck, s, e, ex.code); continue
-        dd = d["daily"]
-        cache.setdefault(ck, []).append([dd["time"][0], dd["precipitation_sum"], dd["temperature_2m_mean"], dd["temperature_2m_min"]])
-        used += w; n += 1
-        if n % 100 == 0:
-            save_gz(CACHE, cache)
-            log("météo : %d plages récupérées, poids %.0f / %.0f" % (n, used, BUDGET))
-        time.sleep(max(.4, w / 7))                   # reste sous 600 poids/minute
+            stop["v"] = True; print("ARRÊT :", ex, flush=True); return r, None
+        except Exception as ex:
+            print("plage ignorée", r[0], r[1], type(ex).__name__, flush=True); return r, None
+
+    n = 0
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for r, res in ex.map(work, batch):
+            if res is None:
+                continue
+            cache.setdefault(r[0], []).append(res); n += 1
+            if n % 100 == 0:
+                save_gz(CACHE, cache)
+                log("météo : %d plages récupérées sur %d" % (n, len(batch)))
+    if (time.time() - T0) / 60 > MAXMIN:
+        print("ARRÊT : durée maximale du passage atteinte")
     save_gz(CACHE, cache)
     return len(ranges), len(todo), n, used
 
