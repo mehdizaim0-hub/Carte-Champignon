@@ -1,0 +1,103 @@
+[debug desk] {"size": {"x": 1000, "y": 900}, "center": {"lat": 46.66789452932406, "lng": 2.5011230468750068}, "zoom": 6, "innerH": 900, "mobile": false, "sheet": "half", "sheetH": 432, "map": {"x": 440, "y": 0, "width": 1000, "height": 900, "top": 0, "right": 1440, "bottom": 900, "left": 440}, "side": {"x": 0, "y": 0, "width": 440, "height": 900, "top": 0, "right": 440, "bottom": 900, "left": 0}}
+[desk] étape gbif cepe en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[desk] étape calque off 3 en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[desk requestfailed] https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ELEVATION.CONTOUR.LINE&STYLE=normal&FORMAT=i net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/527/367.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/527/368.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/527/366.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/528/366.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/526/367.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/529/367.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/526/368.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/529/368.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/527/369.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/528/369.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/526/366.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/529/366.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/526/369.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/10/529/369.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/263/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/262/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/264/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/183.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/184.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/261/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/265/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/182.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/185.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/181.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/260/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/9/266/186.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/127/92.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/128/92.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/127/93.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/128/93.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/127/91.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/128/91.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/126/92.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/126/93.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/127/94.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/128/94.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/126/91.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/126/94.png net::ERR_ABORTED
+[desk requestfailed] https://tile.openstreetmap.org/8/129/94.png net::ERR_ABORTED
+[debug mob] {"size": {"x": 390, "y": 844}, "center": {"lat": 40.212440718286466, "lng": 2.2412109375000004}, "zoom": 5, "innerH": 844, "mobile": true, "sheet": "half", "sheetH": 405, "map": {"x": 0, "y": 0, "width": 390, "height": 844, "top": 0, "right": 390, "bottom": 844, "left": 0}, "side": {"x": 0, "y": 439, "width": 390, "height": 405, "top": 439, "right": 390, "bottom": 844, "left": 0}}
+[mob] étape gbif cepe en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[mob] étape calque off 3 en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[debug dark] {"size": {"x": 390, "y": 844}, "center": {"lat": 40.212440718286466, "lng": 2.2412109375000004}, "zoom": 5, "innerH": 844, "mobile": true, "sheet": "half", "sheetH": 405, "map": {"x": 0, "y": 0, "width": 390, "height": 844, "top": 0, "right": 390, "bottom": 844, "left": 0}, "side": {"x": 0, "y": 439, "width": 390, "height": 405, "top": 439, "right": 390, "bottom": 844, "left": 0}}
+[dark] étape gbif cepe en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[dark] étape calque off 3 en échec : Page.evaluate: SyntaxError: missing ) after argument list
+    at eval (<anonymous>)
+    at UtilityScript.evaluate (<anonymous>:370:30)
+    at UtilityScript.<ano
+[dark requestfailed] https://tile.openstreetmap.org/9/263/181.png net::ERR_ABORTED
+[dark requestfailed] https://tile.openstreetmap.org/9/263/186.png net::ERR_ABORTED
+[dark requestfailed] https://tile.openstreetmap.org/9/262/181.png net::ERR_ABORTED
+[dark requestfailed] https://tile.openstreetmap.org/9/264/181.png net::ERR_ABORTED
+[dark requestfailed] https://tile.openstreetmap.org/9/262/186.png net::ERR_ABORTED
+[dark requestfailed] https://tile.openstreetmap.org/9/264/186.png net::ERR_ABORTED
