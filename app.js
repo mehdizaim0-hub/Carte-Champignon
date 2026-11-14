@@ -72,7 +72,7 @@ function soilModelText(sp){
   if(sp.soc)o.push(`humus favorable (${L[sp.evo||0]})`);
   return o.join(" ; ");
 }
-let SOL=null;
+let SOL=null,GBIF=null;
 const SOIL={a:"acide",c:"calcaire",n:"neutre"},FOR={f:"feuillus",r:"résineux",m:"mixte"};
 const CITIES={"Paris":[48.86,2.35],"Lyon":[45.76,4.84],"Marseille":[43.3,5.37],"Toulouse":[43.6,1.44],"Bordeaux":[44.84,-0.58],"Nantes":[47.22,-1.55],"Lille":[50.63,3.06],"Strasbourg":[48.58,7.75],"Nice":[43.7,7.26],"Rennes":[48.11,-1.68],"Clermont-Ferrand":[45.78,3.08],"Grenoble":[45.19,5.72],"Dijon":[47.32,5.04],"Limoges":[45.83,1.26]};
 // ---------- Utilitaires ----------
@@ -358,6 +358,10 @@ function applySol(){   // moyenne du sol par maille (pour les listes et le calcu
 }
 async function loadSol(){
   try{const r=await fetch("sol.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();if(j.layers&&j.w)setSol(j)}catch(e){}
+}
+// Observations de cueilleurs (GBIF) : jours d'observation distincts par bloc de 2,8 km, par espèce (build_gbif.py). Calque seulement : n'entre pas dans le score.
+async function loadGbif(){
+  try{const r=await fetch("gbif.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();if(j.especes&&j.w)GBIF=j}catch(e){}
 }
 // ---------- Relief : altitude du bloc, pente, exposition, position topographique ----------
 // Source : tuiles d'altitude AWS (106 m par pixel) agrégées par blocs de 2,8 km (build_relief.py).
@@ -701,6 +705,7 @@ function updFade(){
 }
 function render(){
   const sp=SP[st.sp],d=st.day;
+  if(st.calque==="gbif"&&st.gbifSp!==st.sp)setCalque("gbif");
   setTimeout(updFade,0);
   if(st.live){renderMySpots();scheduleNow()}
   document.querySelectorAll("#chips button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===st.sp));
@@ -778,6 +783,7 @@ function phRGB(p){
   while(i<PHSTOPS.length-1&&p>PHSTOPS[i][0])i++;
   const a=PHSTOPS[i-1],b=PHSTOPS[i],t=(p-a[0])/(b[0]-a[0]);return[1,2,3].map(k=>Math.round(a[k]+(b[k]-a[k])*t));
 }
+const GBCOL=[[170,150,250,200],[130,100,235,215],[95,60,210,230],[60,25,160,245]];   // 1 jour, 2-3, 4-9, 10 et +
 function calqueImage(key){
   if(!heatGeom)return null;
   const{la0,lo0,dLat,dLon}=heatGeom;let W,H,K,get;
@@ -787,6 +793,15 @@ function calqueImage(key){
   }else if(key==="ph"){
     if(!SOL||!SOL.ph)return null;W=SOL.w;K=SOL.K;H=SOL.h||Math.round(SOL.ph.length/W);
     get=(y,x)=>{const v=SOL.ph[y*W+x];if(v===255)return null;const c=phRGB(v/10);return[c[0],c[1],c[2],170]};
+  }else if(key==="gbif"){
+    const e=GBIF&&GBIF.especes&&GBIF.especes[SP[st.sp].n];if(!e)return null;W=GBIF.w;H=GBIF.h;K=GBIF.K;
+    const cnt=new Uint8Array(W*H);for(let i=0;i<e.b.length;i+=2)cnt[e.b[i]]=Math.min(255,e.b[i+1]);
+    const cls=c=>c>=10?3:c>=4?2:c>=2?1:0;
+    get=(y,x)=>{   // bloc observé : couleur selon le nombre ; blocs voisins : halo léger (un bloc seul serait invisible à l'échelle de la France)
+      const c=cnt[y*W+x];if(c)return GBCOL[cls(c)];
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if(yy>=0&&yy<H&&xx>=0&&xx<W&&cnt[yy*W+xx])return[GBCOL[0][0],GBCOL[0][1],GBCOL[0][2],70]}
+      return null;
+    };
   }else return null;
   const latS=la0-dLat/2,bl=dLat/K,latN=latS+H*bl,lonW=lo0-dLon/2,lonE=lonW+W*(dLon/K);
   const mer=la=>Math.log(Math.tan(Math.PI/4+la*Math.PI/360)),inv=y=>(2*Math.atan(Math.exp(y))-Math.PI/2)*180/Math.PI;
@@ -802,11 +817,14 @@ function calqueImage(key){
 function calqueLegend(key){
   const sw=(c,l)=>`<span class="it"><i class="sw" style="background:rgb(${c.join(",")})"></i>${l}</span>`;
   if(key==="foret")return "<b>Type de forêt</b><br>"+sw(FCOL[1],"Feuillus")+sw(FCOL[2],"Résineux")+sw(FCOL[3],"Mixte")+sw(FCOL[4],"Bois épars (teinte claire)")+sw(FCOL[7],"Prairie, milieu ouvert");
+  if(key==="gbif"){const sp=SP[st.sp],e=GBIF&&GBIF.especes&&GBIF.especes[sp.n];
+    return `<b>Observations GBIF : ${sp.n}</b><br>`+sw(GBCOL[0],"1 jour")+sw(GBCOL[1],"2 à 3")+sw(GBCOL[2],"4 à 9")+sw(GBCOL[3],"10 et +")+
+      `<br><small>Jours d'observation distincts par bloc de ~2,8 km, ${GBIF.periode[0]}–${GBIF.periode[1]}${e?" ("+e.n+" au total)":""}. Ce n'est pas une abondance : les observateurs se concentrent près des villes et des sentiers. Source : GBIF.org.</small>`}
   const g=PHSTOPS.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${Math.round((s[0]-4.5)/3.8*100)}%`).join(",");
   return `<b>pH du sol</b><div class="calbar" style="background:linear-gradient(90deg,${g})"></div><div class="calrow"><span>4,5 acide</span><span>6,5 neutre</span><span>8,3 calcaire</span></div>`;
 }
 function setCalque(key){
-  st.calque=key||"";
+  st.calque=key||"";st.gbifSp=st.sp;
   if(calqueLayer){map.removeLayer(calqueLayer);calqueLayer=null}
   const lg=$("calleg");lg.hidden=true;lg.textContent="";
   if(!st.calque)return;
@@ -1669,7 +1687,7 @@ async function loadLive(){
     st.pt=null;st.ptZ=null;
     buildHeat();indexCells();
     render();
-    await Promise.all([loadForets(),loadMasks(),loadSol(),loadRelief()]);
+    await Promise.all([loadForets(),loadMasks(),loadSol(),loadRelief(),loadGbif()]);
     applySol();
     applyRelief();
     buildFineGrid();
