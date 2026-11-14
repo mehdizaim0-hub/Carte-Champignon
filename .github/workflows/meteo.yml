@@ -32,7 +32,9 @@ jobs:
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
           save() {
-            git add -f research/meteo-cache.json.gz research/meteo-obs.json.gz research/calibration-meteo.json research/calibration-meteo.txt 2>/dev/null || true
+            for f in research/meteo-cache.json.gz research/meteo-obs.json.gz research/calibration-meteo.json research/calibration-meteo.txt; do
+              if [ -e "$f" ]; then git add -f "$f"; fi
+            done
             git commit -q -m "calibrage météo : $1" || return 0
             for i in 1 2 3; do git pull -q --rebase --autostash && git push -q && break || sleep 5; done
           }
