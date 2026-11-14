@@ -8,3 +8,12 @@ observations : Cèpe de Bordeaux 413, Girolle 236, Morille 131 ; témoin 2500
 [  174 s] météo : 600 plages récupérées sur 2011
 [  201 s] météo : 700 plages récupérées sur 2011
 [  228 s] météo : 800 plages récupérées sur 2011
+[  255 s] météo : 900 plages récupérées sur 2011
+[  282 s] météo : 1000 plages récupérées sur 2011
+[  309 s] météo : 1100 plages récupérées sur 2011
+[  336 s] météo : 1200 plages récupérées sur 2011
+[  363 s] météo : 1300 plages récupérées sur 2011
+[  390 s] météo : 1400 plages récupérées sur 2011
+[  418 s] météo : 1500 plages récupérées sur 2011
+[  445 s] météo : 1600 plages récupérées sur 2011
+[  472 s] météo : 1700 plages récupérées sur 2011
