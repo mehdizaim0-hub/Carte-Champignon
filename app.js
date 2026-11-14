@@ -90,6 +90,8 @@ function weather(z,d,lag,tw,rw,dT){
   if(L){
     const off=dT!=null?dT:(z.dT||0);   // correction d'altitude : -6,5 °C par km par rapport au point de la série
     const P=L.p,T=L.t,i=Math.min((L.off!=null?L.off:st.off)+d,P.length-1);
+    // Fenêtre de pluie de 14 j qui se termine à i-lag+4 (et non i-lag) : le +4 date du premier ajout du lag, sans justification
+    // écrite. Un lag <= 3 fait donc finir la fenêtre au lendemain (pluie prévue). Comportement conservé : voir research/synthese-modele.md.
     const iLag=Math.max(0,Math.min(i-(lag||0)+4,P.length-1));
     let r=0;for(let k=Math.max(0,iLag-13);k<=iLag;k++)r+=P[k]||0;
     const n=tw||7;let t=0,nt=0;for(let k=Math.max(0,i-n+1);k<=i;k++){t+=T[k]||0;nt++}
