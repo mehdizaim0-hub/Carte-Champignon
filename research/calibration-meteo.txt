@@ -17,3 +17,46 @@ observations : Cèpe de Bordeaux 413, Girolle 236, Morille 131 ; témoin 2500
 [  418 s] météo : 1500 plages récupérées sur 2011
 [  445 s] météo : 1600 plages récupérées sur 2011
 [  472 s] météo : 1700 plages récupérées sur 2011
+[  560 s] météo : 1800 plages récupérées sur 2011
+[  560 s] météo : 1900 plages récupérées sur 2011
+[  563 s] météo : 2000 plages récupérées sur 2011
+plages météo : 2370 au total, 2011 manquantes avant ce passage, 2011 récupérées (poids 2243, budget 3000)
+[  566 s] analyse
+
+Cèpe de Bordeaux : 413/413 observations avec météo complète ; témoin 2500/2500
+
+=== Cèpe de Bordeaux : 413 observations, 2500 témoins ===
+  appli actuelle (lag-4)         délai  4 j, fenêtre 14 j : AUC 0.576  IC95 [0.549, 0.609]
+  définition documentée (lag)    délai  8 j, fenêtre 14 j : AUC 0.587  IC95 [0.555, 0.619]
+  meilleur mesuré                délai 13 j, fenêtre  7 j : AUC 0.609  IC95 [0.582, 0.644]
+  DÉLAI MESURÉ (fenêtres 3 j) : pic à 15 j avant l'observation, IC95 du pic [bas, médian, haut] = [14, 15, 16], AUC au pic 0.606
+  centre de la pluie prise en compte : mesuré 16.0 j | appli actuelle 10.5 j | définition documentée 14.5 j
+  choisi sur 2018-2023 -> test 2024-25 : délai 4 fenêtre 21 : AUC train 0.590, test 0.52 (n=132)
+  T° moy 7 j (p5/25/50/75/95)  obs [7.2, 10.8, 13.0, 15.1, 18.8]  témoin [6.2, 11.2, 13.4, 16.3, 20.6]
+  gel 3 j  <0 °C : obs 2.2 % / témoin 4.2 %   < -3 °C : obs 0.5 % / témoin 1.1 %
+
+Girolle : 236/236 observations avec météo complète ; témoin 2500/2500
+
+=== Girolle : 236 observations, 2500 témoins ===
+  appli actuelle (lag-4)         délai  2 j, fenêtre 14 j : AUC 0.602  IC95 [0.555, 0.649]
+  définition documentée (lag)    délai  6 j, fenêtre 14 j : AUC 0.599  IC95 [0.553, 0.646]
+  meilleur mesuré                délai  0 j, fenêtre 21 j : AUC 0.618  IC95 [0.565, 0.669]
+  DÉLAI MESURÉ (fenêtres 3 j) : pic à 4 j avant l'observation, IC95 du pic [bas, médian, haut] = [0, 11, 25], AUC au pic 0.568
+  centre de la pluie prise en compte : mesuré 5.0 j | appli actuelle 8.5 j | définition documentée 12.5 j
+  choisi sur 2018-2023 -> test 2024-25 : délai 23 fenêtre 21 : AUC train 0.630, test 0.582 (n=93)
+  T° moy 7 j (p5/25/50/75/95)  obs [7.6, 12.6, 15.6, 17.8, 21.2]  témoin [7.1, 12.5, 15.7, 18.8, 23.1]
+  gel 3 j  <0 °C : obs 3.0 % / témoin 3.0 %   < -3 °C : obs 0.4 % / témoin 0.8 %
+
+Morille : 131/131 observations avec météo complète ; témoin 2500/2500
+
+=== Morille : 131 observations, 2500 témoins ===
+  appli actuelle (lag-4)         délai  1 j, fenêtre 14 j : AUC 0.617  IC95 [0.55, 0.678]
+  définition documentée (lag)    délai  5 j, fenêtre 14 j : AUC 0.620  IC95 [0.559, 0.674]
+  meilleur mesuré                délai  3 j, fenêtre 14 j : AUC 0.634  IC95 [0.578, 0.707]
+  DÉLAI MESURÉ (fenêtres 3 j) : pic à 5 j avant l'observation, IC95 du pic [bas, médian, haut] = [3, 5, 11], AUC au pic 0.630
+  centre de la pluie prise en compte : mesuré 6.0 j | appli actuelle 7.5 j | définition documentée 11.5 j
+  choisi sur 2018-2023 -> test 2024-25 : délai 10 fenêtre 7 : AUC train 0.608, test 0.602 (n=35)
+  T° moy 7 j (p5/25/50/75/95)  obs [3.3, 7.7, 9.6, 11.9, 14.6]  témoin [4.3, 7.9, 10.6, 13.0, 15.8]
+  gel 3 j  <0 °C : obs 16.0 % / témoin 11.1 %   < -3 °C : obs 4.6 % / témoin 2.8 %
+
+OK : /home/runner/work/Carte-Champignon/Carte-Champignon/research/calibration-meteo.json
