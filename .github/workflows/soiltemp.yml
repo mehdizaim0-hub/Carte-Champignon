@@ -22,8 +22,8 @@ jobs:
       - name: Test sol contre air (commits de progression toutes les 4 minutes)
         shell: bash
         env:
-          SOIL_MAXMIN: "60"
-          METEO_WORKERS: "20"
+          SOIL_MAXMIN: "70"
+          METEO_WORKERS: "12"
         run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
