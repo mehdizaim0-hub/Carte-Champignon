@@ -23,6 +23,7 @@ jobs:
         shell: bash
         env:
           SOIL_MAXMIN: "60"
+          METEO_WORKERS: "20"
         run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
