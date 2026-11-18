@@ -1,12 +1,3 @@
 [    0 s] échantillon : Morille 131 observations, témoin 1500 (mois de la morille)
-[    2 s] variable retenue : soil_temperature_0_to_7cm (valeurs [1.53, -2.15, -3.07, -2.48])
-[    2 s] sol : 1249 plages manquantes, 1249 dans le budget (poids 92)
-ARRÊT : limite de débit (429) : {"error":true,"reason":"Too many concurrent requests"}
-ARRÊT : limite de débit (429) : {"reason":"Too many concurrent requests","error":true}
-ARRÊT : limite de débit (429) : {"error":true,"reason":"Too many concurrent requests"}
-ARRÊT : limite de débit (429) : {"reason":"Too many concurrent requests","error":true}
-ARRÊT : limite de débit (429) : {"error":true,"reason":"Too many concurrent requests"}
-[  140 s] plages : 1349 au total, 1249 manquantes avant ce passage, 38 récupérées
-[  140 s] observations complètes : Morille 10/131, témoin 150/1500
-COUVERTURE INSUFFISANTE : relancer un passage
-[  140 s] terminé
+[    2 s] variable retenue : soil_temperature_0_to_7cm (valeurs [9.24, 4.62, 1.4, 4.12])
+[    2 s] sol : 716 plages manquantes, 716 dans le budget (poids 52)
