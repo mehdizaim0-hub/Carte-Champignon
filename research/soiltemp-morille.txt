@@ -3,3 +3,4 @@
 [    2 s] sol : 716 plages manquantes, 716 dans le budget (poids 52)
 [  309 s] sol : 100 plages récupérées sur 716
 [  608 s] sol : 200 plages récupérées sur 716
+[  907 s] sol : 300 plages récupérées sur 716
