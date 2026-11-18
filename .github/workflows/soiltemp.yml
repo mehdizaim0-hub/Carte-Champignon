@@ -1,0 +1,44 @@
+name: Test température du sol (morille)
+on:
+  workflow_dispatch:
+  push:
+    branches: [calibrage-meteo]
+    paths: [research/lancer-soiltemp.txt]
+permissions:
+  contents: write
+concurrency:
+  group: soiltemp
+  cancel-in-progress: false
+jobs:
+  sol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - name: Test sol contre air (commits de progression toutes les 4 minutes)
+        shell: bash
+        env:
+          SOIL_MAXMIN: "60"
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          save() {
+            for f in research/soiltemp-cache.json.gz research/soiltemp-morille.json research/soiltemp-morille.txt; do
+              if [ -e "$f" ]; then git add -f "$f"; fi
+            done
+            git commit -q -m "test sol (morille) : $1" || return 0
+            for i in 1 2 3; do git pull -q --rebase --autostash && git push -q && break || sleep 5; done
+          }
+          python3 -u tools/soiltemp_morille.py > research/soiltemp-morille.txt 2>&1 &
+          PID=$!
+          while kill -0 $PID 2>/dev/null; do
+            for i in $(seq 1 24); do kill -0 $PID 2>/dev/null || break; sleep 10; done
+            save "progression"
+          done
+          wait $PID; RC=$?
+          save "résultat (code $RC)"
+          exit $RC
