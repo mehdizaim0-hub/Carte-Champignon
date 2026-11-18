@@ -4,3 +4,5 @@
 [  309 s] sol : 100 plages récupérées sur 716
 [  608 s] sol : 200 plages récupérées sur 716
 [  907 s] sol : 300 plages récupérées sur 716
+[ 1307 s] sol : 400 plages récupérées sur 716
+[ 1406 s] sol : 500 plages récupérées sur 716
