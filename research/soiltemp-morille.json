@@ -1,0 +1,14 @@
+{
+ "variable_sol": "soil_temperature_0_to_7cm",
+ "couverture": {
+  "obs": [
+   10,
+   131
+  ],
+  "temoin": [
+   150,
+   1500
+  ]
+ },
+ "verdict": "COUVERTURE INSUFFISANTE : relancer un passage"
+}
