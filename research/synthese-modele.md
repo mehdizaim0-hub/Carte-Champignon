@@ -65,3 +65,31 @@ fenêtre longue `rr`.
 maille, comparaison à un groupe témoin d'autres champignons du même mois) est en cours
 sur la branche `calibrage-meteo` pour trancher. Aucun paramètre ne sera modifié sans
 intervalle de confiance excluant l'absence de signal et confirmation hors échantillon.
+
+## Calibrage sur observations GBIF (novembre 2026)
+
+Méthode : observations humaines GBIF en France, 2018-2025 (cèpe de Bordeaux 413, girolle 236,
+morille 131), météo ERA5 (archive Open-Meteo) par maille de 17 km, comparées à un groupe
+témoin d'observations d'autres champignons du même mois. Indicateur : AUC (0,5 = aucun signal),
+intervalles à 95 % par rééchantillonnage des mailles. Scripts : `tools/gbif_meteo.py` et
+`tools/soiltemp_morille.py` (branche `calibrage-meteo`).
+
+- **Pluie** : les trois espèces sont observées après plus de pluie que le témoin (AUC de 0,58 à
+  0,63, intervalles excluant 0,5). Le sens du modèle est confirmé ; le signal est faible.
+- **Délai pluie -> observation** : cèpe, pic vers 15 j (stable sur quatre découpages de
+  période), à lire comme un majorant puisqu'une date d'observation suit l'apparition ; morille,
+  3 à 5 j (cohérent avec lag = 5) ; girolle, délai non identifiable. Aucun `lag` modifié.
+- **Le +4** : ni confirmé ni infirmé (les écarts d'AUC restent dans les intervalles). Inchangé.
+- **Températures** : les trapèzes du cèpe et de la girolle sont cohérents avec les observations.
+  Celui de la morille, `[6, 10, 16, 21]`, ne discrimine pas mieux que le hasard (AUC 0,48 sur la
+  température de l'air, 0,49 sur celle du sol à 0-7 cm). L'hypothèse « seuils de sol appliqués à
+  l'air » est écartée : l'écart sol - air médian des observations n'est que de +0,3 °C.
+  Environ 11 à 13 % des observations tombent hors du trapèze (score nul). Le décaler de -3 °C
+  améliore l'AUC (0,57 sur l'air, 0,59 sur le sol), et sur l'air l'amélioration se retrouve
+  sur 2018-2023 et sur 2024-2025. Non appliqué : 131 observations seulement, pas de correction
+  d'altitude, et une date d'observation n'est pas une date de sortie.
+- **Gel** : signal faible (cèpe 2,2 % d'observations après gel contre 4,2 % pour le témoin ;
+  morille 16 % contre 11 %).
+
+Limites : aucune vraie absence (témoin statistique), réanalyse et non prévisions, observateurs
+concentrés près des villes et des sentiers. Aucun paramètre de `species.js` n'a été modifié.
