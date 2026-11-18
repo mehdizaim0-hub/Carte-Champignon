@@ -2,13 +2,77 @@
  "variable_sol": "soil_temperature_0_to_7cm",
  "couverture": {
   "obs": [
-   10,
+   131,
    131
   ],
   "temoin": [
-   150,
-   1500
+   800,
+   800
   ]
  },
- "verdict": "COUVERTURE INSUFFISANTE : relancer un passage"
+ "n_obs": 131,
+ "n_temoin": 800,
+ "trapeze": [
+  6,
+  10,
+  16,
+  21
+ ],
+ "fenetre_jours": 7,
+ "sol": {
+  "auc": 0.493,
+  "ic95": [
+   0.439,
+   0.55
+  ],
+  "auc_2018_2023": 0.519,
+  "auc_2024_2025": 0.452,
+  "hors_trapeze_obs_pct": 11.5,
+  "hors_trapeze_temoin_pct": 9.4,
+  "percentiles_obs_5_25_50_75_95": [
+   4.3,
+   8.2,
+   10.1,
+   11.8,
+   14.2
+  ],
+  "decalage_trapeze_auc": {
+   "-3": 0.592,
+   "-2": 0.559,
+   "-1": 0.52,
+   "+0": 0.493,
+   "+1": 0.459,
+   "+2": 0.433,
+   "+3": 0.421
+  }
+ },
+ "air": {
+  "auc": 0.476,
+  "ic95": [
+   0.42,
+   0.532
+  ],
+  "auc_2018_2023": 0.501,
+  "auc_2024_2025": 0.447,
+  "hors_trapeze_obs_pct": 13.0,
+  "hors_trapeze_temoin_pct": 11.4,
+  "percentiles_obs_5_25_50_75_95": [
+   3.3,
+   7.7,
+   9.6,
+   11.9,
+   14.6
+  ],
+  "decalage_trapeze_auc": {
+   "-3": 0.57,
+   "-2": 0.529,
+   "-1": 0.518,
+   "+0": 0.476,
+   "+1": 0.453,
+   "+2": 0.434,
+   "+3": 0.428
+  }
+ },
+ "ecart_sol_moins_air_mediane_obs": 0.29,
+ "verdict": "NON SOUTENUE : le trapèze appliqué au sol ne dépasse pas clairement le hasard."
 }

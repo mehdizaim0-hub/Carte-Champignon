@@ -7,3 +7,13 @@
 [ 1307 s] sol : 400 plages récupérées sur 716
 [ 1406 s] sol : 500 plages récupérées sur 716
 [ 1802 s] sol : 600 plages récupérées sur 716
+[ 1999 s] sol : 700 plages récupérées sur 716
+[ 2007 s] plages : 804 au total, 716 manquantes avant ce passage, 716 récupérées
+[ 2007 s] observations complètes : Morille 131/131, témoin 800/800
+sol  : AUC 0.493 IC95 [0.439, 0.55] | 2018-23 0.519 | 2024-25 0.452 | hors trapèze obs 11.5 % / témoin 9.4 % | T° obs p5/25/50/75/95 [4.3, 8.2, 10.1, 11.8, 14.2]
+       décalage du trapèze -> AUC : {'-3': 0.592, '-2': 0.559, '-1': 0.52, '+0': 0.493, '+1': 0.459, '+2': 0.433, '+3': 0.421}
+air  : AUC 0.476 IC95 [0.42, 0.532] | 2018-23 0.501 | 2024-25 0.447 | hors trapèze obs 13.0 % / témoin 11.4 % | T° obs p5/25/50/75/95 [3.3, 7.7, 9.6, 11.9, 14.6]
+       décalage du trapèze -> AUC : {'-3': 0.57, '-2': 0.529, '-1': 0.518, '+0': 0.476, '+1': 0.453, '+2': 0.434, '+3': 0.428}
+écart médian sol - air (observations) : +0.29 °C
+VERDICT : NON SOUTENUE : le trapèze appliqué au sol ne dépasse pas clairement le hasard.
+[ 2007 s] terminé
