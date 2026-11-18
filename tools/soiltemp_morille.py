@@ -7,7 +7,7 @@ observations de morille d'un groupe témoin (autres champignons du même mois) q
 Réutilise tools/gbif_meteo.py (échantillon figé research/meteo-obs.json.gz, cache météo de l'air research/meteo-cache.json.gz).
 Sorties : research/soiltemp-morille.json, cache research/soiltemp-cache.json.gz. Budget et reprise comme le calibrage météo.
 """
-import os, sys, time, json, random, urllib.parse, urllib.error
+import os, sys, time, json, random, urllib.parse, urllib.error, urllib.request
 from datetime import date, timedelta
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -19,7 +19,8 @@ LOOK = TW + 1
 CACHE = os.path.join(gm.ROOT, "research", "soiltemp-cache.json.gz")
 OUT = os.path.join(gm.ROOT, "research", "soiltemp-morille.json")
 WORKERS = int(os.environ.get("METEO_WORKERS") or 6)
-MAXMIN = float(os.environ.get("SOIL_MAXMIN") or 60)
+MAXMIN = float(os.environ.get("SOIL_MAXMIN") or 70)
+BG_N = int(os.environ.get("SOIL_BG") or 800)                 # taille du groupe témoin (limite le nombre de plages à récupérer)
 BUDGET = float(os.environ.get("SOIL_BUDGET") or 1500)
 CANDS = ["soil_temperature_0_to_7cm", "soil_temperature_0cm", "soil_temperature_6cm"]
 T0 = time.time()
@@ -55,10 +56,30 @@ def plan(obs):
     return rng
 
 
+def http_soft(url):
+    """Comme gm.http, mais un refus « trop de requêtes simultanées » (429) provoque une courte attente puis une nouvelle tentative :
+    seuls les vrais quotas (horaire, journalier) arrêtent le passage."""
+    for a in range(40):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=gm.HDR), timeout=90) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            try: body = e.read().decode("utf-8", "replace")[:200]
+            except Exception: body = ""
+            if e.code == 429:
+                if "aily" in body or "ourly" in body: raise gm.Stop("quota Open-Meteo atteint : " + body)
+                time.sleep(30 if "inutely" in body else 3 + random.random() * 6); continue
+            if e.code >= 500: time.sleep(3 * (a % 5 + 1)); continue
+            raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            time.sleep(3)
+    raise RuntimeError("trop d'échecs successifs")
+
+
 def fetch_range(ck, s, e, var):
     la, lo = ck.split(",")
     url = gm.OM + "?" + urllib.parse.urlencode(dict(latitude=la, longitude=lo, start_date=s.isoformat(), end_date=e.isoformat(), hourly=var, timezone="UTC"))
-    h = gm.http(url)["hourly"]
+    h = http_soft(url)["hourly"]
     by = defaultdict(list)
     for t, v in zip(h["time"], h[var]):
         if v is not None: by[t[:10]].append(v)
@@ -190,6 +211,7 @@ def analyse(S, Bg, rnd):
 def main():
     sp, bg = sample()
     log("échantillon : %s %d observations, témoin %d (mois de la morille)" % (NAME, len(sp), len(bg)))
+    if len(bg) > BG_N: bg = random.Random(2).sample(bg, BG_N)
     rng = plan(sp + bg)
     cache = gm.load_gz(CACHE, {})
     var = pick_variable(rng[0])                           # une à trois requêtes : on ne parie pas sur un seul nom de variable
