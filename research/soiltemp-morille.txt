@@ -1,3 +1,4 @@
 [    0 s] échantillon : Morille 131 observations, témoin 1500 (mois de la morille)
 [    2 s] variable retenue : soil_temperature_0_to_7cm (valeurs [1.53, -2.15, -3.07, -2.48])
 [    2 s] sol : 1349 plages manquantes, 1349 dans le budget (poids 99)
+[  357 s] sol : 100 plages récupérées sur 1349
