@@ -783,7 +783,7 @@ function phRGB(p){
   while(i<PHSTOPS.length-1&&p>PHSTOPS[i][0])i++;
   const a=PHSTOPS[i-1],b=PHSTOPS[i],t=(p-a[0])/(b[0]-a[0]);return[1,2,3].map(k=>Math.round(a[k]+(b[k]-a[k])*t));
 }
-const GBCOL=[[170,150,250,200],[130,100,235,215],[95,60,210,230],[60,25,160,245]];   // 1 jour, 2-3, 4-9, 10 et +
+const GBCOL=[[79,70,229,235],[67,56,202,242],[55,48,163,248],[30,27,75,255]];   // 1 jour, 2-3, 4-9, 10 et + (indigo, bien visible sur le fond gris de la carte)
 function calqueImage(key){
   if(!heatGeom)return null;
   const{la0,lo0,dLat,dLon}=heatGeom;let W,H,K,get;
@@ -799,7 +799,7 @@ function calqueImage(key){
     const cls=c=>c>=10?3:c>=4?2:c>=2?1:0;
     get=(y,x)=>{   // bloc observé : couleur selon le nombre ; blocs voisins : halo léger (un bloc seul serait invisible à l'échelle de la France)
       const c=cnt[y*W+x];if(c)return GBCOL[cls(c)];
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if(yy>=0&&yy<H&&xx>=0&&xx<W&&cnt[yy*W+xx])return[GBCOL[0][0],GBCOL[0][1],GBCOL[0][2],70]}
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if(yy>=0&&yy<H&&xx>=0&&xx<W&&cnt[yy*W+xx])return[GBCOL[0][0],GBCOL[0][1],GBCOL[0][2],115]}
       return null;
     };
   }else return null;
