@@ -30,9 +30,11 @@ w.Element.prototype.scrollTo = function () {};
 w.Element.prototype.scrollIntoView = function () {};
 
 const files = { 'data.json': 'data.json', 'terrain.json': 'terrain.json', 'forets.json': 'forets.json', 'urbain.json': 'urbain.json', 'routes.json': 'routes.json', 'sol.json': 'sol.json', 'relief.json': 'relief.json', 'gbif.json': 'gbif.json' };
+// Le serveur factice recale data.json sur aujourd'hui : les tests ne dépendent plus de l'âge réel du fichier (sinon l'appli affiche « Données anciennes »).
+const fresh = j => { const past = Math.max(1, j.cells[0][3].length - 8), d = new Date(); d.setDate(d.getDate() - past); j.start = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); j.generated = new Date().toISOString(); return j; };
 w.fetch = async u => {
   u = String(u);
-  for (const k in files) if (u.endsWith(k)) return { ok: true, status: 200, json: async () => JSON.parse(read(files[k])) };
+  for (const k in files) if (u.endsWith(k)) return { ok: true, status: 200, json: async () => (k === 'data.json' ? fresh(JSON.parse(read(files[k]))) : JSON.parse(read(files[k]))) };
   if (u.includes('wikipedia.org/api/rest_v1')) return { ok: true, json: async () => ({ thumbnail: { source: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Boletus_edulis_0.jpg/330px-Boletus_edulis_0.jpg?x=1' } }) };
   if (u.includes('commons.wikimedia.org/w/api.php')) return { ok: true, json: async () => ({ query: { pages: { 1: { imageinfo: [{ extmetadata: { Artist: { value: '<a>Auteur Test</a>' }, LicenseShortName: { value: 'CC BY 4.0' } } }] } } } }) };
   if (u.includes('v1/elevation')) return { ok: true, json: async () => ({ elevation: [1042, 1018, 1056, 1031] }) };
