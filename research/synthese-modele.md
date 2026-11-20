@@ -11,7 +11,7 @@ prudemment ici et marquées (~).
 |---|---|---|---|---|---|---|
 | Cèpe de Bordeaux | 5-12-19-23 | 35 mm | 8 (5-15) | acide 4.5-6.5 | tue | .12-.28 |
 | Girolle | 8-14-20-26 | 30 mm | 6 (3-10) | acide | tue | .12-.28 |
-| Morille | 6-10-16-21 | 20 mm | 5 (4-5) | CALCAIRE 7.2-8.1 strict | tue primordia | .14-.30 |
+| Morille | 2-6-12-17 (calé sur GBIF, estimé ; était 6-10-16-21) | 20 mm | 5 (4-5) | CALCAIRE 7.2-8.1 strict | tue primordia | .14-.30 |
 | Trompette de la mort | 2-7-14-19 | 30 mm | 9 (5-13) | ACIDE 4.5-6.0 | léger = stimule ! | .16-.32 (3-4 sem humide) |
 | Pied-de-mouton | 3-9-17-21 | 30 mm | 11 (8-14) | acide pH 5.5 | tolère (arrêt < -5) | .13-.29 |
 | Lactaire délicieux | 4-10-16-20 | 20 mm | 12* (réel 21-40 !) | ACIDE 5.0-6.5 strict | tolère | .13-.30 |
@@ -93,3 +93,18 @@ intervalles à 95 % par rééchantillonnage des mailles. Scripts : `tools/gbif_m
 
 Limites : aucune vraie absence (témoin statistique), réanalyse et non prévisions, observateurs
 concentrés près des villes et des sentiers. Aucun paramètre de `species.js` n'a été modifié.
+
+### Trapèze de température de la morille : décalage de -4 °C (novembre 2026)
+
+Le trapèze d'origine `[6, 10, 16, 21]` (seuils de sol à 5 cm tirés des notes de recherche) ne
+discriminait pas les observations de morille du groupe témoin (AUC 0,48 sur la température de
+l'air) et donnait un score nul à 13 % des observations réelles. Sur 131 observations, décaler le
+trapèze de -4 °C donne `[2, 6, 12, 17]` : AUC 0,558 (IC 95 % 0,51-0,61), meilleure que l'ancien
+trapèze sur 2018-2023 (0,575 contre 0,497) et sur 2024-2025 (0,540 contre 0,461), et 3 % des
+observations seulement à score nul. C'est le plus petit décalage dont l'intervalle de confiance
+exclut 0,5 (-3 °C : borne basse 0,498).
+
+Ce paramètre est **estimé** (calé sur des dates d'observation GBIF), pas étayé par une source
+de terrain : la date d'une observation n'est pas la date de sortie, l'échantillon est petit
+(131) et l'analyse n'applique pas la correction d'altitude de l'appli. À revalider avec le
+carnet « Trouvailles » ou davantage d'observations. Pour revenir en arrière : `t:[6,10,16,21]`.
