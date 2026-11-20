@@ -1,6 +1,8 @@
 name: Observations GBIF par bloc (calque)
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "23 3 1 * *"   # chaque 1er du mois
   push:
     branches: [surcouche-gbif]
     paths: [research/lancer-gbif.txt]
