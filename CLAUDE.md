@@ -15,6 +15,7 @@ Pas de serveur : la page lit des fichiers JSON du dépôt et interroge quelques 
 | `routes.json` | autoroutes et grands axes (BD TOPO) | `build_routes.py` | rare (`masques.yml`) |
 | `sol.json` | pH, sable, argile, carbone organique, blocs de 2,8 km (SoilGrids) | `build_sol.py` | rare (`sol.yml`) |
 | `relief.json` | altitude, pente, exposition, position topographique, blocs de 2,8 km | `build_relief.py` | rare (`relief.yml`) |
+| `gbif.json` | observations de cueilleurs : jours d'observation distincts par bloc de 2,8 km et par espèce (GBIF, 2010-2026), pour le calque « Observations GBIF » | `build_gbif.py` | **chaque mois** (`gbif-obs.yml`, 1er du mois) |
 | `terrain.json` | pH et forêt par maille (ancien, sert de repli) | `build_terrain.py` | rare |
 | `research/` | sources scientifiques et justification des paramètres | à la main | — |
 | `tools/gbif_calib.py` | calibrage saisons, altitude, pH, habitat sur observations GBIF (workflow « Calibrage GBIF ») | à la main | à la demande |
@@ -42,6 +43,8 @@ Conventions : français partout (texte, commentaires) ; les identifiants HTML so
 4. **Fiche espèce** repliable (photo Wikipédia, hôtes, sol, relief, saison, reconnaissance).
 Sur la carte : légende repliable (`maplegend`), bouton « France entière », info-bulle de score au survol, contours plus fins au petit zoom (`drawOutline`). Les choix sont mémorisés (`localStorage` `cm:v1`) et le lien partage espèce, vue et point : `#e=1&v=dur&p=lat,lon`.
 
+- **Calque « Observations GBIF »** (sélecteur de calques) : suit l'espèce choisie ; blocs en indigo selon le nombre de jours d'observation (1, 2-3, 4-9, 10 et +). Indice de présence signalée, **pas une abondance** (les observateurs se concentrent près des villes et des sentiers) ; il n'entre pas dans le score. Source à citer : GBIF.org.
+
 ## Travailler sur le projet
 
 ```
@@ -60,6 +63,12 @@ Les patchs se font par remplacement de texte exact : toujours contrôler `node -
 - **Pousser depuis un workflow** : toujours `for i in 1 2 3; do git pull --rebase && git push && break || sleep 5; done` (le workflow quotidien pousse aussi).
 - **Données et pas de temps** : `data.json` contient 40 jours passés + 8 de prévision ; la page déduit « aujourd'hui » de la date de début (`st.off`).
 - **Jeton GitHub** : jamais dans un fichier ni dans l'URL d'un `git remote` enregistré ; à révoquer après chaque session de travail.
+
+- **`git add` avec un chemin absent abandonne tout** : dans un workflow, ajouter fichier par fichier (`if [ -e "$f" ]; then git add -f "$f"; fi`), sinon rien n'est commité.
+- **Tests et âge des données** : le faux serveur de `page.test.js` recale `data.json` sur aujourd'hui (`start`, `generated`). Sans cela, l'appli affiche « Données anciennes » et deux tests de la vue « Toutes les espèces » échouent dès que le fichier a quelques jours.
+- **Open-Meteo** : refuse trop de requêtes simultanées (429 « concurrent ») : attendre et réessayer, ne pas s'arrêter ; les requêtes horaires (température du sol) sont lentes (quelques secondes). Le quota gratuit pèse `lieux × jours/14 × variables/10`.
+- **Workflow sur une branche** : un `workflow_dispatch` seul n'apparaît pas dans l'interface tant que le fichier n'est pas sur la branche par défaut. Utiliser un déclencheur `push` limité à un fichier de lancement (`paths:`), ou lancer par l'API.
+- **Journaux Actions non téléchargeables** (domaine bloqué) : faire écrire au workflow sa progression dans le dépôt (commits réguliers), et un job annulé par délai ne lance pas ses étapes finales.
 
 ## Rigueur scientifique
 
