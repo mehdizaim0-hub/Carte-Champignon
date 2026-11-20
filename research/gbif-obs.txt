@@ -1,0 +1,22 @@
+grille : 474 x 384 blocs, K=6
+  Cèpe de Bordeaux                 1762 enregistrements GBIF ->   685 jours-blocs distincts,   545 blocs
+  Girolle                          1124 enregistrements GBIF ->   383 jours-blocs distincts,   305 blocs
+  Morille                           461 enregistrements GBIF ->   198 jours-blocs distincts,   181 blocs
+  Trompette de la mort              804 enregistrements GBIF ->   259 jours-blocs distincts,   211 blocs
+  Pied-de-mouton                   1370 enregistrements GBIF ->   381 jours-blocs distincts,   278 blocs
+  Lactaire délicieux                474 enregistrements GBIF ->   180 jours-blocs distincts,   165 blocs
+  Bolet bai                        1337 enregistrements GBIF ->   516 jours-blocs distincts,   399 blocs
+  Chanterelle en tube              1179 enregistrements GBIF ->   346 jours-blocs distincts,   269 blocs
+  Coulemelle                       1885 enregistrements GBIF ->  1013 jours-blocs distincts,   851 blocs
+  Cèpe d'été                        714 enregistrements GBIF ->   248 jours-blocs distincts,   210 blocs
+  Russule charbonnière             1543 enregistrements GBIF ->   352 jours-blocs distincts,   248 blocs
+  Bolet jaune                       431 enregistrements GBIF ->   140 jours-blocs distincts,   109 blocs
+  Armillaire couleur de miel       1377 enregistrements GBIF ->   559 jours-blocs distincts,   450 blocs
+  Pleurote en huître                557 enregistrements GBIF ->   273 jours-blocs distincts,   236 blocs
+  Rosé des prés                     465 enregistrements GBIF ->   196 jours-blocs distincts,   182 blocs
+  Mousseron de la Saint-Georges     329 enregistrements GBIF ->    90 jours-blocs distincts,    74 blocs
+  Marasme des oréades               869 enregistrements GBIF ->   361 jours-blocs distincts,   292 blocs
+  Langue de bœuf                   1711 enregistrements GBIF ->  1096 jours-blocs distincts,   848 blocs
+  Vesse de loup perlée             2430 enregistrements GBIF ->  1044 jours-blocs distincts,   798 blocs
+  Vesse de loup géante              156 enregistrements GBIF ->   102 jours-blocs distincts,    95 blocs
+OK : /home/runner/work/Carte-Champignon/Carte-Champignon/gbif.json (57 Ko, 20 espèces)

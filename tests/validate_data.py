@@ -65,6 +65,21 @@ for name, layers, nodata_max in (("sol.json", ("ph", "sand", "clay", "soc"), 0.5
         if unk > nodata_max: errs.append("%s : %s a %.0f %% de blocs sans donnée" % (name, l, 100 * unk))
     notes.append("%s : %d x %d blocs" % (name, w, h))
 
+g = load("gbif.json", required=False)
+if g:
+    sol = load("sol.json") or {}
+    if (g.get("w"), g.get("h"), g.get("K")) != (sol.get("w"), sol.get("h"), sol.get("K")): errs.append("gbif.json : grille différente de sol.json")
+    nb = (g.get("w") or 0) * (g.get("h") or 0); esp = g.get("especes", {})
+    if len(esp) < 18: errs.append("gbif.json : %d espèces (au moins 18 attendues)" % len(esp))
+    for nom, e in esp.items():
+        b = e.get("b", [])
+        if len(b) % 2: errs.append("gbif.json : %s : liste de longueur impaire" % nom); continue
+        idx, cnt = b[0::2], b[1::2]
+        if idx and (min(idx) < 0 or max(idx) >= nb or idx != sorted(set(idx))): errs.append("gbif.json : %s : indices de blocs invalides ou non triés" % nom)
+        if cnt and min(cnt) < 1: errs.append("gbif.json : %s : comptes < 1" % nom)
+        if sum(cnt) != e.get("n"): errs.append("gbif.json : %s : total %s != somme %s" % (nom, e.get("n"), sum(cnt)))
+    notes.append("gbif.json : %d espèces, %d jours-blocs" % (len(esp), sum(e.get("n", 0) for e in esp.values())))
+
 r = load("routes.json")
 if r:
     if len(r.get("lines", [])) < 20000: errs.append("routes.json : %d lignes (au moins 20000 attendues)" % len(r.get("lines", [])))
