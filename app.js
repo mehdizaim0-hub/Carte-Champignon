@@ -1087,7 +1087,7 @@ const starsHtml=n=>`<span class="stars" role="img" aria-label="${n} sur 5">${sta
 // Indice 0-100 = conditions réunies (météo, saison, sol, forêt, relief) selon le modèle : ce n'est PAS une probabilité de trouver
 // (le calibrage sur observations réelles donne un pouvoir de discrimination d'environ 0,6 d'AUC seulement).
 // Une espèce « se démarque » dans une zone si son indice est au moins « bon » (STAND_MIN) et dépasse nettement la suivante (STAND_GAP).
-const STAND_MIN=55,STAND_GAP=8,ICON_MAX=14,ICON_TILE_DESK=190,ICON_TILE_MOB=140,ICON_SUB=3,ICON_MIN_DIST=64;
+const STAND_MIN=55,STAND_GAP=8,ICON_MAX=14,ICON_TILE_DESK=190,ICON_TILE_MOB=140,ICON_SUB=3,ICON_MIN_DIST=64,ICON_MARGIN=32;
 let iconLayer=null;
 const PHOTO_REQ={};
 function standout(rows){   // rows : [{i,sc}] triées par indice décroissant ; renvoie la ligne qui se démarque, ou null
@@ -1101,19 +1101,25 @@ function zoneRows(lat,lng,d){   // indice du jour d pour chaque espèce non toxi
   SP.forEach((s,i)=>{if(s.toxic)return;try{rows.push({i,sc:score(s,z,d).sc})}catch(e){}});
   rows.sort((x,y)=>y.sc-x.sc);return rows;
 }
+function iconBlocked(x,y){   // une icône ne doit pas passer sous un contrôle, la légende, le bandeau ou le tiroir
+  if(!map||typeof document.elementsFromPoint!=="function")return false;
+  const r=map.getContainer().getBoundingClientRect();
+  return[[0,0],[-24,0],[24,0],[0,-24],[0,24]].some(d=>{const e=document.elementsFromPoint(r.left+x+d[0],r.top+y+d[1])[0];return !!e&&!e.closest(".leaflet-pane")});
+}
 function computeIcons(sub){
   if(!st.live||!map||!st.icons)return[];
   const SUB=sub||ICON_SUB,sz=map.getSize(),tile=sz.x<600?ICON_TILE_MOB:ICON_TILE_DESK,vis=mqMobile.matches?sz.y-sheetPx(st.sheet||"half"):sz.y,cand=[];   // sur mobile, le tiroir cache le bas de la carte
   for(let y0=0;y0<vis;y0+=tile)for(let x0=0;x0<sz.x;x0+=tile){
-    let best=null;                                                // meilleur point de la case : une zone favorable est petite, un seul point la raterait
+    const here=[];                                                // points de la case : une zone favorable est petite, un seul point la raterait
     for(let sy=0;sy<SUB;sy++)for(let sx=0;sx<SUB;sx++){
-      const x=x0+(sx+.5)*tile/SUB,y=y0+(sy+.5)*tile/SUB;if(y>vis||x>sz.x)continue;
+      const x=x0+(sx+.5)*tile/SUB,y=y0+(sy+.5)*tile/SUB;if(y>vis-ICON_MARGIN||x>sz.x-ICON_MARGIN||x<ICON_MARGIN||y<ICON_MARGIN)continue;   // jamais coupée par un bord
       const p=map.containerPointToLatLng([x,y]);
       if(!(p.lat>=41&&p.lat<=51.5&&p.lng>=-5.5&&p.lng<=10))continue;
       const t=standout(zoneRows(p.lat,p.lng,st.day));
-      if(t&&(!best||t.sc>best.sc))best={lat:p.lat,lng:p.lng,i:t.i,sc:t.sc,x,y};
+      if(t)here.push({lat:p.lat,lng:p.lng,i:t.i,sc:t.sc,x,y});
     }
-    if(best)cand.push(best);
+    here.sort((a,b)=>b.sc-a.sc);
+    const ok=here.find(c=>!iconBlocked(c.x,c.y));if(ok)cand.push(ok);
   }
   cand.sort((a,b)=>b.sc-a.sc);const out=[];                      // pas de chevauchement : on garde les meilleurs, à ICON_MIN_DIST pixels au moins les uns des autres
   for(const c of cand){if(out.length>=ICON_MAX)break;if(out.every(o=>Math.hypot(o.x-c.x,o.y-c.y)>=ICON_MIN_DIST))out.push(c)}
