@@ -1087,7 +1087,7 @@ const starsHtml=n=>`<span class="stars" role="img" aria-label="${n} sur 5">${sta
 // Indice 0-100 = conditions réunies (météo, saison, sol, forêt, relief) selon le modèle : ce n'est PAS une probabilité de trouver
 // (le calibrage sur observations réelles donne un pouvoir de discrimination d'environ 0,6 d'AUC seulement).
 // Une espèce « se démarque » dans une zone si son indice est au moins « bon » (STAND_MIN) et dépasse nettement la suivante (STAND_GAP).
-const STAND_MIN=55,STAND_GAP=8,ICON_MAX=14,ICON_TILE_DESK=190,ICON_TILE_MOB=140;
+const STAND_MIN=55,STAND_GAP=8,ICON_MAX=14,ICON_TILE_DESK=190,ICON_TILE_MOB=140,ICON_SUB=3,ICON_MIN_DIST=64;
 let iconLayer=null;
 const PHOTO_REQ={};
 function standout(rows){   // rows : [{i,sc}] triées par indice décroissant ; renvoie la ligne qui se démarque, ou null
@@ -1101,16 +1101,23 @@ function zoneRows(lat,lng,d){   // indice du jour d pour chaque espèce non toxi
   SP.forEach((s,i)=>{if(s.toxic)return;try{rows.push({i,sc:score(s,z,d).sc})}catch(e){}});
   rows.sort((x,y)=>y.sc-x.sc);return rows;
 }
-function computeIcons(){
+function computeIcons(sub){
   if(!st.live||!map||!st.icons)return[];
-  const sz=map.getSize(),tile=sz.x<600?ICON_TILE_MOB:ICON_TILE_DESK,vis=mqMobile.matches?sz.y-sheetPx(st.sheet||"half"):sz.y,out=[];   // sur mobile, le tiroir cache le bas de la carte
-  for(let y=tile/2;y<vis;y+=tile)for(let x=tile/2;x<sz.x;x+=tile){
-    const p=map.containerPointToLatLng([x,y]);
-    if(!(p.lat>=41&&p.lat<=51.5&&p.lng>=-5.5&&p.lng<=10))continue;
-    const t=standout(zoneRows(p.lat,p.lng,st.day));
-    if(t)out.push({lat:p.lat,lng:p.lng,i:t.i,sc:t.sc});
+  const SUB=sub||ICON_SUB,sz=map.getSize(),tile=sz.x<600?ICON_TILE_MOB:ICON_TILE_DESK,vis=mqMobile.matches?sz.y-sheetPx(st.sheet||"half"):sz.y,cand=[];   // sur mobile, le tiroir cache le bas de la carte
+  for(let y0=0;y0<vis;y0+=tile)for(let x0=0;x0<sz.x;x0+=tile){
+    let best=null;                                                // meilleur point de la case : une zone favorable est petite, un seul point la raterait
+    for(let sy=0;sy<SUB;sy++)for(let sx=0;sx<SUB;sx++){
+      const x=x0+(sx+.5)*tile/SUB,y=y0+(sy+.5)*tile/SUB;if(y>vis||x>sz.x)continue;
+      const p=map.containerPointToLatLng([x,y]);
+      if(!(p.lat>=41&&p.lat<=51.5&&p.lng>=-5.5&&p.lng<=10))continue;
+      const t=standout(zoneRows(p.lat,p.lng,st.day));
+      if(t&&(!best||t.sc>best.sc))best={lat:p.lat,lng:p.lng,i:t.i,sc:t.sc,x,y};
+    }
+    if(best)cand.push(best);
   }
-  return out.sort((x,y)=>y.sc-x.sc).slice(0,ICON_MAX);
+  cand.sort((a,b)=>b.sc-a.sc);const out=[];                      // pas de chevauchement : on garde les meilleurs, à ICON_MIN_DIST pixels au moins les uns des autres
+  for(const c of cand){if(out.length>=ICON_MAX)break;if(out.every(o=>Math.hypot(o.x-c.x,o.y-c.y)>=ICON_MIN_DIST))out.push(c)}
+  return out.map(o=>({lat:o.lat,lng:o.lng,i:o.i,sc:o.sc}));
 }
 function iconFor(i,sc){
   const s=SP[i],P=PHOTOS[i],ini=s.n.split(/[\s'’-]+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join("").toUpperCase()||s.n[0];
