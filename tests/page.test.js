@@ -209,6 +209,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   w.scheduleIcons = origSched;
   w.renderIcons(); await sleep(300);
   check('calcul réel : au plus 14 icônes, chacune avec un indice >= 55 (« bon » au moins)', ics().length <= 14 && ics().every(e => +e.querySelector('.ix').textContent >= 55), String(ics().length) + ' icône(s) : ' + ics().map(e => e.querySelector('.ix').textContent).join(','));
+  check('icônes : jamais bloquées quand le navigateur ne sait pas mesurer le recouvrement (jsdom)', w.iconBlocked(100, 100) === false);
   check('calcul réel : une icône ne reprend jamais une espèce toxique', icEls().every(e => !/amanite|gyromitre|cortinaire|galère|entolome/i.test(e.title || '')));
   const names = [[43.6, 1.44], [48.86, 2.35], [45.2, 1.0], [44.0, 3.5], [46.5, 5.5], [49.2, -1.0], [43.0, -0.5], [47.5, 7.0]].map(p => w.makeZone(p[0], p[1]).near);
   check('noms de lieux sans distance : « Secteur », « Autour de » ou « Région de »', names.every(n => !/\bkm\b/i.test(n) && /^(Secteur|Autour de|Région de) /.test(n)), names.join(' | '));
