@@ -1101,10 +1101,13 @@ function zoneRows(lat,lng,d){   // indice du jour d pour chaque espèce non toxi
   SP.forEach((s,i)=>{if(s.toxic)return;try{rows.push({i,sc:score(s,z,d).sc})}catch(e){}});
   rows.sort((x,y)=>y.sc-x.sc);return rows;
 }
-function iconBlocked(x,y){   // une icône ne doit pas passer sous un contrôle, la légende, le bandeau ou le tiroir
-  if(!map||typeof document.elementsFromPoint!=="function")return false;
-  const r=map.getContainer().getBoundingClientRect();
-  return[[0,0],[-24,0],[24,0],[0,-24],[0,24]].some(d=>{const e=document.elementsFromPoint(r.left+x+d[0],r.top+y+d[1])[0];return !!e&&!e.closest(".leaflet-pane")});
+function iconBlocked(x,y){   // une icône ne doit pas passer sous un contrôle de la carte, la légende ou le bandeau (le tiroir mobile est déjà exclu par `vis`)
+  if(!map)return false;
+  const r=map.getContainer().getBoundingClientRect(),cx=r.left+x,cy=r.top+y,h=27;
+  return[...document.querySelectorAll(".leaflet-control,#maplegend,.emptymap")].some(e=>{
+    if(e.hidden)return false;const b=e.getBoundingClientRect();
+    return b.width>0&&b.height>0&&cx+h>b.left&&cx-h<b.right&&cy+h>b.top&&cy-h<b.bottom;
+  });
 }
 function computeIcons(sub){
   if(!st.live||!map||!st.icons)return[];
