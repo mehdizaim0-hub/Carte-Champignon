@@ -256,6 +256,10 @@ function applyBounds(){
   const z=map.getZoom(),ext=map.unproject(map.project(b.getSouthWest(),z).add([0,sheetPx(st.sheet||"half")]),z);
   map.setMaxBounds(L.latLngBounds([Math.min(ext.lat,b.getSouth()),b.getWest()],[b.getNorth(),b.getEast()]));
 }
+function viewCenter(){   // centre de la partie VISIBLE de la carte : sur mobile, le tiroir du bas cache une partie du conteneur, dont le centre n'est pas celui que l'on regarde
+  const sz=map.getSize(),vis=mqMobile.matches?Math.max(120,sz.y-sheetPx(st.sheet||"half")):sz.y;
+  return map.containerPointToLatLng([sz.x/2,vis/2]);
+}
 function franceView(fly){
   applyBounds();
   if(mqMobile.matches){
@@ -1393,7 +1397,7 @@ function renderNow(){
   const box=$("nowg"),ul=$("nowl"),msg=$("nowmsg");if(!box||!ul)return;
   ul.textContent="";msg.hidden=true;$("nowwhere").textContent="";
   if(!st.live||!map||!box.open)return;
-  const c=map.getCenter(),say0=t=>{msg.textContent=t;msg.hidden=false};
+  const c=viewCenter(),say0=t=>{msg.textContent=t;msg.hidden=false};
   if(!(c.lat>=41&&c.lat<=51.5&&c.lng>=-5.5&&c.lng<=10))return say0("Centrez la carte sur la France pour voir les espèces du moment.");
   const z=makeZone(c.lat,c.lng);
   if(z.anth)return say0("Zone urbanisée ou routière : déplacez la carte vers la forêt.");
