@@ -271,6 +271,7 @@ function initMap(){
   const topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap, SRTM · © OpenTopoMap (CC-BY-SA)"});
   osm.addTo(map);
   L.control.layers({"Plan":osm,"Relief et forêts":topo},null,{position:"topright"}).addTo(map);
+  addCalqueCtl();
   initDots();
   map.on("click",e=>setPoint(e.latlng.lat,e.latlng.lng,false));
   map.on("zoomend",drawOutline);
@@ -828,15 +829,50 @@ function calqueLegend(key){
   return `<b>pH du sol</b><div class="calbar" style="background:linear-gradient(90deg,${g})"></div><div class="calrow"><span>4,5 acide</span><span>6,5 neutre</span><span>8,3 calcaire</span></div>`;
 }
 function setCalque(key){
-  st.calque=key||"";st.gbifSp=st.sp;
+  st.calque=key||"";st.gbifSp=st.sp;syncCalqueCtl();
   if(calqueLayer){map.removeLayer(calqueLayer);calqueLayer=null}
   const lg=$("calleg");lg.hidden=true;lg.textContent="";
   if(!st.calque)return;
   const img=calqueImage(st.calque);
-  if(!img){spotSay("Calque indisponible : données pas encore chargées.");st.calque="";$("calque").value="";return}
+  if(!img){spotSay("Calque indisponible : données pas encore chargées.");st.calque="";$("calque").value="";syncCalqueCtl();return}
   if(!map.getPane("calque")){map.createPane("calque");const p=map.getPane("calque");p.style.zIndex=390;p.style.pointerEvents="none"}
   calqueLayer=L.imageOverlay(img.url,img.bounds,{pane:"calque",opacity:1,interactive:false}).addTo(map);
   lg.innerHTML=calqueLegend(st.calque);lg.hidden=false;
+}
+// ---------- Contrôle « Calques » directement sur la carte (le sélecteur des options reste et se synchronise) ----------
+const CALQUES=[["","Aucun calque","Carte seule."],["foret","Type de forêt","Feuillus, résineux ou mixte."],["ph","pH du sol","Acide, neutre ou calcaire."],["gbif","Observations GBIF","Observations de cueilleurs pour l'espèce choisie. Ce n'est pas une abondance."]];
+const CALSHORT={foret:"forêt",ph:"pH",gbif:"GBIF"};
+function syncCalqueCtl(){
+  const c=document.querySelector(".calctl");
+  if(c){
+    c.classList.toggle("on",!!st.calque);
+    c.querySelectorAll('[role="radio"]').forEach(b=>b.setAttribute("aria-checked",String(b.dataset.k===(st.calque||""))));
+    const bt=c.querySelector(".calbtn"),cur=CALQUES.find(x=>x[0]===(st.calque||""));if(bt&&cur){bt.title=st.calque?"Calque actif : "+cur[1]:"Calques de la carte";bt.setAttribute("aria-label",bt.title)}
+  }
+  const lt=$("legtoggle");if(lt)lt.textContent=st.calque?"Légende · "+CALSHORT[st.calque]:"Légende";   // sur mobile la légende est repliée : le bouton dit déjà de quel calque il s'agit
+}
+function addCalqueCtl(){
+  const Ctl=L.Control.extend({onAdd(){
+    const d=L.DomUtil.create("div","calctl leaflet-bar"),b=L.DomUtil.create("button","calbtn",d),m=L.DomUtil.create("div","calmenu",d);
+    b.type="button";b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.setAttribute("aria-label","Calques de la carte");b.title="Calques de la carte";
+    b.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>';
+    m.hidden=true;m.setAttribute("role","radiogroup");m.setAttribute("aria-label","Calques");
+    const close=()=>{m.hidden=true;b.setAttribute("aria-expanded","false")};
+    CALQUES.forEach(([k,n,h])=>{
+      const r=L.DomUtil.create("button","calopt",m);r.type="button";r.dataset.k=k;r.setAttribute("role","radio");r.setAttribute("aria-checked",String(k===(st.calque||"")));
+      r.innerHTML="<b></b><small></small>";r.firstChild.textContent=n;r.lastChild.textContent=h;
+      r.onclick=()=>{close();b.focus();$("calque").value=k;setCalque(k);
+        if(k&&innerWidth<=860){$("maplegend").classList.remove("min");$("legtoggle").setAttribute("aria-expanded","true")}};   // sur mobile : on vient de choisir un calque, on montre ce qu'il signifie
+      r.onkeydown=e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){const all=[...m.querySelectorAll(".calopt")],i=all.indexOf(r),j=(i+(e.key==="ArrowDown"?1:all.length-1))%all.length;all[j].focus();e.preventDefault()}};
+    });
+    b.onclick=()=>{const o=m.hidden;m.hidden=!o;b.setAttribute("aria-expanded",String(o));if(o){const cur=m.querySelector('[aria-checked="true"]');if(cur)cur.focus()}};
+    document.addEventListener("click",e=>{if(!m.hidden&&!d.contains(e.target))close()});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!m.hidden){close();b.focus()}});
+    L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);
+    return d;
+  }});
+  new Ctl({position:"topright"}).addTo(map);
+  syncCalqueCtl();
 }
 // ---------- État vide : aucune zone favorable (hors saison) -> expliquer et proposer des espèces qui sortent ----------
 let EMPTYC={key:"",out:null};
