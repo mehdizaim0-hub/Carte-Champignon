@@ -2,19 +2,41 @@ name: Mise à jour quotidienne
 on:
   schedule:
     - cron: "0 5 * * *"
+    - cron: "0 17 * * *"   # deuxième tentative : ne fait rien si les données sont déjà fraîches
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - run: python3 build_data.py
-      - name: Contrôle des données (rien n'est publié si elles sont invalides)
+      - name: "Données déjà fraîches ? (seule la tentative de l'après-midi peut s'arrêter ici)"
+        id: fresh
+        run: |
+          python3 - <<'PYEOF' >> "$GITHUB_OUTPUT"
+          import json, datetime
+          g = datetime.datetime.fromisoformat(json.load(open("data.json", encoding="utf-8"))["generated"])
+          age = (datetime.datetime.now(datetime.timezone.utc) - g).total_seconds() / 3600
+          skip = age < 20 and "${{ github.event.schedule }}" == "0 17 * * *"
+          print("skip=" + str(skip).lower())
+          PYEOF
+      - name: "Récupération des données (3 tentatives espacées de 10 minutes, car Open-Meteo refuse parfois)"
+        if: steps.fresh.outputs.skip != 'true'
+        run: |
+          for n in 1 2 3; do
+            python3 build_data.py && exit 0
+            echo "tentative $n échouée"
+            if [ "$n" -lt 3 ]; then sleep 600; fi
+          done
+          exit 1
+      - name: "Contrôle des données (rien n'est publié si elles sont invalides)"
+        if: steps.fresh.outputs.skip != 'true'
         run: python3 tests/validate_data.py --fresh
-      - run: |
+      - name: Publication
+        if: steps.fresh.outputs.skip != 'true'
+        run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
           git add data.json
