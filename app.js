@@ -148,7 +148,7 @@ function score(sp,z,d,dT){
   const tfx=z.rel?terrainFactors(z.rel,rf):null;   // point : exposition, dépression, pente (les blocs de la carte les appliquent séparément)
   const Ha=Math.pow(so*Math.max(al,.001),.7),M=Math.pow(Math.max(tf*rf,0),.9)*sf*frMul*ampMul*(tfx?tfx.f:1);
   const sc=z.anth?0:Math.min(100,100*Ha*Math.pow(fo,.7)*M);   // agglomération ou axe routier : aucune présence possible
-  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,w,M,Ha,sfx,tfx};
+  return{sc:Math.round(sc),so,fo,al,tf,rf,sf,fr:frMul,amp:ampMul,w,M,Ha,sfx,tfx};
 }
 // Dégradé séquentiel : jaune pâle (peu favorable) -> ambre -> orange -> rouge -> bordeaux (très favorable).
 // Chaque palier est nettement distinct en teinte ET en luminosité (lisible aussi en daltonisme). Sous 22 : transparent.
@@ -846,6 +846,41 @@ function placeEmpty(){
   if(!box||!host||box.parentNode===host)return;
   if(host===$("mapwrap"))host.insertBefore(box,$("map"));else host.appendChild(box);
 }
+// ---------- Pourquoi aucune zone n'est favorable : facteur le plus bas sur les meilleurs habitats ----------
+// Lecture du modèle, pas un constat de terrain : on regarde, sur les 60 meilleurs habitats (sol, forêt, altitude) de l'espèce, quel facteur de la météo
+// ou de la saison est le plus bas. Aucune température chiffrée n'est citée (certains trapèzes sont estimés).
+const MOIS_LONG=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+let EMPTYW={};
+function seasonNext(gb,mo){   // mois (0-11) du prochain mois « en saison » (poids GBIF >= 0,5), à partir du mois suivant ; null s'il n'y en a aucun
+  for(let k=1;k<=12;k++){const m=(mo+k)%12;if(gb[m]>=.5)return m}
+  return null;
+}
+function causeText(m,sp,mo){   // m : moyennes {sf,tf,rf,fr,T} sur les meilleurs habitats ; renvoie {n,txt}
+  const lim=[["sf",m.sf],["rf",m.rf],["tf",m.tf],["fr",m.fr]].filter(x=>x[1]<.5).sort((a,b)=>a[1]-b[1]);
+  const words={
+    sf:()=>{const n=seasonNext(sp.gb,mo);return"hors saison"+(n!=null?" (la saison reprend vers "+MOIS_LONG[n]+")":"")},
+    rf:()=>"trop sec (pas assez de pluie récente ou d'humidité du sol)",
+    tf:()=>m.T<(sp.t[1]+sp.t[2])/2?"trop froid":"trop chaud",
+    fr:()=>"gel récent"
+  };
+  if(!lim.length)return{n:0,txt:"plusieurs conditions sont seulement à moitié réunies, sans cause unique"};
+  return{n:lim.length>1?2:1,txt:lim.slice(0,2).map(x=>words[x[0]]()).join(", et ")};
+}
+function emptyWhy(i,d0){   // phrase d'explication, ou null (espèce toxique, aucune zone)
+  const sp=SP[i];if(!sp||sp.toxic||!Z||!Z.length)return null;
+  const key=[st.fetchedAt,st.dataDate,d0,st.rain,st.dt,st.live?1:0,i].join("|");
+  if(EMPTYW.key===key)return EMPTYW.txt;
+  const rows=[];
+  for(const z of Z){if(z.anth)continue;const r=score(sp,z,d0);rows.push({r,h:r.Ha*Math.pow(r.fo,.7)})}
+  if(!rows.length)return null;
+  rows.sort((a,b)=>b.h-a.h);const top=rows.slice(0,60),avg=f=>top.reduce((s,o)=>s+f(o.r),0)/top.length;
+  const c=causeText({sf:avg(r=>r.sf),tf:avg(r=>r.tf),rf:avg(r=>r.rf),fr:avg(r=>r.fr),T:avg(r=>r.w.T)},sp,dateOf(d0).getMonth());
+  let bestD=-1,bestS=0;
+  for(let d=0;d<8;d++){let mx=0;for(const z of Z)mx=Math.max(mx,score(sp,z,d).sc);if(mx>bestS){bestS=mx;bestD=d}}
+  const nxt=bestS>=22?" Meilleur jour des 8 prochains : "+(bestD===0?"aujourd'hui":"J+"+bestD)+" (score "+bestS+"/100"+(bestS<35?", à peine favorable":"")+").":" Aucune amélioration prévue dans les 8 prochains jours.";
+  const txt=(c.n>1?"Freins, selon le modèle : ":c.n===1?"Principal frein, selon le modèle : ":"Selon le modèle : ")+c.txt+"."+nxt;
+  EMPTYW={key,txt};return txt;
+}
 function renderEmptyMap(sorted,sp){
   const box=$("emptymap");if(!box)return;placeEmpty();
   const best=sorted&&sorted.length?sorted[sorted.length-1]:0,tok=st.emptyTok=(st.emptyTok||0)+1,vk=sp.n+"|"+st.view+"|"+st.day;
@@ -865,7 +900,9 @@ function renderEmptyMap(sorted,sp){
   t.innerHTML=`<b>Aucune zone favorable</b> pour ${sp.n} ${when}. <span class="sub">Meilleur score en France : ${Math.round(best)}/100.</span>`;
   x.type="button";x.className="x";x.textContent="×";x.setAttribute("aria-label","Masquer ce message");x.onclick=()=>{st.emptyHide=vk;box.hidden=true};
   alts.className="alts";alts.textContent="Recherche d'espèces favorables…";
-  box.append(x,t,alts);box.hidden=false;
+  const why=document.createElement("p");why.className="why";why.textContent="Analyse des causes…";
+  box.append(x,t,why,alts);box.hidden=false;
+  setTimeout(()=>{if(tok!==st.emptyTok)return;const r=emptyWhy(st.sp,d0);if(r)why.textContent=r;else why.remove()},0);   // calcul différé : une centaine de ms
   const show=list=>{
     if(tok!==st.emptyTok)return;alts.textContent="";
     const pick=list.filter(o=>o.i!==st.sp&&o.n>=10).sort((a,b)=>b.n-a.n).slice(0,3);
