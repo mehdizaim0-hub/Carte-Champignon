@@ -186,6 +186,34 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
   }
 
+  console.log('Cadrage de la France au-dessus du tiroir (mobile)');
+  const m0 = w.__map(), fb0 = m0.fitBounds, sv0 = m0.setView; let optM = null, svN = 0;
+  m0.fitBounds = (b, o) => { optM = o; return m0; }; m0.setView = () => { svN++; return m0; };
+  w.__mq.matches = true; w.setSheet('half'); w.franceView(false);
+  check('mobile : la France est cadrée avec un décalage bas égal à la hauteur du tiroir + 8 px', !!optM && optM.paddingBottomRight[1] === w.__sheetPx('half') + 8 && svN === 0, JSON.stringify(optM));
+  optM = null; w.setSheet('full'); w.franceView(false);
+  check('mobile, tiroir ouvert : le décalage suit la hauteur du tiroir', !!optM && optM.paddingBottomRight[1] === w.__sheetPx('full') + 8 && w.__sheetPx('full') > w.__sheetPx('half'));
+  optM = null; w.setSheet('half'); w.franceView(false);
+  check('mobile : la marge haute réserve la place des contrôles', !!optM && optM.paddingTopLeft[1] >= 60);
+  w.__mq.matches = false; optM = null; svN = 0; w.franceView(false);
+  check('ordinateur : vue fixe centrée sur la France, sans décalage de tiroir', optM === null && svN === 1);
+  m0.fitBounds = fb0; m0.setView = sv0; w.__mq.matches = false; w.setSheet('half'); w.applyBounds();
+
+  console.log('Centre de la carte visible (« Ce qui sort ici »)');
+  const m1 = w.__map(), gs0 = m1.getSize, cp0 = m1.containerPointToLatLng; let cpArg = null;
+  m1.getSize = () => w.L.point(400, 800); m1.containerPointToLatLng = p => { cpArg = p; return cp0.call(m1, p); };
+  w.__mq.matches = false; w.viewCenter();
+  check('ordinateur : le centre regardé est le centre du conteneur', cpArg && cpArg[0] === 200 && cpArg[1] === 400, JSON.stringify(cpArg));
+  w.__mq.matches = true; w.setSheet('half'); w.viewCenter(); const visHalf = 800 - w.__sheetPx('half');
+  check('mobile : le centre regardé est celui de la partie au-dessus du tiroir', cpArg && cpArg[0] === 200 && Math.abs(cpArg[1] - visHalf / 2) < 1 && cpArg[1] < 400, JSON.stringify(cpArg) + ' attendu y=' + visHalf / 2);
+  w.setSheet('full'); w.viewCenter(); const visFull = Math.max(120, 800 - w.__sheetPx('full'));
+  check('mobile, tiroir ouvert : le centre monte avec le tiroir (jamais sous 120 px de carte visible)', Math.abs(cpArg[1] - visFull / 2) < 1 && visFull >= 120, JSON.stringify(cpArg));
+  m1.getSize = gs0; m1.containerPointToLatLng = cp0; w.__mq.matches = false; w.setSheet('half');
+  const mFr = w.__map(), c0 = mFr.getCenter(); w.__mq.matches = true; w.setSheet('half'); w.franceView(false);
+  const vc = w.viewCenter();
+  check('mobile, vue d\'accueil : le centre regardé est bien en France (le panneau « ici » ne demande plus de recentrer)', vc.lat >= 41 && vc.lat <= 51.5 && vc.lng >= -5.5 && vc.lng <= 10, vc.lat.toFixed(2) + ',' + vc.lng.toFixed(2));
+  w.__mq.matches = false; w.setSheet('half'); w.applyBounds(); mFr.setView(c0, mFr.getZoom());
+
   console.log('Contrôle « Calques » sur la carte');
   const ctl = doc.querySelector('.calctl'), cb = ctl && ctl.querySelector('.calbtn'), cm = ctl && ctl.querySelector('.calmenu');
   const radios = () => [...cm.querySelectorAll('[role="radio"]')];
