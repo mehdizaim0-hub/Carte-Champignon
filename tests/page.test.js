@@ -186,6 +186,19 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
   }
 
+  console.log('Cadrage de la France au-dessus du tiroir (mobile)');
+  const m0 = w.__map(), fb0 = m0.fitBounds, sv0 = m0.setView; let optM = null, svN = 0;
+  m0.fitBounds = (b, o) => { optM = o; return m0; }; m0.setView = () => { svN++; return m0; };
+  w.__mq.matches = true; w.setSheet('half'); w.franceView(false);
+  check('mobile : la France est cadrée avec un décalage bas égal à la hauteur du tiroir + 8 px', !!optM && optM.paddingBottomRight[1] === w.__sheetPx('half') + 8 && svN === 0, JSON.stringify(optM));
+  optM = null; w.setSheet('full'); w.franceView(false);
+  check('mobile, tiroir ouvert : le décalage suit la hauteur du tiroir', !!optM && optM.paddingBottomRight[1] === w.__sheetPx('full') + 8 && w.__sheetPx('full') > w.__sheetPx('half'));
+  optM = null; w.setSheet('half'); w.franceView(false);
+  check('mobile : la marge haute réserve la place des contrôles', !!optM && optM.paddingTopLeft[1] >= 60);
+  w.__mq.matches = false; optM = null; svN = 0; w.franceView(false);
+  check('ordinateur : vue fixe centrée sur la France, sans décalage de tiroir', optM === null && svN === 1);
+  m0.fitBounds = fb0; m0.setView = sv0; w.__mq.matches = false; w.setSheet('half'); w.applyBounds();
+
   console.log('Contrôle « Calques » sur la carte');
   const ctl = doc.querySelector('.calctl'), cb = ctl && ctl.querySelector('.calbtn'), cm = ctl && ctl.querySelector('.calmenu');
   const radios = () => [...cm.querySelectorAll('[role="radio"]')];
