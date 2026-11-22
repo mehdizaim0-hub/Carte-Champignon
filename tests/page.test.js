@@ -186,6 +186,23 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
   }
 
+  console.log('Bandeau « Aucune zone favorable » : pourquoi, et jusqu\'à quand');
+  const gbCepe = [.1, 0, 0, .09, .02, .06, .06, .25, .73, 1, .27, .06], spT = { gb: gbCepe, t: [5, 11, 17, 22] };
+  check('prochaine saison : de novembre, le cèpe reprend en septembre (poids >= 0,5), en passant l\'année', w.seasonNext(gbCepe, 10) === 8 && w.seasonNext(gbCepe, 8) === 9 && w.seasonNext(gbCepe, 9) === 8);
+  check('prochaine saison : aucun mois assez fort -> null', w.seasonNext([.1, .2, .1, 0, 0, .3, .1, .1, .1, .2, .1, 0], 3) === null);
+  let c = w.causeText({ sf: .2, tf: .9, rf: .9, fr: 1, T: 12 }, spT, 10);
+  check('cause : hors saison, avec le mois de reprise', c.n === 1 && /hors saison/.test(c.txt) && /septembre/.test(c.txt), c.txt);
+  c = w.causeText({ sf: 1, tf: 1, rf: .2, fr: 1, T: 12 }, spT, 10);
+  check('cause : trop sec', c.n === 1 && /trop sec/.test(c.txt) && !/hors saison/.test(c.txt), c.txt);
+  check('cause : trop froid ou trop chaud selon la température moyenne', /trop froid/.test(w.causeText({ sf: 1, tf: .3, rf: 1, fr: 1, T: 6 }, spT, 10).txt) && /trop chaud/.test(w.causeText({ sf: 1, tf: .3, rf: 1, fr: 1, T: 21 }, spT, 10).txt));
+  c = w.causeText({ sf: .3, tf: 1, rf: .1, fr: .4, T: 12 }, spT, 10);
+  check('cause : deux freins au plus, le plus bas d\'abord', c.n === 2 && c.txt.indexOf('trop sec') < c.txt.indexOf('hors saison') && !/gel/.test(c.txt), c.txt);
+  c = w.causeText({ sf: .9, tf: .8, rf: .7, fr: 1, T: 12 }, spT, 10);
+  check('cause : aucun facteur sous 0,5 -> pas de cause unique', c.n === 0 && /sans cause unique/.test(c.txt), c.txt);
+  const why0 = w.emptyWhy(0, 0);
+  check('phrase réelle : un frein selon le modèle, une échéance, jamais « probabilité » ni de température chiffrée', typeof why0 === 'string' && /selon le modèle/i.test(why0) && /(Meilleur jour|Aucune amélioration)/.test(why0) && !/probabilit/i.test(why0) && !/\d\s?°/.test(why0), String(why0));
+  check('phrase : rien pour une espèce inconnue', w.emptyWhy(-1, 0) === null && w.emptyWhy(999, 0) === null);
+
   console.log('Indices par zone et icône de l\'espèce qui se démarque');
   const so = w.standout, S1 = r => so(r) && so(r).i;
   check('« se démarque » : indice >= 55 et >= 8 points d\'avance sur la suivante', S1([{ i: 3, sc: 72 }, { i: 5, sc: 40 }]) === 3 && S1([{ i: 3, sc: 55 }, { i: 5, sc: 47 }]) === 3 && S1([{ i: 3, sc: 60 }]) === 3);
