@@ -36,12 +36,14 @@
 <label class="opt">Rendu <select id="mode" aria-label="Rendu de la carte"><option value="dots">Nuage de points</option><option value="flat">Aplat de couleur</option></select></label>
 <label class="opt"><input type="checkbox" id="gray" checked> Fond de carte en gris (plus lisible sous la couleur)</label>
 <label class="opt"><input type="checkbox" id="cvd"> Palette adaptée au daltonisme (jaune, vert, violet)</label>
+<label class="opt"><input type="checkbox" id="optIcons" checked> Icônes des espèces qui se démarquent (indice 55 et plus)</label>
 <label class="opt"><input type="checkbox" id="cnv"> Courbes de niveau (IGN, à partir du zoom 11)</label>
 <label class="opt">Calque <select id="calque" aria-label="Calque de la carte"><option value="">Aucun</option><option value="foret">Type de forêt</option><option value="ph">pH du sol</option><option value="gbif">Observations GBIF (espèce choisie)</option></select></label>
 </details>
 </section>
 <details class="card" id="nowg" style="--i:2" open>
 <summary style="cursor:pointer;font-family:Fraunces,serif;font-weight:700;font-size:15px">Ce qui sort ici <span class="sub" id="nowwhere"></span></summary>
+<p class="sub" id="nowhelp">Indice de conditions favorables de 0 à 100 (météo, saison, sol, forêt, relief) : ce n’est pas une probabilité de trouver.</p>
 <ol class="nowl" id="nowl"></ol>
 <p class="sub" id="nowmsg" style="margin:8px 0 0" hidden></p>
 </details>

@@ -252,3 +252,15 @@ aside#side{padding-bottom:0}aside#side::after{content:"";display:block;height:14
 @media(prefers-color-scheme:dark){.s1{background:#6e6140}.s2{background:#7d9462}.cc-d .ccl{color:#e8946a}.cc-m .ccl{color:#e0b060}.cc-f .ccl{color:#9cc77d}}
 #side .emptymap{position:relative;left:auto;right:auto;top:auto;z-index:auto;margin:0 0 12px;box-shadow:none}
 html[data-sheet="full"] #maplegend{display:none}
+
+/* Icône de l'espèce qui se démarque dans une zone (vignette ronde + indice) */
+.spicon{position:relative;width:48px;height:48px}
+.spicon img,.spicon .ini{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;box-sizing:border-box;border:3px solid #fff;box-shadow:0 1px 7px rgba(0,0,0,.5);background:#e9e2d2}
+.spicon .ini{display:flex;align-items:center;justify-content:center;font:700 15px/1 system-ui,sans-serif;color:#2b2b25}
+.spicon .ix{position:absolute;right:-7px;bottom:-5px;min-width:24px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:10px;background:#1f1b16;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff}
+.spicon.l3 img,.spicon.l3 .ini{border-color:#e08a1e}
+.spicon.l4 img,.spicon.l4 .ini{border-color:#c2171f}
+.leaflet-marker-icon:focus-visible{outline:3px solid #4c1d95;outline-offset:2px;border-radius:50%}
+#nowl li.top .nm{font-weight:700}
+.nowthumb{width:26px;height:26px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:7px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+#nowhelp{margin:6px 0 2px;font-size:.78rem;line-height:1.35;opacity:.8}

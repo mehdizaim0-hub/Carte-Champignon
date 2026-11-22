@@ -39,11 +39,13 @@ Conventions : français partout (texte, commentaires) ; les identifiants HTML so
 
 1. Titre, bouton `?` (ouvre « Comment cette carte est fabriquée »), une phrase d'accroche.
 2. **Commandes** : espèce (`chips`), vue (`views`), jour (`days`, masqué en vues « durable » et « meilleur jour »), état des données, options repliées (rendu points/aplat, fond gris).
-3. **Résultat** (`detail`) : invitation à toucher la carte, puis avis sur le point (niveau, comparaison à la France, lieu vs conditions, tendance), meilleurs spots à 1 km, calcul détaillé repliable. `setPoint()` fait défiler le panneau jusqu'ici (`scrollToDetail`).
+3. **Résultat** (`detail`) : invitation à toucher la carte, puis avis sur le point (niveau, comparaison à la France, lieu vs conditions, tendance), calcul détaillé repliable. `setPoint()` fait défiler le panneau jusqu'ici (`scrollToDetail`).
 4. **Fiche espèce** repliable (photo Wikipédia, hôtes, sol, relief, saison, reconnaissance).
 Sur la carte : légende repliable (`maplegend`), bouton « France entière », info-bulle de score au survol, contours plus fins au petit zoom (`drawOutline`). Les choix sont mémorisés (`localStorage` `cm:v1`) et le lien partage espèce, vue et point : `#e=1&v=dur&p=lat,lon`.
 
 - **Calque « Observations GBIF »** (sélecteur de calques) : suit l'espèce choisie ; blocs en indigo selon le nombre de jours d'observation (1, 2-3, 4-9, 10 et +). Indice de présence signalée, **pas une abondance** (les observateurs se concentrent près des villes et des sentiers) ; il n'entre pas dans le score. Source à citer : GBIF.org.
+
+- **Indices par zone et icône de l'espèce qui se démarque** : « Ce qui sort ici » classe les espèces par **indice de conditions favorables (0-100)**, jamais présenté comme une probabilité (le calibrage sur observations réelles ne donne qu'environ 0,6 d'AUC). Sur la carte, des marqueurs à vignette photo (`computeIcons()`, `placeIcons()`, au plus 14, recalculés au déplacement) montrent l'espèce qui se démarque dans chaque zone visible : indice d'au moins 55 et d'au moins 8 points d'avance sur la suivante (`standout()`, constantes `STAND_MIN` et `STAND_GAP`). Bascule dans les options (`optIcons`). Les noms de lieux n'ont plus de distance en km (« Secteur… », « Autour de… », « Région de… »). L'ancien système de rayon kilométrique (cercle et « Meilleurs coins ») est supprimé ; « Mes spots » (points enregistrés) est une autre fonction et reste.
 
 ## Travailler sur le projet
 

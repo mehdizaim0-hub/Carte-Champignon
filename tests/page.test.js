@@ -186,6 +186,37 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
   }
 
+  console.log('Indices par zone et icône de l\'espèce qui se démarque');
+  const so = w.standout, S1 = r => so(r) && so(r).i;
+  check('« se démarque » : indice >= 55 et >= 8 points d\'avance sur la suivante', S1([{ i: 3, sc: 72 }, { i: 5, sc: 40 }]) === 3 && S1([{ i: 3, sc: 55 }, { i: 5, sc: 47 }]) === 3 && S1([{ i: 3, sc: 60 }]) === 3);
+  check('« se démarque » : rien si trop proche, sous 55 ou liste vide', so([{ i: 3, sc: 60 }, { i: 5, sc: 58 }]) === null && so([{ i: 3, sc: 54 }, { i: 5, sc: 10 }]) === null && so([]) === null && so(null) === null);
+  const spBefore = w.__st.sp, spPick = spBefore === 2 ? 3 : 2;
+  const origSched = w.scheduleIcons; w.scheduleIcons = () => {}; w.clearTimeout(w.__st.icT);   // pas de recalcul différé pendant les vérifications manuelles (le minuteur appartient à la fenêtre simulée)
+  w.placeIcons([{ lat: 46.0, lng: 2.0, i: spPick, sc: 72 }, { lat: 45.0, lng: 3.0, i: 1, sc: 61 }]); await sleep(300);
+  const ics = () => [...doc.querySelectorAll('.spicon')];
+  check('icônes : une par zone, avec son indice', ics().length === 2 && ics().map(e => e.querySelector('.ix').textContent).join() === '72,61', String(ics().length));
+  const icEls = () => [...doc.querySelectorAll('.leaflet-marker-icon')].filter(e => e.querySelector('.spicon'));
+  check('icônes accessibles : intitulé avec l\'espèce et l\'indice, jamais « probabilité »', icEls().length === 2 && icEls().every(e => /indice de conditions favorables \d+ sur 100/.test(e.title || '') && !/probabilit/i.test(e.title)), icEls().map(e => e.title).join(' | '));
+  icEls()[0].dispatchEvent(new w.MouseEvent('click', { bubbles: true, cancelable: true })); await sleep(400);
+  check('toucher une icône sélectionne l\'espèce', w.__st.sp === spPick, 'sp=' + w.__st.sp + ' attendu ' + spPick);
+  doc.querySelector('#chips button[data-i="' + spBefore + '"]').click(); await sleep(300);
+  const oi = $('optIcons'); w.placeIcons([{ lat: 46.0, lng: 2.0, i: 1, sc: 66 }]); await sleep(200);
+  oi.checked = false; oi.dispatchEvent(new w.Event('change')); await sleep(500);
+  check('option « Icônes… » décochée : icônes retirées et choix mémorisé', ics().length === 0 && JSON.parse(w.localStorage.getItem('cm:v1') || '{}').icons === false, String(ics().length));
+  oi.checked = true; oi.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('option « Icônes… » recochée : choix mémorisé', JSON.parse(w.localStorage.getItem('cm:v1') || '{}').icons === true);
+  w.placeIcons([]); check('aucune icône quand aucune zone ne se démarque', ics().length === 0);
+  w.scheduleIcons = origSched;
+  w.renderIcons(); await sleep(300);
+  check('calcul réel : au plus 14 icônes, chacune avec un indice >= 55 (« bon » au moins)', ics().length <= 14 && ics().every(e => +e.querySelector('.ix').textContent >= 55), String(ics().length) + ' icône(s) : ' + ics().map(e => e.querySelector('.ix').textContent).join(','));
+  check('icônes : jamais bloquées quand le navigateur ne sait pas mesurer le recouvrement (jsdom)', w.iconBlocked(100, 100) === false);
+  check('calcul réel : une icône ne reprend jamais une espèce toxique', icEls().every(e => !/amanite|gyromitre|cortinaire|galère|entolome/i.test(e.title || '')));
+  const names = [[43.6, 1.44], [48.86, 2.35], [45.2, 1.0], [44.0, 3.5], [46.5, 5.5], [49.2, -1.0], [43.0, -0.5], [47.5, 7.0]].map(p => w.makeZone(p[0], p[1]).near);
+  check('noms de lieux sans distance : « Secteur », « Autour de » ou « Région de »', names.every(n => !/\bkm\b/i.test(n) && /^(Secteur|Autour de|Région de) /.test(n)), names.join(' | '));
+  check('« Ce qui sort ici » : indice présenté comme tel, jamais comme une probabilité', /pas une probabilité/.test($('nowhelp').textContent) && !/probabilité de présence/i.test(doc.body.textContent));
+  w.setPoint(47.0, 4.0, false); await sleep(900);
+  check('système de rayon supprimé : plus de cercle ni de « Meilleurs coins »', typeof w.updateSpots === 'undefined' && typeof w.spotRadius === 'undefined' && !/cercle de|Meilleurs coins/.test($('detail').textContent));
+
   console.log('Mes spots');
   w.prompt = () => 'Coin du chêne';
   w.localStorage.removeItem('cm:spots:v1');
