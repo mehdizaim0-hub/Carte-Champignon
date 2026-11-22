@@ -186,6 +186,33 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
     check('toucher « ' + lastName + ' » sélectionne exactement cette espèce', w.__sp[w.__st.sp].n === lastName, w.__sp[w.__st.sp].n);
   }
 
+  console.log('Contrôle « Calques » sur la carte');
+  const ctl = doc.querySelector('.calctl'), cb = ctl && ctl.querySelector('.calbtn'), cm = ctl && ctl.querySelector('.calmenu');
+  const radios = () => [...cm.querySelectorAll('[role="radio"]')];
+  check('contrôle « Calques » présent sur la carte, menu fermé, bouton nommé', !!cb && cm.hidden && cb.getAttribute('aria-expanded') === 'false' && /Calques/.test(cb.getAttribute('aria-label')));
+  cb.click();
+  check('ouverture : 4 choix (aucun, forêt, pH, GBIF), « Aucun calque » coché', !cm.hidden && cb.getAttribute('aria-expanded') === 'true' && radios().length === 4 && radios().filter(r => r.getAttribute('aria-checked') === 'true').map(r => r.dataset.k).join() === '', radios().map(r => r.dataset.k).join('|'));
+  check('chaque choix a une phrase d\'explication, et GBIF précise « pas une abondance »', radios().every(r => r.querySelector('small').textContent.length > 5) && /pas une abondance/.test(cm.querySelector('[data-k="gbif"] small').textContent));
+  cm.querySelector('[data-k="gbif"]').click(); await sleep(400);
+  check('choisir « Observations GBIF » : calque actif, sélecteur des options synchronisé, légende affichée, menu refermé', w.__st.calque === 'gbif' && $('calque').value === 'gbif' && /GBIF\.org/.test($('calleg').textContent) && cm.hidden && ctl.classList.contains('on'));
+  check('le bouton du contrôle et le choix coché reflètent le calque actif', cm.querySelector('[data-k="gbif"]').getAttribute('aria-checked') === 'true' && cm.querySelector('[data-k=""]').getAttribute('aria-checked') === 'false' && /GBIF/.test(cb.title));
+  check('le bouton de légende dit de quel calque il s\'agit (utile quand la légende est repliée sur mobile)', /Légende · GBIF/.test($('legtoggle').textContent), $('legtoggle').textContent);
+  const optSel = $('calque'); optSel.value = 'ph'; optSel.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('inversement : le sélecteur des options met à jour le contrôle de la carte', cm.querySelector('[data-k="ph"]').getAttribute('aria-checked') === 'true' && /pH/.test($('legtoggle').textContent));
+  $('maplegend').classList.add('min'); const iw0 = w.innerWidth; w.innerWidth = 400;
+  cb.click(); cm.querySelector('[data-k="foret"]').click(); await sleep(300); w.innerWidth = iw0;
+  check('sur mobile, choisir un calque ouvre la légende (elle est repliée par défaut)', !$('maplegend').classList.contains('min') && $('legtoggle').getAttribute('aria-expanded') === 'true');
+  $('maplegend').classList.add('min'); cb.click(); cm.querySelector('[data-k="ph"]').click(); await sleep(300);
+  check('sur ordinateur, la légende n\'est pas rouverte de force', $('maplegend').classList.contains('min'));
+  cb.click(); doc.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  check('Échap referme le menu', cm.hidden && cb.getAttribute('aria-expanded') === 'false');
+  cb.click(); doc.body.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  check('un clic ailleurs referme le menu', cm.hidden);
+  cb.click(); const rs = radios(); rs[0].focus(); rs[0].dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+  check('clavier : la flèche bas passe au choix suivant', doc.activeElement === rs[1] || doc.activeElement === (rs[0].nextElementSibling));
+  cm.querySelector('[data-k=""]').click(); await sleep(300);
+  check('« Aucun calque » retire le calque, la légende et le nom sur le bouton de légende', w.__st.calque === '' && $('calleg').hidden && $('legtoggle').textContent === 'Légende' && !ctl.classList.contains('on') && $('calque').value === '');
+
   console.log('Bandeau « Aucune zone favorable » : pourquoi, et jusqu\'à quand');
   const gbCepe = [.1, 0, 0, .09, .02, .06, .06, .25, .73, 1, .27, .06], spT = { gb: gbCepe, t: [5, 11, 17, 22] };
   check('prochaine saison : de novembre, le cèpe reprend en septembre (poids >= 0,5), en passant l\'année', w.seasonNext(gbCepe, 10) === 8 && w.seasonNext(gbCepe, 8) === 9 && w.seasonNext(gbCepe, 9) === 8);
