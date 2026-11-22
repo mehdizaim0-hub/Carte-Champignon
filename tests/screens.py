@@ -52,7 +52,7 @@ try:
             # --- parties basses de l'interface (ajoutées : pluie, courbes, sosies, état vide, calque) ---
             SC = "document.getElementById('side').scrollTo(0,0);document.querySelector('%s').scrollIntoView({block:'start'})"
             step("espece0", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'0\\']').click();document.querySelectorAll('#views button')[1].click()"), 2500)
-            step("france", lambda: page.evaluate("map.setView([46.6,2.6],6)"), 4000)
+            step("france", lambda: page.evaluate("franceView(false)"), 4000)
             shot("7_carte_etat_vide")
             step("point2", lambda: page.evaluate("setPoint(44.2,-0.9,true)"), 9000)
             step("pluie", lambda: page.evaluate(SC % "#detail .rain"), 900)
@@ -63,16 +63,16 @@ try:
             shot("10_fiche_courbes")
             step("ce qui sort", lambda: page.evaluate(SC % "#nowg"), 900)
             shot("11_ce_qui_sort")
-            step("calque ph", lambda: page.evaluate("document.querySelector('details.opts').open=true;document.getElementById('calque').value='ph';document.getElementById('calque').dispatchEvent(new Event('change'));map.setView([46.6,2.6],6)"), 4000)
+            step("calque ph", lambda: page.evaluate("document.querySelector('details.opts').open=true;document.getElementById('calque').value='ph';document.getElementById('calque').dispatchEvent(new Event('change'));franceView(false)"), 4000)
             shot("12_calque_ph")
             step("calque off", lambda: page.evaluate("document.getElementById('calque').value='';document.getElementById('calque').dispatchEvent(new Event('change'))"), 1000)
             step("options", lambda: page.evaluate("document.querySelector('details.opts').open=true;document.getElementById('mode').value='flat';document.getElementById('mode').dispatchEvent(new Event('change'))"), 2000)
-            step("france", lambda: page.evaluate("map.setView([46.6,2.6],6)"), 3000)
+            step("france", lambda: page.evaluate("franceView(false)"), 3000)
             shot("6_aplat")
             # --- palettes, calque forêt, courbes de niveau IGN (zoom 12 près de Grenoble) ---
             CH = "var e=document.getElementById('%s');e.%s;e.dispatchEvent(new Event('change'))"
             step("retour points", lambda: page.evaluate(CH % ("mode", "value='dots'")), 1500)
-            step("pleurote", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'13\\']').click();map.setView([46.6,2.6],6)"), 4000)
+            step("pleurote", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'13\\']').click();franceView(false)"), 4000)
             shot("13_palette_standard")
             step("cvd", lambda: page.evaluate(CH % ("cvd", "checked=true")), 2500)
             shot("14_palette_daltonisme")
@@ -81,11 +81,11 @@ try:
             shot("15_calque_foret")
             step("calque off 2", lambda: page.evaluate(CH % ("calque", "value=''")), 1000)
             # --- calque Observations GBIF (cèpe) : France entière, puis zoom régional ; on remet la pleurote ensuite ---
-            step("gbif cepe", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'0\\']').click();" + CH % ("calque", "value='gbif'") + ";map.setView([46.6,2.6],6)"), 4000)
+            step("gbif cepe", lambda: page.evaluate("document.querySelector('#chips button[data-i=\\'0\\']').click();" + CH % ("calque", "value='gbif'") + ";franceView(false)"), 4000)
             shot("15b_calque_gbif_france")
             step("gbif cepe zoom", lambda: page.evaluate("map.setView([44.3,-0.6],9)"), 3000)
             shot("15c_calque_gbif_regional")
-            step("calque off 3", lambda: page.evaluate(CH % ("calque", "value=''") + ";document.querySelector('#chips button[data-i=\\'13\\']').click();map.setView([46.6,2.6],6)"), 2000)
+            step("calque off 3", lambda: page.evaluate(CH % ("calque", "value=''") + ";document.querySelector('#chips button[data-i=\\'13\\']').click();franceView(false)"), 2000)
             step("menu calques", lambda: page.evaluate("document.querySelector('.calbtn').click()"), 900)
             shot("15d_menu_calques")
             step("calque via menu", lambda: page.evaluate("document.querySelector('.calopt[data-k=\"gbif\"]').click()"), 3500)
@@ -123,7 +123,7 @@ try:
             shot("23_j_ai_trouve")
             step("ferme", lambda: page.evaluate("closeFindQ()"), 300)
             # --- vue « Toutes les espèces » ---
-            step("vue toutes", lambda: page.evaluate("setSheet('half');document.querySelector('#views button[data-v=\\'all\\']').click();map.setView([46.6,2.6],6)"), 15000)
+            step("vue toutes", lambda: page.evaluate("setSheet('half');document.querySelector('#views button[data-v=\\'all\\']').click();franceView(false)"), 15000)
             shot("26_vue_toutes")
             step("retour vue", lambda: page.evaluate("document.querySelector('#views button[data-v=\\'dur\\']').click()"), 1500)
             ctx.close()
