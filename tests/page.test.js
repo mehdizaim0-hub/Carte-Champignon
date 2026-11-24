@@ -8,6 +8,8 @@ const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const errors = [], fails = [];
 const check = (nom, ok, detail = '') => { console.log((ok ? '  ok   ' : '  ÉCHEC ') + nom + (ok ? '' : '  ' + detail)); if (!ok) fails.push(nom); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// Attend qu'une condition soit vraie (au plus ms) au lieu d'un délai fixe : un navigateur simulé chargé ou plus lent (Node 20 en CI) ne doit pas faire échouer un test.
+const until = async (cond, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (cond()) return true; await sleep(50); } return !!cond(); };
 
 const html0 = read('index.html');
 let html = read('index.html')
@@ -213,6 +215,7 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const vc = w.viewCenter();
   check('mobile, vue d\'accueil : le centre regardé est bien en France (le panneau « ici » ne demande plus de recentrer)', vc.lat >= 41 && vc.lat <= 51.5 && vc.lng >= -5.5 && vc.lng <= 10, vc.lat.toFixed(2) + ',' + vc.lng.toFixed(2));
   w.__mq.matches = false; w.setSheet('half'); w.applyBounds(); mFr.setView(c0, mFr.getZoom());
+  w.clearTimeout(w.__st.icT); await sleep(900);   // les déplacements de carte ci-dessus déclenchent des calculs différés (icônes, panneau) : on les laisse finir avant la suite
 
   console.log('Contrôle « Calques » sur la carte');
   const ctl = doc.querySelector('.calctl'), cb = ctl && ctl.querySelector('.calbtn'), cm = ctl && ctl.querySelector('.calmenu');
@@ -316,11 +319,13 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const withFind = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]')[0];
   check('trouvaille enregistrée (espèce, quantité, date) et affichée', withFind.finds.length === 1 && withFind.finds[0].q === '2 kg' && !!withFind.finds[0].sp && /1 trouvaille/.test(doc.querySelector('#myspl li').textContent), JSON.stringify(withFind.finds));
   // import d'une sauvegarde
-  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 46, lon: 2, name: 'Import', ts: 1, finds: [] }, { lat: 47, lon: 4, name: 'Doublon' }] })], 's.json')); await sleep(300);
+  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 46, lon: 2, name: 'Import', ts: 1, finds: [] }, { lat: 47, lon: 4, name: 'Doublon' }] })], 's.json'));
+  await until(() => JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length >= 2);
   const after = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
   check('import : spot ajouté, doublon ignoré', after.length === 2 && after.some(x => x.name === 'Import') && !after.some(x => x.name === 'Doublon'), JSON.stringify(after.map(x => x.name)));
+  await until(() => doc.querySelectorAll('#myspl li').length === 2);
   check('liste mise à jour après l\'import (2 entrées)', doc.querySelectorAll('#myspl li').length === 2);
-  spBtn().click(); await sleep(150);
+  spBtn().click(); await until(() => JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').length === 1);
   const rest = JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]');
   check('spot retiré depuis la fiche : seul l\'import reste', rest.length === 1 && rest[0].name === 'Import');
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
@@ -352,7 +357,8 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   const mf = $('myfinds').textContent;
   check('bloc « Trouvailles et modèle » : score du jour de la trouvaille et refus de conclure avec une seule trouvaille', /Modèle ce jour-là : \d+\/100/.test(mf) && /Trop peu de trouvailles pour conclure/.test(mf) && /n'est pas modifié/.test(mf), mf.slice(0, 260));
   // import : date invalide corrigée, score invalide ignoré
-  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 45, lon: 2, name: 'Imp', ts: 1, finds: [{ ts: 1700000000000, d: 'pas-une-date', sp: CB, q: 'x', m: { sc: 'abc' } }, { ts: 1700000000000, d: '2023-11-14', sp: CB, q: 'y', m: { sc: 61.4, k: 3, n: 30, pct: 80 } }] }] })], 'i.json')); await sleep(300);
+  w.spotsImport(new w.File([JSON.stringify({ v: 1, spots: [{ lat: 45, lon: 2, name: 'Imp', ts: 1, finds: [{ ts: 1700000000000, d: 'pas-une-date', sp: CB, q: 'x', m: { sc: 'abc' } }, { ts: 1700000000000, d: '2023-11-14', sp: CB, q: 'y', m: { sc: 61.4, k: 3, n: 30, pct: 80 } }] }] })], 'i.json'));
+  await until(() => JSON.parse(w.localStorage.getItem('cm:spots:v1') || '[]').some(x => x.name === 'Imp'));
   const imp = JSON.parse(w.localStorage.getItem('cm:spots:v1')).find(x => x.name === 'Imp').finds;
   check('import : date invalide remplacée, score invalide ignoré, score valide arrondi et conservé', /^\d{4}-\d{2}-\d{2}$/.test(imp[0].d) && !imp[0].m && imp[1].d === '2023-11-14' && imp[1].m.sc === 61 && imp[1].m.pct === 80, JSON.stringify(imp));
   w.localStorage.removeItem('cm:spots:v1'); w.renderMySpots();
