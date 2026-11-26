@@ -261,6 +261,26 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('phrase réelle : un frein selon le modèle, une échéance, jamais « probabilité » ni de température chiffrée', typeof why0 === 'string' && /selon le modèle/i.test(why0) && /(Meilleur jour|Aucune amélioration)/.test(why0) && !/probabilit/i.test(why0) && !/\d\s?°/.test(why0), String(why0));
   check('phrase : rien pour une espèce inconnue', w.emptyWhy(-1, 0) === null && w.emptyWhy(999, 0) === null);
 
+  console.log('Calque GBIF : classes distinctes sans la couleur seule');
+  const lumi = rgb => { const f = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
+  cq.value = 'gbif'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  const gsw = [...doc.querySelectorAll('#calleg .sw')].map(e => (e.style.background.match(/\d+/g) || []).slice(0, 3).map(Number));
+  const gy = gsw.map(lumi), gratio = gy.slice(0, -1).map((v, k) => (v + .05) / (gy[k + 1] + .05));
+  check('légende GBIF : 4 classes, clarté strictement décroissante, contraste >= 1,5 entre classes voisines', gsw.length === 4 && gratio.every(r => r >= 1.5), JSON.stringify(gsw) + ' ratios ' + gratio.map(r => r.toFixed(2)).join(','));
+  check('légende GBIF : la classe la plus pâle reste lisible sur le fond gris de la carte (contraste >= 3)', (lumi([230, 230, 230]) + .05) / (gy[0] + .05) >= 3, ((lumi([230, 230, 230]) + .05) / (gy[0] + .05)).toFixed(2));
+  check('légende GBIF : une seule teinte (bleue) : le bleu domine toujours le rouge dans chaque classe', gsw.every(c => c[2] > c[0] && c[2] > c[1] * 1.1));
+  check('légende GBIF : dit que la taille aussi augmente avec le nombre de jours', /plus la tache est foncée et large/.test($('calleg').textContent));
+  const gp = (cnt, y, x) => w.gbifPixel(cnt, 9, 9, y, x), gmk = (c, y = 4, x = 4) => { const a = new Uint8Array(81); a[y * 9 + x] = c; return a; };
+  const alphaAt = (c, d) => { const p = gp(gmk(c), 4, 4 + d); return p ? p[3] : 0; };
+  check('taille : la classe 1 jour déborde d\'1 bloc (pas de 2)', alphaAt(1, 0) > 0 && alphaAt(1, 1) > 0 && alphaAt(1, 2) === 0);
+  check('taille : la classe 2-3 jours déborde d\'1 bloc', alphaAt(2, 1) > 0 && alphaAt(3, 2) === 0);
+  check('taille : les classes 4-9 et 10+ jours débordent de 2 blocs, pas de 3', alphaAt(5, 2) > 0 && alphaAt(5, 3) === 0 && alphaAt(12, 2) > 0 && alphaAt(12, 3) === 0);
+  check('halo plus transparent que le bloc, et plus opaque quand la classe monte', alphaAt(1, 1) < alphaAt(1, 0) && alphaAt(12, 1) > alphaAt(1, 1));
+  const two = gmk(12, 4, 4); two[4 * 9 + 6] = 1; const pxm = gp(two, 4, 5);
+  check('entre un bloc fort et un bloc faible, le halo prend la couleur de la classe la plus forte', pxm && pxm[0] === w.gbifPixel(gmk(12), 9, 9, 4, 4)[0] && pxm[2] === w.gbifPixel(gmk(12), 9, 9, 4, 4)[2]);
+  check('bords de grille : aucun accès hors tableau', gp(gmk(12, 0, 0), 0, 0) !== null && gp(gmk(12, 8, 8), 8, 8) !== null && gp(gmk(12, 0, 0), 8, 8) === null);
+  cq.value = ''; cq.dispatchEvent(new w.Event('change')); await sleep(200);
+
   console.log('Indices par zone et icône de l\'espèce qui se démarque');
   const so = w.standout, S1 = r => so(r) && so(r).i;
   check('« se démarque » : indice >= 55 et >= 8 points d\'avance sur la suivante', S1([{ i: 3, sc: 72 }, { i: 5, sc: 40 }]) === 3 && S1([{ i: 3, sc: 55 }, { i: 5, sc: 47 }]) === 3 && S1([{ i: 3, sc: 60 }]) === 3);

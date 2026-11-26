@@ -792,7 +792,20 @@ function phRGB(p){
   while(i<PHSTOPS.length-1&&p>PHSTOPS[i][0])i++;
   const a=PHSTOPS[i-1],b=PHSTOPS[i],t=(p-a[0])/(b[0]-a[0]);return[1,2,3].map(k=>Math.round(a[k]+(b[k]-a[k])*t));
 }
-const GBCOL=[[79,70,229,235],[67,56,202,242],[55,48,163,248],[30,27,75,255]];   // 1 jour, 2-3, 4-9, 10 et + (indigo, bien visible sur le fond gris de la carte)
+// Calque GBIF : une seule teinte (bleu) dont la CLARTÉ change nettement d'une classe à l'autre (contraste de 1,5 ou plus entre classes voisines, 3,3 de la plus pâle sur le fond gris),
+// donc lisible quel que soit le daltonisme ; et la TAILLE redouble la couleur : les classes fortes débordent sur les blocs voisins (GBRAD, GBHALO).
+const GBCOL=[[64,118,234,235],[24,84,215,242],[17,61,154,248],[10,35,90,255]];   // 1 jour, 2-3, 4-9, 10 et +
+const GBCLS=c=>c>=10?3:c>=4?2:c>=2?1:0,GBRAD=[1,1,2,2],GBHALO=[115,140,150,170];   // rayon du halo (en blocs) et opacité du halo, par classe
+function gbifPixel(cnt,W,H,y,x){   // couleur [r,v,b,alpha] du pixel (y,x) de la grille, ou null : bloc observé, sinon halo du voisin de classe la plus forte qui l'atteint
+  const c=cnt[y*W+x];if(c)return GBCOL[GBCLS(c)];
+  let best=-1;
+  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+    const yy=y+dy,xx=x+dx;if(yy<0||yy>=H||xx<0||xx>=W)continue;
+    const n=cnt[yy*W+xx];if(!n)continue;
+    const k=GBCLS(n);if(k>best&&Math.max(Math.abs(dy),Math.abs(dx))<=GBRAD[k])best=k;
+  }
+  return best<0?null:[GBCOL[best][0],GBCOL[best][1],GBCOL[best][2],GBHALO[best]];
+}
 function calqueImage(key){
   if(!heatGeom)return null;
   const{la0,lo0,dLat,dLon}=heatGeom;let W,H,K,get;
@@ -805,12 +818,7 @@ function calqueImage(key){
   }else if(key==="gbif"){
     const e=GBIF&&GBIF.especes&&GBIF.especes[SP[st.sp].n];if(!e)return null;W=GBIF.w;H=GBIF.h;K=GBIF.K;
     const cnt=new Uint8Array(W*H);for(let i=0;i<e.b.length;i+=2)cnt[e.b[i]]=Math.min(255,e.b[i+1]);
-    const cls=c=>c>=10?3:c>=4?2:c>=2?1:0;
-    get=(y,x)=>{   // bloc observé : couleur selon le nombre ; blocs voisins : halo léger (un bloc seul serait invisible à l'échelle de la France)
-      const c=cnt[y*W+x];if(c)return GBCOL[cls(c)];
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if(yy>=0&&yy<H&&xx>=0&&xx<W&&cnt[yy*W+xx])return[GBCOL[0][0],GBCOL[0][1],GBCOL[0][2],115]}
-      return null;
-    };
+    get=(y,x)=>gbifPixel(cnt,W,H,y,x);   // couleur selon le nombre de jours, taille du halo selon la classe (un bloc seul serait invisible à l'échelle de la France)
   }else return null;
   const latS=la0-dLat/2,bl=dLat/K,latN=latS+H*bl,lonW=lo0-dLon/2,lonE=lonW+W*(dLon/K);
   const mer=la=>Math.log(Math.tan(Math.PI/4+la*Math.PI/360)),inv=y=>(2*Math.atan(Math.exp(y))-Math.PI/2)*180/Math.PI;
@@ -828,7 +836,7 @@ function calqueLegend(key){
   if(key==="foret")return "<b>Type de forêt</b><br>"+sw(FCOL[1],"Feuillus")+sw(FCOL[2],"Résineux")+sw(FCOL[3],"Mixte")+sw(FCOL[4],"Bois épars (teinte claire)")+sw(FCOL[7],"Prairie, milieu ouvert");
   if(key==="gbif"){const sp=SP[st.sp],e=GBIF&&GBIF.especes&&GBIF.especes[sp.n];
     return `<b>Observations GBIF : ${sp.n}</b><br>`+sw(GBCOL[0],"1 jour")+sw(GBCOL[1],"2 à 3")+sw(GBCOL[2],"4 à 9")+sw(GBCOL[3],"10 et +")+
-      `<br><small>Jours d'observation distincts par bloc de ~2,8 km, ${GBIF.periode[0]}–${GBIF.periode[1]}${e?" ("+e.n+" au total)":""}. Ce n'est pas une abondance : les observateurs se concentrent près des villes et des sentiers. Source : GBIF.org.</small>`}
+      `<br><small>Jours d'observation distincts par bloc de ~2,8 km, ${GBIF.periode[0]}–${GBIF.periode[1]}${e?" ("+e.n+" au total)":""}. Plus il y a de jours, plus la tache est foncée et large. Ce n'est pas une abondance : les observateurs se concentrent près des villes et des sentiers. Source : GBIF.org.</small>`}
   const g=PHSTOPS.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${Math.round((s[0]-4.5)/3.8*100)}%`).join(",");
   return `<b>pH du sol</b><div class="calbar" style="background:linear-gradient(90deg,${g})"></div><div class="calrow"><span>4,5 acide</span><span>6,5 neutre</span><span>8,3 calcaire</span></div>`;
 }
