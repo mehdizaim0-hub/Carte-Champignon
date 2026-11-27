@@ -645,11 +645,21 @@ function drawDots(){
 // ---------- UI ----------
 // ---------- Mémoire des choix et lien partageable ----------
 const PREF_KEY="cm:v1",INIT_HASH=location.hash||"";   // le lien d'origine est lu une fois : render() réécrit le hash
-function loadPrefs(){
+const CAL_KEYS=["foret","ph","gbif"];
+function parseShare(hash){   // lien partagé : espèce (e), vue (v), jour (d, de -1 = hier à 7 = dans 7 jours), calque (c). Tout est validé : rien n'est pris tel quel dans l'adresse.
+  const h=new URLSearchParams(String(hash||"").replace(/^#/,"")),o={};
+  const e=h.has("e")?+h.get("e"):NaN;if(Number.isInteger(e)&&e>=0&&e<SP.length)o.e=e;
+  const v=h.get("v");if(VIEWS.some(x=>x.k===v))o.v=v;
+  if(h.has("d")){const d=+h.get("d");if(Number.isInteger(d)&&d>=-1&&d<=7)o.d=d}
+  const c=h.get("c");if(CAL_KEYS.includes(c))o.c=c;
+  return o;
+}
+function loadPrefs(hash){
   let p={};try{p=JSON.parse(localStorage.getItem(PREF_KEY)||"{}")}catch(e){}
-  const h=new URLSearchParams(INIT_HASH.replace(/^#/,""));
-  const sp=h.has("e")?+h.get("e"):p.sp;if(Number.isInteger(sp)&&sp>=0&&sp<SP.length)st.sp=sp;
-  const v=h.get("v")||p.view;if(VIEWS.some(x=>x.k==v))st.view=v;
+  const o=parseShare(hash===undefined?INIT_HASH:hash);
+  const sp=o.e!==undefined?o.e:p.sp;if(Number.isInteger(sp)&&sp>=0&&sp<SP.length)st.sp=sp;
+  const v=o.v||p.view;if(VIEWS.some(x=>x.k==v))st.view=v;
+  if(o.d!==undefined)st.day=o.d;   // le jour d'un lien est relatif à aujourd'hui (d=3 : dans 3 jours)
   if(p.mode==="flat"||p.mode==="dots")st.mode=p.mode;
   if(typeof p.gray==="boolean")$("gray").checked=p.gray;
   st.icons=p.icons!==false;$("optIcons").checked=st.icons;
@@ -659,7 +669,7 @@ function loadPrefs(){
 }
 function savePrefs(){
   try{localStorage.setItem(PREF_KEY,JSON.stringify({sp:st.sp,view:st.view,mode:st.mode,gray:$("gray").checked,cvd:$("cvd").checked,icons:st.icons!==false}))}catch(e){}
-  try{const h=["e="+st.sp,"v="+st.view];if(st.pt)h.push("p="+st.pt.lat.toFixed(5)+","+st.pt.lon.toFixed(5));history.replaceState(null,"","#"+h.join("&"))}catch(e){}
+  try{const h=["e="+st.sp,"v="+st.view];if(st.day!==0)h.push("d="+st.day);if(CAL_KEYS.includes(st.calque))h.push("c="+st.calque);if(st.pt)h.push("p="+st.pt.lat.toFixed(5)+","+st.pt.lon.toFixed(5));history.replaceState(null,"","#"+h.join("&"))}catch(e){}
 }
 function scrollToDetail(){
   const a=$("side"),d=$("detail");if(!a||!d)return;
@@ -840,7 +850,9 @@ function calqueLegend(key){
   const g=PHSTOPS.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${Math.round((s[0]-4.5)/3.8*100)}%`).join(",");
   return `<b>pH du sol</b><div class="calbar" style="background:linear-gradient(90deg,${g})"></div><div class="calrow"><span>4,5 acide</span><span>6,5 neutre</span><span>8,3 calcaire</span></div>`;
 }
-function setCalque(key){
+function setCalque(key){setCalqueNow(key);savePrefs()}   // le lien partagé reflète tout de suite le calque
+function applyShareCalque(c){if(!CAL_KEYS.includes(c))return;$("calque").value=c;setCalque(c)}
+function setCalqueNow(key){
   st.calque=key||"";st.gbifSp=st.sp;syncCalqueCtl();
   if(calqueLayer){map.removeLayer(calqueLayer);calqueLayer=null}
   const lg=$("calleg");lg.hidden=true;lg.textContent="";
@@ -1708,6 +1720,7 @@ async function loadForets(){
   }catch(e){}
 }
 function applyHash(){
+  applyShareCalque(parseShare(INIT_HASH).c);   // après le chargement des données : forêt, sol et GBIF sont prêts
   const m=/[#&]p=(-?[\d.]+),(-?[\d.]+)/.exec(INIT_HASH);
   if(m)setPoint(parseFloat(m[1]),parseFloat(m[2]),true);
 }
