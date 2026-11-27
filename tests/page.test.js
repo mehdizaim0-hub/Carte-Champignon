@@ -261,6 +261,31 @@ try { w.eval(appSrc + '\n;window.__st=st;window.__cnv=()=>cnvLayer;window.__star
   check('phrase réelle : un frein selon le modèle, une échéance, jamais « probabilité » ni de température chiffrée', typeof why0 === 'string' && /selon le modèle/i.test(why0) && /(Meilleur jour|Aucune amélioration)/.test(why0) && !/probabilit/i.test(why0) && !/\d\s?°/.test(why0), String(why0));
   check('phrase : rien pour une espèce inconnue', w.emptyWhy(-1, 0) === null && w.emptyWhy(999, 0) === null);
 
+  console.log('Lien de partage : jour et calque');
+  const ps = w.parseShare, jk = o => JSON.stringify(o);
+  check('lien : espèce, vue, jour et calque lus', jk(ps('#e=2&v=day&d=3&c=gbif')) === jk({ e: 2, v: 'day', d: 3, c: 'gbif' }), jk(ps('#e=2&v=day&d=3&c=gbif')));
+  check('lien : espèce hors liste, vue inconnue, jour hors de -1 à 7 ou non entier, calque inconnu ou injecté : tout est ignoré', Object.keys(ps('#e=999&v=evil&d=9&c=<script>alert(1)</script>')).length === 0 && ps('#d=1.5').d === undefined && ps('#d=-2').d === undefined && ps('#d=abc').d === undefined && ps('#c=GBIF').c === undefined && ps('#e=-1').e === undefined);
+  check('lien : bornes du jour (-1 hier et 7 dans une semaine) acceptées', ps('#d=-1').d === -1 && ps('#d=7').d === 7 && ps('#d=0').d === 0);
+  check('lien : vide ou absent, sans erreur', Object.keys(ps('')).length === 0 && Object.keys(ps(undefined)).length === 0 && Object.keys(ps('#')).length === 0 && Object.keys(ps(null)).length === 0);
+  const sh0 = { sp: w.__st.sp, day: w.__st.day, view: w.__st.view };
+  cq.value = 'gbif'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('lien : le calque actif est dans l\'adresse', /[#&]c=gbif(&|$)/.test(w.location.hash), w.location.hash);
+  doc.querySelector('#days button[data-d="3"]').click(); await sleep(300);
+  check('lien : le jour choisi est dans l\'adresse, avec le calque', /[#&]d=3(&|$)/.test(w.location.hash) && /[#&]c=gbif(&|$)/.test(w.location.hash), w.location.hash);
+  doc.querySelector('#days button[data-d="0"]').click(); await sleep(300);
+  check('lien : aujourd\'hui (jour par défaut) n\'ajoute rien à l\'adresse', !/[#&]d=/.test(w.location.hash), w.location.hash);
+  cq.value = ''; cq.dispatchEvent(new w.Event('change')); await sleep(300);
+  check('lien : sans calque, pas de c= dans l\'adresse', !/[#&]c=/.test(w.location.hash), w.location.hash);
+  w.applyShareCalque('ph'); await sleep(300);
+  check('lien ouvert : un calque partagé est appliqué (état, sélecteur, contrôle de la carte, adresse)', w.__st.calque === 'ph' && $('calque').value === 'ph' && doc.querySelector('.calopt[data-k="ph"]').getAttribute('aria-checked') === 'true' && /[#&]c=ph(&|$)/.test(w.location.hash));
+  w.applyShareCalque('<x>'); w.applyShareCalque(undefined); w.applyShareCalque('GBIF');
+  check('lien ouvert : un calque invalide ou absent ne change rien', w.__st.calque === 'ph');
+  w.applyShareCalque('foret'); await sleep(200); w.setCalque(''); await sleep(200);
+  w.loadPrefs('#e=1&v=hab&d=2'); const afterLoad = { sp: w.__st.sp, v: w.__st.view, d: w.__st.day };
+  check('lien ouvert : espèce, vue et jour sont lus', afterLoad.sp === 1 && afterLoad.v === 'hab' && afterLoad.d === 2, jk(afterLoad));
+  w.loadPrefs('#e=999&v=evil&d=42'); check('lien ouvert : valeurs invalides jamais appliquées (repli sur les préférences enregistrées, jour inchangé)', Number.isInteger(w.__st.sp) && w.__st.sp >= 0 && w.__st.sp < 20 && w.__st.sp !== 999 && w.__st.view !== 'evil' && w.__st.day === 2, JSON.stringify({ sp: w.__st.sp, v: w.__st.view, d: w.__st.day }));
+  w.__st.sp = sh0.sp; w.__st.day = sh0.day; w.__st.view = sh0.view; w.render(); await sleep(300);
+
   console.log('Calque GBIF : classes distinctes sans la couleur seule');
   const lumi = rgb => { const f = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
   cq.value = 'gbif'; cq.dispatchEvent(new w.Event('change')); await sleep(300);
